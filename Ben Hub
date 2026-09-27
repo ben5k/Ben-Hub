@@ -824,8 +824,8 @@ createScriptCard(StealEggScroll, "سكربت A الاحمر", "تجميع أحد
     pcall(function() loadstring(game:HttpGet("https://raw.githubusercontent.com/virtuososvisualedits-prog/Ww/refs/heads/main/final-obfuscated.lua"))() end)
 end, KeysIndex)
 
-createScriptCard(StealEggScroll, "سكربت فلفل", "سكربت ممتاز لحدث البيض", function()
-    pcall(function() loadstring(game:HttpGet("https://raw.githubusercontent.com/tienkhanh1/spicy/main/Chilli.lua"))() end)
+createScriptCard(StealEggScroll, "سكربت الازراق", "سكربت ممتاز لحدث البيض", function()
+    pcall(function() loadstring(game:HttpGet("https://raw.githubusercontent.com/PulseZax/Loader/refs/heads/main/.lua"))() end)
 end)
 
 -- ركوب الحيوانات
