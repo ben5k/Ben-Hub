@@ -1,953 +1,1291 @@
--- ===================================================
--- 👑 BEN HUB (LUR HUB) - الكود النهائي المعدل (خلفية سوداء وتحسين المظهر)
--- ===================================================
-
-local Players = game:GetService("Players")
+-- Ben Script Hub - Blox Fruits & New Map Scripts Edition (Delta Executor Ready)
 local CoreGui = game:GetService("CoreGui")
-local UserInputService = game:GetService("UserInputService")
-local HttpService = game:GetService("HttpService")
-local GuiService = game:GetService("GuiService")
+local Players = game:GetService("Players")
 local TweenService = game:GetService("TweenService")
+local TeleportService = game:GetService("TeleportService")
+local HttpService = game:GetService("HttpService")
+local SoundService = game:GetService("SoundService")
+local Workspace = game:GetService("Workspace")
+
 local LocalPlayer = Players.LocalPlayer
+local parent = (gethui and gethui()) or CoreGui:FindFirstChild("RobloxGui") or LocalPlayer:WaitForChild("PlayerGui")
 
--- روابط الفايربيس والويب هوك والصوت
-local FIREBASE_BASE = "https://benhubchat-24010-default-rtdb.firebaseio.com/"
-local CHAT_URL = FIREBASE_BASE .. "chat.json"
-local ONLINE_URL = FIREBASE_BASE .. "stats/online/" .. tostring(LocalPlayer.UserId) .. ".json"
-local ALL_ONLINE_URL = FIREBASE_BASE .. "stats/online.json"
-local SUGGESTION_WEBHOOK = "https://discord.com/api/webhooks/1551892613815074937/DNm0s4PFO6uzMybJ353SgRcV0aW90VmRd1rf8TAF3pzag3zyp2cqq4YO8wFV9My4TJp_"
-local INTRO_AUDIO_URL = "https://www.image2url.com/r2/default/audio/1790084303441-4ae1a589-e734-4af5-a5e1-78c3dd1b0e0a.mp3"
+if parent:FindFirstChild("BenScriptHubIntroUI") then
+    parent.BenScriptHubIntroUI:Destroy()
+end
+if parent:FindFirstChild("BenScriptHubUI") then
+    parent.BenScriptHubUI:Destroy()
+end
 
-local request = (syn and syn.request) or (http and http.request) or http_request or request or (fluxus and fluxus.request) or (krnl and krnl.request)
-local setclipboard = setclipboard or toclipboard or set_clipboard or (syn and syn.write_clipboard)
-local gethui = gethui or function() return CoreGui end
+local function customRequest(options)
+    local req = request or http_request or (syn and syn.request) or (http and http.request)
+    if req then return req(options) else return {StatusCode = 400, Body = ""} end
+end
 
--- ==================== 1. تحميل الصور والوسائط ====================
-local function loadAsset(url, filename)
-    if writefile and readfile and getcustomasset then
-        pcall(function()
-            if not pcall(function() readfile(filename) end) then
-                writefile(filename, game:HttpGet(url))
-            end
-        end)
-        local success, asset = pcall(function() return getcustomasset(filename) end)
-        if success then return asset end
+local function fetchAsset(url, fileName)
+    if writefile and getcustomasset and readfile then
+        local file = "BenHub_" .. fileName .. ".png"
+        if not isfile(file) then
+            pcall(function() writefile(file, game:HttpGet(url)) end)
+        end
+        if isfile(file) then return getcustomasset(file) end
     end
     return url
 end
 
-local BG_IMAGE_ID = loadAsset("https://f.top4top.io/p_3917lvgp10.png", "LURHub_BG.png")
-local TOGGLE_IMAGE_ID = loadAsset("https://g.top4top.io/p_3917nj3r41.png", "LURHub_Icon.png")
+local logoAsset = fetchAsset("https://i.top4top.io/p_3922ajkzh0.png", "logo")
+local bannerAsset = fetchAsset("https://j.top4top.io/p_39224zme21.png", "banner")
 
--- صور المنصات الاجتماعية
-local TIKTOK_IMG = loadAsset("https://c.top4top.io/p_3917y7udu0.jpg", "TikTok_Icon.jpg")
-local YOUTUBE_IMG = loadAsset("https://d.top4top.io/p_3917edrzh1.jpg", "YouTube_Icon.jpg")
-local TELEGRAM_IMG = loadAsset("https://e.top4top.io/p_3917nmbx32.jpg", "Telegram_Icon.jpg")
-local DISCORD_IMG = loadAsset("https://f.top4top.io/p_3917ieixk3.jpg", "Discord_Icon.jpg")
+local bgAssets = {
+    bg1 = fetchAsset("https://f.top4top.io/p_3922clj7y0.jpg", "bg1"),
+    bg2 = fetchAsset("https://g.top4top.io/p_3922f361v1.jpg", "bg2"),
+    bg3 = fetchAsset("https://h.top4top.io/p_3922pllg82.jpg", "bg3"),
+    bg4 = fetchAsset("https://i.top4top.io/p_3922ouzjv3.jpg", "bg4"),
+}
 
--- ==================== 2. نظام التشفير والفلترة ====================
-local ForbiddenWords = {"سب", "كفر", "فشار", "امك", "أمك", "اختك", "أختك", "ابوك", "أبوك", "كس", "قحبة", "طيز", "زق", "شرموط", "خرية", "منيك", "قحب"}
-local LinkPatterns = {"https?://%S+", "www%.%S+", "discord%.gg/%S+", "%.com", "%.net", "%.org", "%.gg"}
+local selectedBg = "default"
+local particlesEnabled = true
+local configFile = "BenHub_Config_v8.txt"
 
-local function isCleanText(text)
+if isfile and readfile and isfile(configFile) then
+    pcall(function()
+        local data = HttpService:JSONDecode(readfile(configFile))
+        if data then
+            selectedBg = data.bg or "default"
+            particlesEnabled = (data.particles == nil) and true or data.particles
+        end
+    end)
+end
+
+local FIREBASE_CHAT_URL = "https://benhubchat-24010-default-rtdb.firebaseio.com/messages.json"
+local FIREBASE_SUGGEST_URL = "https://benhubchat-24010-default-rtdb.firebaseio.com/suggestions.json"
+
+local badWords = {"http", "https", ".com", "discord", "سب", "كفر", "قذف", "فشار"}
+local function filterBadContent(text)
     local lowerText = string.lower(text)
-    for _, pattern in pairs(LinkPatterns) do
-        if string.find(lowerText, pattern) then return false, "ممنوع نشر الروابط!" end
+    for _, word in ipairs(badWords) do
+        if string.find(lowerText, word) then return true end
     end
-    for _, word in ipairs(ForbiddenWords) do
-        if string.find(lowerText, string.lower(word)) then return false, "كلمات محظورة ومسيئة!" end
-    end
-    return true
+    return false
 end
 
--- ==================== 3. إنشاء الشاشة الرئيسية ====================
-local ParentGui = gethui() or CoreGui
-local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "LURHub_v3UI"
-ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
-ScreenGui.IgnoreGuiInset = true
+---------------------------------------------------------
+-- واجهة زر البداية
+---------------------------------------------------------
+local IntroGui = Instance.new("ScreenGui")
+IntroGui.Name = "BenScriptHubIntroUI"
+IntroGui.ResetOnSpawn = false
+IntroGui.IgnoreGuiInset = true
+IntroGui.DisplayOrder = 999999
+IntroGui.Parent = parent
 
-pcall(function() ScreenGui.Parent = ParentGui end)
-if not ScreenGui.Parent then ScreenGui.Parent = LocalPlayer:WaitForChild("PlayerGui") end
+local StartBtn = Instance.new("TextButton")
+StartBtn.Name = "StartBtn"
+StartBtn.Size = UDim2.new(0, 240, 0, 60)
+StartBtn.Position = UDim2.new(0.5, -120, 0.5, -30)
+StartBtn.BackgroundColor3 = Color3.fromRGB(160, 25, 35)
+StartBtn.BackgroundTransparency = 0.1
+StartBtn.Text = "⚡ تشغيل السكربت"
+StartBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+StartBtn.Font = Enum.Font.SourceSansBold
+StartBtn.TextSize = 22
+StartBtn.ZIndex = 1000000
+StartBtn.Parent = IntroGui
 
--- تشغيل صوت الترحيب بصوت عالٍ
+Instance.new("UICorner", StartBtn).CornerRadius = UDim.new(0, 12)
+local BtnStroke = Instance.new("UIStroke")
+BtnStroke.Color = Color3.fromRGB(255, 215, 0)
+BtnStroke.Thickness = 2.5
+BtnStroke.Parent = StartBtn
+
 task.spawn(function()
-    local soundAsset = loadAsset(INTRO_AUDIO_URL, "BenHub_IntroSound.mp3")
-    local introSound = Instance.new("Sound", ParentGui)
-    introSound.SoundId = soundAsset
-    introSound.Volume = 10
-    introSound:Play()
+    while StartBtn and StartBtn.Parent do
+        TweenService:Create(StartBtn, TweenInfo.new(0.8, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), {Size = UDim2.new(0, 250, 0, 63), Position = UDim2.new(0.5, -125, 0.5, -31.5)}):Play()
+        task.wait(0.8)
+        TweenService:Create(StartBtn, TweenInfo.new(0.8, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), {Size = UDim2.new(0, 240, 0, 60), Position = UDim2.new(0.5, -120, 0.5, -30)}):Play()
+        task.wait(0.8)
+    end
 end)
 
--- شاشة التحميل السوداء بالكامل مع تحسين المظهر والانيميشن
-local SplashFrame = Instance.new("Frame", ScreenGui)
-SplashFrame.Size = UDim2.new(1, 0, 1, 0)
-SplashFrame.Position = UDim2.new(0, 0, 0, 0)
-SplashFrame.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
-SplashFrame.BorderSizePixel = 0
-SplashFrame.ZIndex = 500
-SplashFrame.ClipsDescendants = true
+---------------------------------------------------------
+-- الواجهة الرئيسية لـ Ben Hub
+---------------------------------------------------------
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "BenScriptHubUI"
+ScreenGui.ResetOnSpawn = false
+ScreenGui.Parent = parent
 
--- اللوجو في المنتصف مع تأثير ظهور احترافي
-local CenterLogo = Instance.new("ImageLabel", SplashFrame)
-CenterLogo.Size = UDim2.new(0, 0, 0, 0)
-CenterLogo.Position = UDim2.new(0.5, 0, 0.38, 0)
-CenterLogo.Image = TOGGLE_IMAGE_ID
-CenterLogo.BackgroundTransparency = 1
-CenterLogo.ZIndex = 503
-Instance.new("UICorner", CenterLogo).CornerRadius = UDim.new(1, 0)
+local Main = Instance.new("Frame")
+Main.Name = "Main"
+Main.Size = UDim2.new(0, 520, 0, 280)
+Main.Position = UDim2.new(0.5, -260, 0.5, -140)
+Main.BackgroundColor3 = Color3.fromRGB(14, 14, 18)
+Main.BackgroundTransparency = 0.12
+Main.BorderSizePixel = 0
+Main.Active = true
+Main.Draggable = true
+Main.ClipsDescendants = true
+Main.Visible = false
+Main.Parent = ScreenGui
 
-local LogoStroke = Instance.new("UIStroke", CenterLogo)
-LogoStroke.Color = Color3.fromRGB(255, 40, 50)
-LogoStroke.Thickness = 3
+Instance.new("UICorner", Main).CornerRadius = UDim.new(0, 8)
+local MainStroke = Instance.new("UIStroke")
+MainStroke.Color = Color3.fromRGB(170, 25, 35)
+MainStroke.Thickness = 1.3
+MainStroke.Parent = Main
 
-TweenService:Create(CenterLogo, TweenInfo.new(0.7, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
-    Size = UDim2.new(0, 130, 0, 130),
-    Position = UDim2.new(0.5, -65, 0.38, -65)
-}):Play()
+local MainBgImage = Instance.new("ImageLabel")
+MainBgImage.Size = UDim2.new(1, 0, 1, 0)
+MainBgImage.BackgroundTransparency = 1
+MainBgImage.ImageTransparency = 0.25
+MainBgImage.ScaleType = Enum.ScaleType.Crop
+MainBgImage.ZIndex = 1
+MainBgImage.Parent = Main
 
--- النص المطلوب أسفل اللوجو بتصميم جذاب
-local LoadingText = Instance.new("TextLabel", SplashFrame)
-LoadingText.Size = UDim2.new(0.9, 0, 0, 60)
-LoadingText.Position = UDim2.new(0.05, 0, 0.58, 0)
-LoadingText.Text = "جاري تحميل سكربت من صنع Ben عربي بلكامل تسهيل جميع خدمات هاك روبلوكس"
-LoadingText.TextColor3 = Color3.fromRGB(255, 255, 255)
-LoadingText.Font = Enum.Font.SourceSansBold
-LoadingText.TextSize = 19
-LoadingText.TextWrapped = true
-LoadingText.BackgroundTransparency = 1
-LoadingText.TextTransparency = 1
-LoadingText.ZIndex = 503
+local function updateBackground(bgKey)
+    if bgKey ~= "default" and bgAssets[bgKey] then
+        MainBgImage.Image = bgAssets[bgKey]
+        MainBgImage.Visible = true
+    else
+        MainBgImage.Image = ""
+        MainBgImage.Visible = false
+    end
+end
+updateBackground(selectedBg)
 
-local TextStroke = Instance.new("UIStroke", LoadingText)
-TextStroke.Color = Color3.fromRGB(220, 30, 40)
-TextStroke.Thickness = 1.5
+---------------------------------------------------------
+-- المشهد السينمائي + تشغيل الرقصة والموسيقى لمدة 7.5 ثانية
+---------------------------------------------------------
+local function playCinematicScene(duration)
+    local char = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+    local humanoid = char:FindFirstChildOfClass("Humanoid")
+    local rootPart = char:FindFirstChild("HumanoidRootPart")
+    
+    if not rootPart or not humanoid then return end
 
-TweenService:Create(LoadingText, TweenInfo.new(0.6, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {TextTransparency = 0}):Play()
+    local origWalkSpeed = humanoid.WalkSpeed
+    local origJumpPower = humanoid.JumpPower
+    humanoid.WalkSpeed = 0
+    humanoid.JumpPower = 0
 
--- ==================== 4. الواجهة الرئيسية للهاب ====================
-local MainFrame = Instance.new("Frame", ScreenGui)
-MainFrame.Name = "MainFrame"
-MainFrame.Size = UDim2.new(0, 460, 0, 290)
-MainFrame.Position = UDim2.new(0.5, -230, 0.25, 0)
-MainFrame.BackgroundColor3 = Color3.fromRGB(15, 10, 12)
-MainFrame.BorderSizePixel = 0
-MainFrame.Active = true
-MainFrame.ClipsDescendants = true
-MainFrame.ZIndex = 1
-MainFrame.Visible = false
-Instance.new("UICorner", MainFrame).CornerRadius = UDim.new(0, 12)
+    local CineGui = Instance.new("ScreenGui")
+    CineGui.Name = "BenCinematicGui"
+    CineGui.IgnoreGuiInset = true
+    CineGui.DisplayOrder = 9999999
+    CineGui.Parent = parent
 
-local UIStroke = Instance.new("UIStroke", MainFrame)
-UIStroke.Color = Color3.fromRGB(220, 30, 40)
-UIStroke.Thickness = 2
+    local TopBar = Instance.new("Frame")
+    TopBar.Size = UDim2.new(1, 0, 0, 0)
+    TopBar.Position = UDim2.new(0, 0, 0, 0)
+    TopBar.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+    TopBar.BorderSizePixel = 0
+    TopBar.Parent = CineGui
 
-local BackgroundImg = Instance.new("ImageLabel", MainFrame)
-BackgroundImg.Size = UDim2.new(1, 0, 1, 0)
-BackgroundImg.Image = BG_IMAGE_ID
-BackgroundImg.BackgroundTransparency = 1
-BackgroundImg.ImageTransparency = 0.55
-BackgroundImg.ScaleType = Enum.ScaleType.Crop
-BackgroundImg.ZIndex = 1
+    local BottomBar = Instance.new("Frame")
+    BottomBar.Size = UDim2.new(1, 0, 0, 0)
+    BottomBar.Position = UDim2.new(0, 0, 1, 0)
+    BottomBar.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+    BottomBar.BorderSizePixel = 0
+    BottomBar.Parent = CineGui
 
-local isChatDraggable = false
+    TweenService:Create(TopBar, TweenInfo.new(0.8, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Size = UDim2.new(1, 0, 0.12, 0)}):Play()
+    TweenService:Create(BottomBar, TweenInfo.new(0.8, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Size = UDim2.new(1, 0, 0.12, 0), Position = UDim2.new(0, 0, 0.88, 0)}):Play()
 
-local function makeDraggable(guiObject, isChatWindow)
-    local dragging, dragInput, dragStart, startPos
-    guiObject.InputBegan:Connect(function(input)
-        if isChatWindow and not isChatDraggable then return end
-        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-            dragging = true
-            dragStart = input.Position
-            startPos = guiObject.Position
-            input.Changed:Connect(function()
-                if input.UserInputState == Enum.UserInputState.End then dragging = false end
-            end)
+    local camera = Workspace.CurrentCamera
+    local origCamType = camera.CameraType
+    camera.CameraType = Enum.CameraType.Scriptable
+
+    local targetEmoteId = 76480113479386
+    local danceTrack = nil
+
+    pcall(function()
+        local desc = humanoid:FindFirstChildOfClass("HumanoidDescription") or Instance.new("HumanoidDescription", humanoid)
+        local emotes = desc:GetEmotes()
+        emotes["CineDance"] = {targetEmoteId}
+        desc:SetEmotes(emotes)
+        humanoid:PlayEmote("CineDance")
+    end)
+
+    pcall(function()
+        local animator = humanoid:FindFirstChildOfClass("Animator") or Instance.new("Animator", humanoid)
+        local anim = Instance.new("Animation")
+        anim.AnimationId = "rbxassetid://" .. tostring(targetEmoteId)
+        danceTrack = animator:LoadAnimation(anim)
+        danceTrack.Priority = Enum.AnimationPriority.Action4
+        danceTrack:Play()
+    end)
+
+    local sound = Instance.new("Sound")
+    pcall(function()
+        sound.SoundId = "rbxassetid://92948891633881"
+        sound.Volume = 25
+        sound.Parent = SoundService
+        sound:Play()
+    end)
+
+    local startTime = tick()
+    local connection
+    connection = game:GetService("RunService").RenderStepped:Connect(function()
+        local elapsed = tick() - startTime
+        if elapsed >= duration then
+            connection:Disconnect()
+        else
+            local angle = elapsed * 0.55
+            local camPos = rootPart.Position + Vector3.new(math.sin(angle) * 11, 2.5, math.cos(angle) * 11)
+            camera.CFrame = CFrame.new(camPos, rootPart.Position + Vector3.new(0, 1.2, 0))
         end
     end)
-    guiObject.InputChanged:Connect(function(input)
-        if isChatWindow and not isChatDraggable then return end
-        if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
-            dragInput = input
-        end
+
+    task.wait(duration)
+
+    if danceTrack then pcall(function() danceTrack:Stop() end) end
+    pcall(function() sound:Stop() sound:Destroy() end)
+
+    TweenService:Create(TopBar, TweenInfo.new(0.6), {Size = UDim2.new(1, 0, 0, 0)}):Play()
+    local bTween = TweenService:Create(BottomBar, TweenInfo.new(0.6), {Size = UDim2.new(1, 0, 0, 0), Position = UDim2.new(0, 0, 1, 0)})
+    bTween:Play()
+
+    bTween.Completed:Connect(function()
+        CineGui:Destroy()
     end)
-    UserInputService.InputChanged:Connect(function(input)
-        if input == dragInput and dragging then
-            if isChatWindow and not isChatDraggable then dragging = false return end
-            local delta = input.Position - dragStart
-            guiObject.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
-        end
-    end)
+
+    camera.CameraType = origCamType
+    if humanoid then
+        humanoid.WalkSpeed = origWalkSpeed > 0 and origWalkSpeed or 16
+        humanoid.JumpPower = origJumpPower > 0 and origJumpPower or 50
+    end
 end
 
-makeDraggable(MainFrame, false)
-
--- إنهاء شاشة التحميل السوداء بسلاسة واحترافية
-task.delay(3.2, function()
-    TweenService:Create(SplashFrame, TweenInfo.new(0.7, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {BackgroundTransparency = 1}):Play()
-    TweenService:Create(CenterLogo, TweenInfo.new(0.5, Enum.EasingStyle.Back, Enum.EasingDirection.In), {Size = UDim2.new(0, 0, 0, 0)}):Play()
-    TweenService:Create(LoadingText, TweenInfo.new(0.5, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {TextTransparency = 1}):Play()
-    
-    task.wait(0.7)
-    SplashFrame:Destroy()
-    MainFrame.Visible = true
+StartBtn.MouseButton1Click:Connect(function()
+    StartBtn.Visible = false
+    playCinematicScene(7.5)
+    IntroGui:Destroy()
+    Main.Visible = true
 end)
 
--- ==================== 5. زر فتح/إغلاق الهاب العائم ====================
-local ToggleBtn = Instance.new("ImageButton", ScreenGui)
-ToggleBtn.Name = "LURHubToggleBtn"
-ToggleBtn.Size = UDim2.new(0, 45, 0, 45)
-ToggleBtn.Position = UDim2.new(0, 15, 0.4, 0)
-ToggleBtn.Image = TOGGLE_IMAGE_ID
-ToggleBtn.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
-ToggleBtn.Visible = false
-ToggleBtn.ZIndex = 100
-Instance.new("UICorner", ToggleBtn).CornerRadius = UDim.new(1, 0)
+---------------------------------------------------------
+-- نظام البارتكلز
+---------------------------------------------------------
+local ParticlesFrame = Instance.new("Frame")
+ParticlesFrame.Size = UDim2.new(1, 0, 1, 0)
+ParticlesFrame.BackgroundTransparency = 1
+ParticlesFrame.ZIndex = 1
+ParticlesFrame.Parent = Main
 
-local ToggleStroke = Instance.new("UIStroke", ToggleBtn)
-ToggleStroke.Color = Color3.fromRGB(220, 30, 40)
-ToggleStroke.Thickness = 2
+local activeStars = {}
+local function clearParticles()
+    for _, el in ipairs(activeStars) do
+        if el.frame then el.frame:Destroy() end
+    end
+    activeStars = {}
+end
 
-makeDraggable(ToggleBtn, false)
-ToggleBtn.MouseButton1Click:Connect(function()
-    MainFrame.Visible = not MainFrame.Visible
+local function spawnParticles()
+    clearParticles()
+    if not particlesEnabled then return end
+    for i = 1, 25 do
+        local star = Instance.new("Frame")
+        local sz = math.random(2, 4)
+        star.Size = UDim2.new(0, sz, 0, sz)
+        star.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+        star.BackgroundTransparency = math.random(3, 7) / 10
+        star.BorderSizePixel = 0
+        star.ZIndex = 1
+        star.Position = UDim2.new(math.random(), 0, math.random(), 0)
+        star.Parent = ParticlesFrame
+        Instance.new("UICorner", star).CornerRadius = UDim.new(1, 0)
+        table.insert(activeStars, {frame = star, speedY = -math.random(2, 8) / 10000})
+    end
+end
+spawnParticles()
+
+task.spawn(function()
+    while Main and Main.Parent do
+        if particlesEnabled then
+            for _, el in ipairs(activeStars) do
+                if el.frame and el.frame.Parent then
+                    local posY = el.frame.Position.Y.Scale + el.speedY
+                    if posY < -0.05 then posY = 1.05 end
+                    el.frame.Position = UDim2.new(el.frame.Position.X.Scale, 0, posY, 0)
+                end
+            end
+        end
+        task.wait(0.03)
+    end
 end)
 
--- ==================== 6. الشريط العلوي والعداد ====================
-local TopBar = Instance.new("Frame", MainFrame)
-TopBar.Size = UDim2.new(1, 0, 0, 42)
-TopBar.BackgroundColor3 = Color3.fromRGB(20, 10, 12)
-TopBar.BackgroundTransparency = 0.2
-TopBar.ZIndex = 10
-Instance.new("UICorner", TopBar).CornerRadius = UDim.new(0, 10)
-
-local Title = Instance.new("TextLabel", TopBar)
-Title.Size = UDim2.new(0.35, 0, 1, 0)
-Title.Position = UDim2.new(0.03, 0, 0, 0)
-Title.Text = "👑 Ben Hub"
-Title.TextColor3 = Color3.fromRGB(255, 40, 50)
-Title.Font = Enum.Font.SourceSansBold
-Title.TextSize = 16
-Title.TextXAlignment = Enum.TextXAlignment.Left
-Title.BackgroundTransparency = 1
-Title.ZIndex = 11
-
-local CounterFrame = Instance.new("Frame", TopBar)
-CounterFrame.Size = UDim2.new(0.35, 0, 0.7, 0)
-CounterFrame.Position = UDim2.new(0.50, 0, 0.15, 0)
-CounterFrame.BackgroundColor3 = Color3.fromRGB(25, 12, 16)
-CounterFrame.BackgroundTransparency = 0.3
-CounterFrame.ZIndex = 11
-Instance.new("UICorner", CounterFrame).CornerRadius = UDim.new(0, 6)
-
-local StatsLabel = Instance.new("TextLabel", CounterFrame)
-StatsLabel.Size = UDim2.new(1, 0, 1, 0)
-StatsLabel.BackgroundTransparency = 1
-StatsLabel.TextColor3 = Color3.fromRGB(255, 220, 220)
-StatsLabel.Font = Enum.Font.SourceSansBold
-StatsLabel.TextSize = 12
-StatsLabel.Text = "🟢 أونلاين: 1"
-StatsLabel.ZIndex = 12
-
-local CloseBtn = Instance.new("TextButton", TopBar)
-CloseBtn.Size = UDim2.new(0, 28, 0, 28)
-CloseBtn.Position = UDim2.new(0.91, 0, 0.16, 0)
-CloseBtn.BackgroundColor3 = Color3.fromRGB(190, 25, 35)
-CloseBtn.Text = "X"
+---------------------------------------------------------
+-- زر الإغلاق والدائرة العائمة
+---------------------------------------------------------
+local CloseBtn = Instance.new("TextButton")
+CloseBtn.Size = UDim2.new(0, 20, 0, 20)
+CloseBtn.Position = UDim2.new(1, -24, 0, 5)
+CloseBtn.BackgroundColor3 = Color3.fromRGB(180, 30, 40)
+CloseBtn.Text = "✕"
 CloseBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
 CloseBtn.Font = Enum.Font.SourceSansBold
-CloseBtn.TextSize = 14
-CloseBtn.ZIndex = 11
-Instance.new("UICorner", CloseBtn).CornerRadius = UDim.new(0, 6)
-CloseBtn.MouseButton1Click:Connect(function() 
-    MainFrame.Visible = false 
-    ToggleBtn.Visible = true 
+CloseBtn.TextSize = 12
+CloseBtn.ZIndex = 10
+CloseBtn.Parent = Main
+Instance.new("UICorner", CloseBtn).CornerRadius = UDim.new(0, 4)
+
+local BenOpenBtn = Instance.new("ImageButton")
+BenOpenBtn.Name = "BenOpenBtn"
+BenOpenBtn.Size = UDim2.new(0, 50, 0, 50)
+BenOpenBtn.Position = UDim2.new(0, 15, 0.5, -25)
+BenOpenBtn.BackgroundColor3 = Color3.fromRGB(15, 15, 20)
+BenOpenBtn.Image = logoAsset
+BenOpenBtn.Visible = false
+BenOpenBtn.Active = true
+BenOpenBtn.Draggable = true
+BenOpenBtn.Parent = ScreenGui
+
+Instance.new("UICorner", BenOpenBtn).CornerRadius = UDim.new(1, 0)
+local openStroke = Instance.new("UIStroke")
+openStroke.Color = Color3.fromRGB(255, 215, 0)
+openStroke.Thickness = 2
+openStroke.Parent = BenOpenBtn
+
+CloseBtn.MouseButton1Click:Connect(function()
+    Main.Visible = false
+    BenOpenBtn.Visible = true
 end)
 
-local function updateOnlineStats()
-    if request then
-        pcall(function()
-            request({
-                Url = ONLINE_URL,
-                Method = "PUT",
-                Headers = {["Content-Type"] = "application/json"},
-                Body = HttpService:JSONEncode({lastSeen = os.time()})
-            })
-        end)
-    end
-    pcall(function()
-        local resBody = game:HttpGet(ALL_ONLINE_URL)
-        if resBody and resBody ~= "null" and resBody ~= "" then
-            local data = HttpService:JSONDecode(resBody)
-            if type(data) == "table" then
-                local activeUsers = 0
-                local now = os.time()
-                for uid, userStat in pairs(data) do
-                    if type(userStat) == "table" and userStat.lastSeen and (now - userStat.lastSeen < 35) then
-                        activeUsers = activeUsers + 1
-                    end
-                end
-                StatsLabel.Text = "🟢 أونلاين: " .. tostring(math.max(1, activeUsers))
-            end
-        end
-    end)
-end
-
-task.spawn(function()
-    while ScreenGui and ScreenGui.Parent do
-        updateOnlineStats()
-        task.wait(6)
-    end
+BenOpenBtn.MouseButton1Click:Connect(function()
+    Main.Visible = true
+    BenOpenBtn.Visible = false
 end)
 
--- ==================== 7. القائمة والتبويبات ====================
-local Sidebar = Instance.new("Frame", MainFrame)
-Sidebar.Size = UDim2.new(0, 115, 1, -48)
-Sidebar.Position = UDim2.new(0, 5, 0, 45)
-Sidebar.BackgroundColor3 = Color3.fromRGB(15, 8, 10)
+---------------------------------------------------------
+-- القائمة الجانبية (Sidebar)
+---------------------------------------------------------
+local Sidebar = Instance.new("Frame")
+Sidebar.Size = UDim2.new(0, 130, 1, 0)
+Sidebar.BackgroundColor3 = Color3.fromRGB(10, 10, 14)
 Sidebar.BackgroundTransparency = 0.3
-Sidebar.ZIndex = 10
+Sidebar.ZIndex = 3
+Sidebar.Parent = Main
 Instance.new("UICorner", Sidebar).CornerRadius = UDim.new(0, 8)
 
-local Container = Instance.new("Frame", MainFrame)
-Container.Size = UDim2.new(1, -130, 1, -48)
-Container.Position = UDim2.new(0, 125, 0, 45)
-Container.BackgroundTransparency = 1
-Container.ZIndex = 10
+local LogoImage = Instance.new("ImageLabel")
+LogoImage.Size = UDim2.new(0, 85, 0, 42)
+LogoImage.Position = UDim2.new(0.5, -42, 0, 4)
+LogoImage.BackgroundTransparency = 1
+LogoImage.Image = logoAsset
+LogoImage.ScaleType = Enum.ScaleType.Fit
+LogoImage.ZIndex = 4
+LogoImage.Parent = Sidebar
 
-local Tabs, Pages = {}, {}
+local ButtonsHolder = Instance.new("Frame")
+ButtonsHolder.Size = UDim2.new(1, -10, 1, -105)
+ButtonsHolder.Position = UDim2.new(0, 5, 0, 48)
+ButtonsHolder.BackgroundTransparency = 1
+ButtonsHolder.ZIndex = 4
+ButtonsHolder.Parent = Sidebar
 
-local function switchToTab(targetIndex)
-    for i, p in pairs(Pages) do p.Visible = (i == targetIndex) end
-    for i, b in pairs(Tabs) do 
-        b.BackgroundColor3 = (i == targetIndex) and Color3.fromRGB(190, 25, 35) or Color3.fromRGB(30, 15, 20)
-    end
-end
+local ButtonsLayout = Instance.new("UIListLayout")
+ButtonsLayout.SortOrder = Enum.SortOrder.LayoutOrder
+ButtonsLayout.Padding = UDim.new(0, 3)
+ButtonsLayout.Parent = ButtonsHolder
 
-local function createTab(name, icon)
-    local tabIndex = #Tabs + 1
-    local btn = Instance.new("TextButton", Sidebar)
-    btn.Size = UDim2.new(0.9, 0, 0, 28)
-    btn.Position = UDim2.new(0.05, 0, 0, (tabIndex - 1) * 31 + 4)
-    btn.BackgroundColor3 = (tabIndex == 1) and Color3.fromRGB(190, 25, 35) or Color3.fromRGB(30, 15, 20)
-    btn.Text = icon .. " " .. name
+local FooterLbl = Instance.new("TextLabel")
+FooterLbl.Size = UDim2.new(1, 0, 0, 14)
+FooterLbl.Position = UDim2.new(0, 0, 1, -48)
+FooterLbl.BackgroundTransparency = 1
+FooterLbl.Text = "👑 Ben NEVER DIES."
+FooterLbl.TextColor3 = Color3.fromRGB(200, 150, 50)
+FooterLbl.Font = Enum.Font.SourceSansBold
+FooterLbl.TextSize = 9
+FooterLbl.ZIndex = 4
+FooterLbl.Parent = Sidebar
+
+local PlayerCard = Instance.new("Frame")
+PlayerCard.Size = UDim2.new(1, -10, 0, 28)
+PlayerCard.Position = UDim2.new(0, 5, 1, -32)
+PlayerCard.BackgroundColor3 = Color3.fromRGB(22, 22, 28)
+PlayerCard.BackgroundTransparency = 0.2
+PlayerCard.ZIndex = 4
+PlayerCard.Parent = Sidebar
+Instance.new("UICorner", PlayerCard).CornerRadius = UDim.new(0, 5)
+
+local PlayerAvatar = Instance.new("ImageLabel")
+PlayerAvatar.Size = UDim2.new(0, 22, 0, 22)
+PlayerAvatar.Position = UDim2.new(0, 4, 0.5, -11)
+PlayerAvatar.BackgroundTransparency = 1
+PlayerAvatar.ZIndex = 5
+PlayerAvatar.Parent = PlayerCard
+Instance.new("UICorner", PlayerAvatar).CornerRadius = UDim.new(1, 0)
+
+local PlayerNameLbl = Instance.new("TextLabel")
+PlayerNameLbl.Size = UDim2.new(1, -32, 1, 0)
+PlayerNameLbl.Position = UDim2.new(0, 30, 0, 0)
+PlayerNameLbl.BackgroundTransparency = 1
+PlayerNameLbl.Text = LocalPlayer.DisplayName ~= "" and LocalPlayer.DisplayName or LocalPlayer.Name
+PlayerNameLbl.TextColor3 = Color3.fromRGB(255, 215, 0)
+PlayerNameLbl.Font = Enum.Font.SourceSansBold
+PlayerNameLbl.TextSize = 10
+PlayerNameLbl.TextXAlignment = Enum.TextXAlignment.Left
+PlayerNameLbl.ZIndex = 5
+PlayerNameLbl.Parent = PlayerCard
+
+task.spawn(function()
+    pcall(function()
+        local content = Players:GetUserThumbnailAsync(LocalPlayer.UserId, Enum.ThumbnailType.HeadShot, Enum.ThumbnailSize.Size150x150)
+        if content then PlayerAvatar.Image = content end
+    end)
+end)
+
+---------------------------------------------------------
+-- صفحات التبويبات
+---------------------------------------------------------
+local PagesHolder = Instance.new("Frame")
+PagesHolder.Size = UDim2.new(1, -140, 1, -10)
+PagesHolder.Position = UDim2.new(0, 135, 0, 5)
+PagesHolder.BackgroundTransparency = 1
+PagesHolder.ZIndex = 3
+PagesHolder.Parent = Main
+
+local HomeTab = Instance.new("Frame")
+HomeTab.Size = UDim2.new(1, 0, 1, 0)
+HomeTab.BackgroundTransparency = 1
+HomeTab.Visible = true
+HomeTab.Parent = PagesHolder
+
+local MapScriptsTab = Instance.new("Frame")
+MapScriptsTab.Size = UDim2.new(1, 0, 1, 0)
+MapScriptsTab.BackgroundTransparency = 1
+MapScriptsTab.Visible = false
+MapScriptsTab.Parent = PagesHolder
+
+local ExecTab = Instance.new("Frame")
+ExecTab.Size = UDim2.new(1, 0, 1, 0)
+ExecTab.BackgroundTransparency = 1
+ExecTab.Visible = false
+ExecTab.Parent = PagesHolder
+
+local SuggestTab = Instance.new("Frame")
+SuggestTab.Size = UDim2.new(1, 0, 1, 0)
+SuggestTab.BackgroundTransparency = 1
+SuggestTab.Visible = false
+SuggestTab.Parent = PagesHolder
+
+local ChatTab = Instance.new("Frame")
+ChatTab.Size = UDim2.new(1, 0, 1, 0)
+ChatTab.BackgroundTransparency = 1
+ChatTab.Visible = false
+ChatTab.Parent = PagesHolder
+
+local SettingsTab = Instance.new("Frame")
+SettingsTab.Size = UDim2.new(1, 0, 1, 0)
+SettingsTab.BackgroundTransparency = 1
+SettingsTab.Visible = false
+SettingsTab.Parent = PagesHolder
+
+local tabButtons = {}
+local function createTabButton(text, iconId, targetTab)
+    local btn = Instance.new("TextButton")
+    btn.Size = UDim2.new(1, 0, 0, 23)
+    btn.BackgroundColor3 = (targetTab == HomeTab) and Color3.fromRGB(150, 20, 30) or Color3.fromRGB(20, 20, 26)
+    btn.BackgroundTransparency = 0.2
+    btn.Text = text .. " " .. iconId
     btn.TextColor3 = Color3.fromRGB(255, 255, 255)
     btn.Font = Enum.Font.SourceSansBold
-    btn.TextSize = 11
-    btn.ZIndex = 11
-    Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 6)
+    btn.TextSize = 10
+    btn.ZIndex = 4
+    btn.Parent = ButtonsHolder
 
-    local page = Instance.new("Frame", Container)
-    page.Size = UDim2.new(1, 0, 1, 0)
-    page.BackgroundTransparency = 1
-    page.Visible = (tabIndex == 1)
-    page.ZIndex = 10
+    Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 4)
+    table.insert(tabButtons, {button = btn, tab = targetTab})
 
-    btn.MouseButton1Click:Connect(function() switchToTab(tabIndex) end)
-
-    table.insert(Tabs, btn)
-    table.insert(Pages, page)
-    return page, tabIndex
+    btn.MouseButton1Click:Connect(function()
+        for _, t in ipairs(tabButtons) do
+            t.button.BackgroundColor3 = Color3.fromRGB(20, 20, 26)
+            if t.tab then t.tab.Visible = false end
+        end
+        btn.BackgroundColor3 = Color3.fromRGB(150, 20, 30)
+        if targetTab then targetTab.Visible = true end
+    end)
+    return btn
 end
 
-local TutorialsPage, TutorialsIndex = createTab("الشروحات", "🎥")
-local ExecutorPage, ExecutorIndex = createTab("مشغل السكربتات", "📜")
-local SuggestionsPage, SuggestionsIndex = createTab("اقتراحات", "💡")
-local KeysPage, KeysIndex = createTab("قسم المفاتيح", "🔑")
-local StealEggPage, StealEggIndex = createTab("سرقة البيض", "🥚")
-local RidePetPage, RidePetIndex = createTab("ركوب الحيوانات", "🐾")
+createTabButton("الرئيسية", "🔘", HomeTab)
+createTabButton("سكربتات مابات", "⚙️", MapScriptsTab)
+createTabButton("مشغل سكربتات", "⚔️", ExecTab)
+createTabButton("اقتراحات", "🛒", SuggestTab)
+createTabButton("شات", "💬", ChatTab)
+createTabButton("الإعدادات", "⚙️", SettingsTab)
 
--- ==================== 8. زر الشات العلوي والقفل ====================
-local ChatExtBtn = Instance.new("TextButton", ScreenGui)
-ChatExtBtn.Name = "RobloxTopChatBtn"
-ChatExtBtn.Size = UDim2.new(0, 36, 0, 36)
-ChatExtBtn.Position = UDim2.new(0, 235, 0, 4)
-ChatExtBtn.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
-ChatExtBtn.BackgroundTransparency = 0.5
-ChatExtBtn.Text = "💬"
-ChatExtBtn.TextSize = 18
-ChatExtBtn.ZIndex = 100
-Instance.new("UICorner", ChatExtBtn).CornerRadius = UDim.new(0, 8)
+---------------------------------------------------------
+-- 1. الصفحة الرئيسية
+---------------------------------------------------------
+local ServerStatus = Instance.new("TextLabel")
+ServerStatus.Size = UDim2.new(1, -10, 0, 18)
+ServerStatus.Position = UDim2.new(0, 0, 0, 0)
+ServerStatus.BackgroundTransparency = 1
+ServerStatus.Text = "🟢 أونلاين: " .. #Players:GetPlayers() .. "/" .. Players.MaxPlayers .. " مستخدمين"
+ServerStatus.TextColor3 = Color3.fromRGB(120, 255, 120)
+ServerStatus.Font = Enum.Font.SourceSansBold
+ServerStatus.TextSize = 10
+ServerStatus.TextXAlignment = Enum.TextXAlignment.Right
+ServerStatus.Parent = HomeTab
 
-local ChatExtStroke = Instance.new("UIStroke", ChatExtBtn)
-ChatExtStroke.Color = Color3.fromRGB(255, 40, 50)
-ChatExtStroke.Thickness = 1.5
+local BannerFrame = Instance.new("Frame")
+BannerFrame.Size = UDim2.new(1, -10, 0, 75)
+BannerFrame.Position = UDim2.new(0, 0, 0, 20)
+BannerFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 30)
+BannerFrame.BackgroundTransparency = 0.3
+BannerFrame.Parent = HomeTab
+Instance.new("UICorner", BannerFrame).CornerRadius = UDim.new(0, 6)
 
-local ChatFrame = Instance.new("Frame", ScreenGui)
-ChatFrame.Name = "RobloxStyleChatFrame"
-ChatFrame.Size = UDim2.new(0, 270, 0, 210)
-ChatFrame.Position = UDim2.new(0, 15, 0, 50)
-ChatFrame.BackgroundColor3 = Color3.fromRGB(12, 12, 15)
-ChatFrame.BackgroundTransparency = 0.15
-ChatFrame.Visible = false
-ChatFrame.ZIndex = 90
-Instance.new("UICorner", ChatFrame).CornerRadius = UDim.new(0, 10)
+local BannerImage = Instance.new("ImageLabel")
+BannerImage.Size = UDim2.new(1, 0, 1, 0)
+BannerImage.Image = bannerAsset
+BannerImage.ScaleType = Enum.ScaleType.Crop
+BannerImage.Parent = BannerFrame
+Instance.new("UICorner", BannerImage).CornerRadius = UDim.new(0, 6)
 
-local ChatFrameStroke = Instance.new("UIStroke", ChatFrame)
-ChatFrameStroke.Color = Color3.fromRGB(220, 30, 40)
-ChatFrameStroke.Thickness = 1.5
+local CardsRow = Instance.new("Frame")
+CardsRow.Size = UDim2.new(1, -10, 0, 32)
+CardsRow.Position = UDim2.new(0, 0, 0, 100)
+CardsRow.BackgroundTransparency = 1
+CardsRow.Parent = HomeTab
 
-makeDraggable(ChatFrame, true)
+local UsersCard = Instance.new("Frame")
+UsersCard.Size = UDim2.new(0.32, 0, 1, 0)
+UsersCard.Position = UDim2.new(0, 0, 0, 0)
+UsersCard.BackgroundColor3 = Color3.fromRGB(20, 25, 35)
+UsersCard.BackgroundTransparency = 0.3
+UsersCard.Parent = CardsRow
+Instance.new("UICorner", UsersCard).CornerRadius = UDim.new(0, 5)
 
-local ChatTitle = Instance.new("TextLabel", ChatFrame)
-ChatTitle.Size = UDim2.new(1, -60, 0, 25)
-ChatTitle.Position = UDim2.new(0, 8, 0, 2)
-ChatTitle.Text = "💬 الشات العام (Ben Hub)"
-ChatTitle.TextColor3 = Color3.fromRGB(255, 60, 70)
-ChatTitle.Font = Enum.Font.SourceSansBold
-ChatTitle.TextSize = 11
-ChatTitle.TextXAlignment = Enum.TextXAlignment.Left
-ChatTitle.BackgroundTransparency = 1
-ChatTitle.ZIndex = 91
+local UsersLbl = Instance.new("TextLabel")
+UsersLbl.Size = UDim2.new(1, 0, 1, 0)
+UsersLbl.BackgroundTransparency = 1
+UsersLbl.Text = "⚡ 1 مستخدم\nمشغلين السكربت الآن"
+UsersLbl.TextColor3 = Color3.fromRGB(255, 215, 0)
+UsersLbl.Font = Enum.Font.SourceSansBold
+UsersLbl.TextSize = 8.5
+UsersLbl.Parent = UsersCard
 
-local LockChatBtn = Instance.new("TextButton", ChatFrame)
-LockChatBtn.Size = UDim2.new(0, 22, 0, 20)
-LockChatBtn.Position = UDim2.new(1, -50, 0, 4)
-LockChatBtn.BackgroundColor3 = Color3.fromRGB(190, 25, 35)
-LockChatBtn.Text = "🔒"
-LockChatBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-LockChatBtn.Font = Enum.Font.SourceSansBold
-LockChatBtn.TextSize = 12
-LockChatBtn.ZIndex = 91
-Instance.new("UICorner", LockChatBtn).CornerRadius = UDim.new(0, 4)
+local DiscordBtn = Instance.new("TextButton")
+DiscordBtn.Size = UDim2.new(0.33, 0, 1, 0)
+DiscordBtn.Position = UDim2.new(0.335, 0, 0, 0)
+DiscordBtn.BackgroundColor3 = Color3.fromRGB(88, 101, 242)
+DiscordBtn.BackgroundTransparency = 0.2
+DiscordBtn.Text = "💬 ديـسـكـورد"
+DiscordBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+DiscordBtn.Font = Enum.Font.SourceSansBold
+DiscordBtn.TextSize = 10.5
+DiscordBtn.Parent = CardsRow
+Instance.new("UICorner", DiscordBtn).CornerRadius = UDim.new(0, 5)
 
-LockChatBtn.MouseButton1Click:Connect(function()
-    isChatDraggable = not isChatDraggable
-    if isChatDraggable then
-        LockChatBtn.Text = "🔓"
-        LockChatBtn.BackgroundColor3 = Color3.fromRGB(30, 160, 40)
-    else
-        LockChatBtn.Text = "🔒"
-        LockChatBtn.BackgroundColor3 = Color3.fromRGB(190, 25, 35)
+DiscordBtn.MouseButton1Click:Connect(function()
+    if setclipboard then
+        setclipboard("https://discord.gg/benhub")
+        DiscordBtn.Text = "✅ تم نسخ الرابط!"
+        task.wait(1.5)
+        DiscordBtn.Text = "💬 ديـسـكـورد"
     end
 end)
 
-local ChatCloseBtn = Instance.new("TextButton", ChatFrame)
-ChatCloseBtn.Size = UDim2.new(0, 20, 0, 20)
-ChatCloseBtn.Position = UDim2.new(1, -24, 0, 4)
-ChatCloseBtn.BackgroundColor3 = Color3.fromRGB(190, 25, 35)
-ChatCloseBtn.Text = "X"
-ChatCloseBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-ChatCloseBtn.Font = Enum.Font.SourceSansBold
-ChatCloseBtn.TextSize = 11
-ChatCloseBtn.ZIndex = 91
-Instance.new("UICorner", ChatCloseBtn).CornerRadius = UDim.new(0, 4)
+local UptimeCard = Instance.new("Frame")
+UptimeCard.Size = UDim2.new(0.32, 0, 1, 0)
+UptimeCard.Position = UDim2.new(0.68, 0, 0, 0)
+UptimeCard.BackgroundColor3 = Color3.fromRGB(20, 25, 35)
+UptimeCard.BackgroundTransparency = 0.3
+UptimeCard.Parent = CardsRow
+Instance.new("UICorner", UptimeCard).CornerRadius = UDim.new(0, 5)
 
-ChatCloseBtn.MouseButton1Click:Connect(function() ChatFrame.Visible = false end)
-ChatExtBtn.MouseButton1Click:Connect(function() ChatFrame.Visible = not ChatFrame.Visible end)
+local UptimeLbl = Instance.new("TextLabel")
+UptimeLbl.Size = UDim2.new(1, 0, 1, 0)
+UptimeLbl.BackgroundTransparency = 1
+UptimeLbl.Text = "⏱️ 00:00\nالوقت المنقضي"
+UptimeLbl.TextColor3 = Color3.fromRGB(220, 220, 230)
+UptimeLbl.Font = Enum.Font.SourceSansBold
+UptimeLbl.TextSize = 8.5
+UptimeLbl.Parent = UptimeCard
 
-local GlobalChatScroll = Instance.new("ScrollingFrame", ChatFrame)
-GlobalChatScroll.Size = UDim2.new(0.96, 0, 0.70, 0)
-GlobalChatScroll.Position = UDim2.new(0.02, 0, 0.14, 0)
-GlobalChatScroll.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
-GlobalChatScroll.BackgroundTransparency = 0.4
-GlobalChatScroll.ScrollBarThickness = 2
-GlobalChatScroll.AutomaticCanvasSize = Enum.AutomaticSize.Y
-GlobalChatScroll.CanvasSize = UDim2.new(0, 0, 0, 0)
-GlobalChatScroll.ZIndex = 91
-Instance.new("UICorner", GlobalChatScroll).CornerRadius = UDim.new(0, 6)
+local startTick = tick()
+task.spawn(function()
+    while HomeTab and HomeTab.Parent do
+        local elapsed = math.floor(tick() - startTick)
+        local mins = math.floor(elapsed / 60)
+        local secs = elapsed % 60
+        UptimeLbl.Text = string.format("⏱️ %02d:%02d\nالوقت المنقضي", mins, secs)
+        task.wait(1)
+    end
+end)
 
-local GlobalLayout = Instance.new("UIListLayout", GlobalChatScroll)
-GlobalLayout.Padding = UDim.new(0, 4)
+local UpdatesBox = Instance.new("Frame")
+UpdatesBox.Size = UDim2.new(1, -10, 0, 128)
+UpdatesBox.Position = UDim2.new(0, 0, 0, 137)
+UpdatesBox.BackgroundColor3 = Color3.fromRGB(15, 15, 20)
+UpdatesBox.BackgroundTransparency = 0.4
+UpdatesBox.Parent = HomeTab
+Instance.new("UICorner", UpdatesBox).CornerRadius = UDim.new(0, 6)
 
-local InputBox = Instance.new("TextBox", ChatFrame)
-InputBox.Size = UDim2.new(0.70, 0, 0, 26)
-InputBox.Position = UDim2.new(0.02, 0, 0.85, 0)
-InputBox.BackgroundColor3 = Color3.fromRGB(25, 12, 16)
-InputBox.PlaceholderText = "اكتب رسالتك..."
-InputBox.PlaceholderColor3 = Color3.fromRGB(150, 150, 150)
-InputBox.Text = ""
-InputBox.TextColor3 = Color3.fromRGB(255, 255, 255)
-InputBox.Font = Enum.Font.SourceSans
-InputBox.TextSize = 11
-InputBox.ClearTextOnFocus = false
-InputBox.ZIndex = 91
-Instance.new("UICorner", InputBox).CornerRadius = UDim.new(0, 5)
+local UpdatesTitle = Instance.new("TextLabel")
+UpdatesTitle.Size = UDim2.new(1, -10, 0, 20)
+UpdatesTitle.Position = UDim2.new(0, 5, 0, 2)
+UpdatesTitle.BackgroundTransparency = 1
+UpdatesTitle.Text = "📢 آخر التحديثات والتعليمات:"
+UpdatesTitle.TextColor3 = Color3.fromRGB(255, 215, 0)
+UpdatesTitle.Font = Enum.Font.SourceSansBold
+UpdatesTitle.TextSize = 10
+UpdatesTitle.TextXAlignment = Enum.TextXAlignment.Right
+UpdatesTitle.Parent = UpdatesBox
 
-local SendBtn = Instance.new("TextButton", ChatFrame)
-SendBtn.Size = UDim2.new(0.24, 0, 0, 26)
-SendBtn.Position = UDim2.new(0.74, 0, 0.85, 0)
-SendBtn.BackgroundColor3 = Color3.fromRGB(190, 25, 35)
-SendBtn.Text = "إرسال"
-SendBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-SendBtn.Font = Enum.Font.SourceSansBold
-SendBtn.TextSize = 11
-SendBtn.ZIndex = 91
-Instance.new("UICorner", SendBtn).CornerRadius = UDim.new(0, 5)
+local UpdatesText = Instance.new("TextLabel")
+UpdatesText.Size = UDim2.new(1, -14, 0, 100)
+UpdatesText.Position = UDim2.new(0, 7, 0, 22)
+UpdatesText.BackgroundTransparency = 1
+UpdatesText.Text = "• إضافة ماب جديد (Blox Fruits) مع أحدث سكربتات.\n• إضافة سكربتات سرقة البيض الجديدة (الأزرق، ليون، تجميد الوحوش، ميراندا).\n• إضافة سكربت كشف الحيوانات أوتو لماب ركوب الحيوانات.\n• ضبط المشهد السينمائي والرقصة والموسيقى على 7.5 ثانية."
+UpdatesText.TextColor3 = Color3.fromRGB(200, 200, 210)
+UpdatesText.Font = Enum.Font.SourceSans
+UpdatesText.TextSize = 8.5
+UpdatesText.TextXAlignment = Enum.TextXAlignment.Right
+UpdatesText.TextYAlignment = Enum.TextYAlignment.Top
+UpdatesText.Parent = UpdatesBox
 
-local function AddChatMessage(username, userId, messageText)
-    local MessageFrame = Instance.new("Frame", GlobalChatScroll)
-    MessageFrame.Size = UDim2.new(0.98, 0, 0, 32)
-    MessageFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 25)
-    MessageFrame.BackgroundTransparency = 0.3
-    MessageFrame.ZIndex = 92
-    Instance.new("UICorner", MessageFrame).CornerRadius = UDim.new(0, 4)
+---------------------------------------------------------
+-- 2. قسم الإعدادات
+---------------------------------------------------------
+local ChangeServerBtn = Instance.new("TextButton")
+ChangeServerBtn.Size = UDim2.new(1, -20, 0, 26)
+ChangeServerBtn.Position = UDim2.new(0, 0, 0, 0)
+ChangeServerBtn.BackgroundColor3 = Color3.fromRGB(160, 30, 40)
+ChangeServerBtn.Text = "🔄 ----- تغيير سيرفر"
+ChangeServerBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+ChangeServerBtn.Font = Enum.Font.SourceSansBold
+ChangeServerBtn.TextSize = 10.5
+ChangeServerBtn.Parent = SettingsTab
+Instance.new("UICorner", ChangeServerBtn).CornerRadius = UDim.new(0, 5)
 
-    local AvatarImage = Instance.new("ImageLabel", MessageFrame)
-    AvatarImage.Size = UDim2.new(0, 24, 0, 24)
-    AvatarImage.Position = UDim2.new(0.02, 0, 0.12, 0)
-    AvatarImage.BackgroundTransparency = 1
-    AvatarImage.Image = "rbxthumb://type=AvatarHeadShot&id=" .. tostring(userId) .. "&w=150&h=150"
-    AvatarImage.ZIndex = 93
-    Instance.new("UICorner", AvatarImage).CornerRadius = UDim.new(1, 0)
+ChangeServerBtn.MouseButton1Click:Connect(function()
+    TeleportService:Teleport(game.PlaceId, LocalPlayer)
+end)
 
-    local UserLabel = Instance.new("TextLabel", MessageFrame)
-    UserLabel.Size = UDim2.new(0.85, 0, 0, 12)
-    UserLabel.Position = UDim2.new(0.14, 0, 0, 2)
-    UserLabel.Text = "@" .. tostring(username)
-    UserLabel.TextColor3 = Color3.fromRGB(255, 70, 80)
-    UserLabel.Font = Enum.Font.SourceSansBold
-    UserLabel.TextSize = 10
-    UserLabel.TextXAlignment = Enum.TextXAlignment.Left
-    UserLabel.BackgroundTransparency = 1
-    UserLabel.ZIndex = 93
+local ToggleParticlesBtn = Instance.new("TextButton")
+ToggleParticlesBtn.Size = UDim2.new(1, -20, 0, 26)
+ToggleParticlesBtn.Position = UDim2.new(0, 0, 0, 32)
+ToggleParticlesBtn.BackgroundColor3 = particlesEnabled and Color3.fromRGB(40, 120, 60) or Color3.fromRGB(120, 40, 40)
+ToggleParticlesBtn.Text = particlesEnabled and "✨ التحكم بالبارتكلز: مفعل" or "❌ التحكم بالبارتكلز: مقفل"
+ToggleParticlesBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+ToggleParticlesBtn.Font = Enum.Font.SourceSansBold
+ToggleParticlesBtn.TextSize = 10.5
+ToggleParticlesBtn.Parent = SettingsTab
+Instance.new("UICorner", ToggleParticlesBtn).CornerRadius = UDim.new(0, 5)
 
-    local TextLabel = Instance.new("TextLabel", MessageFrame)
-    TextLabel.Size = UDim2.new(0.85, 0, 0, 14)
-    TextLabel.Position = UDim2.new(0.14, 0, 0, 14)
-    TextLabel.Text = tostring(messageText)
-    TextLabel.TextColor3 = Color3.fromRGB(240, 240, 240)
-    TextLabel.Font = Enum.Font.SourceSans
-    TextLabel.TextSize = 10
-    TextLabel.TextXAlignment = Enum.TextXAlignment.Left
-    TextLabel.TextWrapped = true
-    TextLabel.BackgroundTransparency = 1
-    TextLabel.ZIndex = 93
-end
+ToggleParticlesBtn.MouseButton1Click:Connect(function()
+    particlesEnabled = not particlesEnabled
+    if particlesEnabled then
+        ToggleParticlesBtn.Text = "✨ التحكم بالبارتكلز: مفعل"
+        ToggleParticlesBtn.BackgroundColor3 = Color3.fromRGB(40, 120, 60)
+        spawnParticles()
+    else
+        ToggleParticlesBtn.Text = "❌ التحكم بالبارتكلز: مقفل"
+        ToggleParticlesBtn.BackgroundColor3 = Color3.fromRGB(120, 40, 40)
+        clearParticles()
+    end
+end)
 
-local function SendToFirebase(text)
-    if not request then return end
-    pcall(function()
-        request({
-            Url = CHAT_URL,
-            Method = "POST",
-            Headers = {["Content-Type"] = "application/json"},
-            Body = HttpService:JSONEncode({
-                username = LocalPlayer.Name,
-                userId = LocalPlayer.UserId,
-                message = text,
-                timestamp = os.time()
-            })
-        })
+local BgGridFrame = Instance.new("Frame")
+BgGridFrame.Size = UDim2.new(1, -20, 0, 135)
+BgGridFrame.Position = UDim2.new(0, 0, 0, 65)
+BgGridFrame.BackgroundTransparency = 1
+BgGridFrame.Parent = SettingsTab
+
+local bgButtons = {}
+local tempSelectedBg = selectedBg
+
+local bgOptions = {
+    {key = "default", name = "افتراضي", img = ""},
+    {key = "bg1", name = "خلفية 1", img = bgAssets.bg1},
+    {key = "bg2", name = "خلفية 2", img = bgAssets.bg2},
+    {key = "bg3", name = "خلفية 3", img = bgAssets.bg3},
+    {key = "bg4", name = "خلفية 4", img = bgAssets.bg4},
+}
+
+for i, opt in ipairs(bgOptions) do
+    local bgCard = Instance.new("TextButton")
+    bgCard.Size = UDim2.new(0, 68, 0, 110)
+    bgCard.Position = UDim2.new(0, (i - 1) * 73, 0, 10)
+    bgCard.BackgroundColor3 = Color3.fromRGB(20, 20, 26)
+    bgCard.Text = ""
+    bgCard.Parent = BgGridFrame
+    Instance.new("UICorner", bgCard).CornerRadius = UDim.new(0, 6)
+
+    local stroke = Instance.new("UIStroke")
+    stroke.Color = (opt.key == tempSelectedBg) and Color3.fromRGB(255, 215, 0) or Color3.fromRGB(50, 50, 60)
+    stroke.Thickness = (opt.key == tempSelectedBg) and 2 or 1
+    stroke.Parent = bgCard
+
+    local previewImg = Instance.new("ImageLabel")
+    previewImg.Size = UDim2.new(1, -4, 0, 80)
+    previewImg.Position = UDim2.new(0, 2, 0, 2)
+    previewImg.BackgroundColor3 = Color3.fromRGB(10, 10, 15)
+    previewImg.Image = opt.img
+    previewImg.ScaleType = Enum.ScaleType.Crop
+    previewImg.Parent = bgCard
+    Instance.new("UICorner", previewImg).CornerRadius = UDim.new(0, 4)
+
+    local lbl = Instance.new("TextLabel")
+    lbl.Size = UDim2.new(1, 0, 0, 22)
+    lbl.Position = UDim2.new(0, 0, 0, 85)
+    lbl.BackgroundTransparency = 1
+    lbl.Text = opt.name
+    lbl.TextColor3 = Color3.fromRGB(255, 255, 255)
+    lbl.Font = Enum.Font.SourceSansBold
+    lbl.TextSize = 9
+    lbl.Parent = bgCard
+
+    bgButtons[opt.key] = stroke
+
+    bgCard.MouseButton1Click:Connect(function()
+        tempSelectedBg = opt.key
+        for k, str in pairs(bgButtons) do
+            str.Color = (k == tempSelectedBg) and Color3.fromRGB(255, 215, 0) or Color3.fromRGB(50, 50, 60)
+            str.Thickness = (k == tempSelectedBg) and 2 or 1
+        end
     end)
 end
 
-local processedKeys = {}
-local function FetchMessages()
-    local success, responseBody = pcall(function() return game:HttpGet(CHAT_URL) end)
-    if success and responseBody and responseBody ~= "null" and responseBody ~= "" then
-        local decodeSuccess, data = pcall(function() return HttpService:JSONDecode(responseBody) end)
-        if decodeSuccess and type(data) == "table" then
-            local sortedKeys = {}
-            for key, _ in pairs(data) do table.insert(sortedKeys, key) end
-            table.sort(sortedKeys)
-            for _, key in ipairs(sortedKeys) do
-                if not processedKeys[key] then
-                    processedKeys[key] = true
-                    local msgData = data[key]
-                    if type(msgData) == "table" and msgData.username and msgData.userId and msgData.message then
-                        AddChatMessage(msgData.username, msgData.userId, msgData.message)
+local SaveSettingsBtn = Instance.new("TextButton")
+SaveSettingsBtn.Size = UDim2.new(1, -20, 0, 28)
+SaveSettingsBtn.Position = UDim2.new(0, 0, 0, 210)
+SaveSettingsBtn.BackgroundColor3 = Color3.fromRGB(40, 140, 60)
+SaveSettingsBtn.Text = "💾 حفظ الإعدادات والخلفية"
+SaveSettingsBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+SaveSettingsBtn.Font = Enum.Font.SourceSansBold
+SaveSettingsBtn.TextSize = 10.5
+SaveSettingsBtn.Parent = SettingsTab
+Instance.new("UICorner", SaveSettingsBtn).CornerRadius = UDim.new(0, 5)
+
+SaveSettingsBtn.MouseButton1Click:Connect(function()
+    selectedBg = tempSelectedBg
+    updateBackground(selectedBg)
+
+    if writefile then
+        local data = {
+            bg = selectedBg,
+            particles = particlesEnabled
+        }
+        writefile(configFile, HttpService:JSONEncode(data))
+    end
+
+    SaveSettingsBtn.Text = "✅ تم حفظ التغييرات بنجاح!"
+    task.wait(1.5)
+    SaveSettingsBtn.Text = "💾 حفظ الإعدادات والخلفية"
+end)
+
+---------------------------------------------------------
+-- نظام كروت المابات المحدث المكتمل
+---------------------------------------------------------
+local mapDataList = {
+    {
+        name = "سرقة البيض",
+        desc = "أقوى سكربتات ماب سرقة البيض",
+        image = fetchAsset("https://d.top4top.io/p_3922v5lak1.jpg", "egg_steal"),
+        scripts = {
+            {
+                title = "سكربت A",
+                desc = "سكربت A لماب سرقة البيض",
+                requiresKey = "نعم",
+                code = [[loadstring(game:HttpGet("https://raw.githubusercontent.com/virtuososvisualedits-prog/Ww/refs/heads/main/final-obfuscated.lua"))()]]
+            },
+            {
+                title = "سكربت فلفل",
+                desc = "سكربت فلفل لماب سرقة البيض",
+                requiresKey = "لا",
+                code = [[loadstring(game:HttpGet("https://raw.githubusercontent.com/tienkhanh1/spicy/main/Chilli.lua"))()]]
+            },
+            {
+                title = "الأزرق (كسر حماية)",
+                desc = "سكربت الأزرق كسر حماية",
+                requiresKey = "لا",
+                code = [[loadstring(game:HttpGet("https://raw.githubusercontent.com/PulseZax/Loader/refs/heads/main/.lua"))()]]
+            },
+            {
+                title = "سكربت ليون",
+                desc = "سكربت ليون فارم v2",
+                requiresKey = "لا",
+                code = [[loadstring(game:HttpGet("https://raw.githubusercontent.com/lennonxscripts/lennonfarmv2/refs/heads/main/stealanegg"))()]]
+            },
+            {
+                title = "تجميد الوحوش",
+                desc = "سكربت تجميد الوحوش Krov",
+                requiresKey = "لا",
+                code = [[loadstring(game:HttpGet("https://raw.githubusercontent.com/alix77-r/Krov/refs/heads/main/AntiHitKrovScript.txt"))()]]
+            },
+            {
+                title = "ميراندا هوب",
+                desc = "سكربت ميراندا AFK",
+                requiresKey = "لا",
+                code = [[loadstring(game:HttpGet("https://raw.githubusercontent.com/miirandahub/loader/refs/heads/main/mirandaafk.lua"))()]]
+            }
+        }
+    },
+    {
+        name = "بلوكس فروت",
+        desc = "أقوى سكربتات ماب Blox Fruits",
+        image = fetchAsset("https://f.top4top.io/p_3923xn5tv0.png", "blox_fruits"),
+        scripts = {
+            {
+                title = "سكربت بلوكس فروت",
+                desc = "سكربت موز المباشر",
+                requiresKey = "لا",
+                code = [[loadstring(game:HttpGet("https://raw.githubusercontent.com/bloxfruitsnokey/Banana/refs/heads/main/DB/script.luau"))()]]
+            }
+        }
+    },
+    {
+        name = "ركوب حيوانات",
+        desc = "أقوى سكربتات ماب ركوب حيوانات",
+        image = fetchAsset("https://c.top4top.io/p_39220ivke0.png", "ride_pet"),
+        scripts = {
+            {
+                title = "سكربت اصفر",
+                desc = "سكربت أصفر لماب ركوب حيوانات",
+                requiresKey = "لا",
+                code = [[loadstring(game:HttpGet("https://raw.githubusercontent.com/afkar-gg/sc/refs/heads/main/Linkhive/RideAPet.lua"))()]]
+            },
+            {
+                title = "كشف حيوانات اوتو",
+                desc = "سكربت كشف الحيوانات التلقائي",
+                requiresKey = "لا",
+                code = [[loadstring(game:HttpGet("https://pastefy.app/AsNICbLa/raw"))()]]
+            }
+        }
+    }
+}
+
+local MapSearchBox = Instance.new("TextBox")
+MapSearchBox.Size = UDim2.new(1, -20, 0, 24)
+MapSearchBox.Position = UDim2.new(0, 0, 0, 0)
+MapSearchBox.BackgroundColor3 = Color3.fromRGB(20, 20, 26)
+MapSearchBox.PlaceholderText = "🔍 البحث عن ماب أو سكربت..."
+MapSearchBox.Text = ""
+MapSearchBox.TextColor3 = Color3.fromRGB(255, 255, 255)
+MapSearchBox.Font = Enum.Font.SourceSans
+MapSearchBox.TextSize = 10
+MapSearchBox.Parent = MapScriptsTab
+Instance.new("UICorner", MapSearchBox).CornerRadius = UDim.new(0, 5)
+
+local MapsScroll = Instance.new("ScrollingFrame")
+MapsScroll.Size = UDim2.new(1, -20, 0, 235)
+MapsScroll.Position = UDim2.new(0, 0, 0, 30)
+MapsScroll.BackgroundTransparency = 1
+MapsScroll.CanvasSize = UDim2.new(0, 0, 0, 0)
+MapsScroll.ScrollBarThickness = 3
+MapsScroll.Active = true
+MapsScroll.Parent = MapScriptsTab
+
+local MapsGrid = Instance.new("UIGridLayout")
+MapsGrid.CellSize = UDim2.new(0, 172, 0, 108)
+MapsGrid.CellPadding = UDim2.new(0, 8, 0, 8)
+MapsGrid.Parent = MapsScroll
+
+local ScriptDetailFrame = Instance.new("Frame")
+ScriptDetailFrame.Size = UDim2.new(1, -20, 0, 235)
+ScriptDetailFrame.Position = UDim2.new(0, 0, 0, 30)
+ScriptDetailFrame.BackgroundTransparency = 1
+ScriptDetailFrame.Visible = false
+ScriptDetailFrame.Parent = MapScriptsTab
+
+local BackToMapsBtn = Instance.new("TextButton")
+BackToMapsBtn.Size = UDim2.new(0, 95, 0, 20)
+BackToMapsBtn.BackgroundColor3 = Color3.fromRGB(160, 30, 40)
+BackToMapsBtn.Text = "↩ عودة للمابات"
+BackToMapsBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+BackToMapsBtn.Font = Enum.Font.SourceSansBold
+BackToMapsBtn.TextSize = 9.5
+BackToMapsBtn.Parent = ScriptDetailFrame
+Instance.new("UICorner", BackToMapsBtn).CornerRadius = UDim.new(0, 4)
+
+local ScriptsScroll = Instance.new("ScrollingFrame")
+ScriptsScroll.Size = UDim2.new(1, 0, 0, 210)
+ScriptsScroll.Position = UDim2.new(0, 0, 0, 25)
+ScriptsScroll.BackgroundTransparency = 1
+ScriptsScroll.CanvasSize = UDim2.new(0, 0, 0, 0)
+ScriptsScroll.ScrollBarThickness = 3
+ScriptsScroll.Active = true
+ScriptsScroll.Parent = ScriptDetailFrame
+
+local ScriptsLayout = Instance.new("UIListLayout")
+ScriptsLayout.SortOrder = Enum.SortOrder.LayoutOrder
+ScriptsLayout.Padding = UDim.new(0, 6)
+ScriptsLayout.Parent = ScriptsScroll
+
+BackToMapsBtn.MouseButton1Click:Connect(function()
+    ScriptDetailFrame.Visible = false
+    MapsScroll.Visible = true
+end)
+
+local function openMapScripts(mapInfo)
+    for _, child in ipairs(ScriptsScroll:GetChildren()) do
+        if child:IsA("Frame") then child:Destroy() end
+    end
+
+    for _, sc in ipairs(mapInfo.scripts) do
+        local card = Instance.new("Frame")
+        card.Size = UDim2.new(1, -6, 0, 52)
+        card.BackgroundColor3 = Color3.fromRGB(22, 22, 30)
+        card.Parent = ScriptsScroll
+        Instance.new("UICorner", card).CornerRadius = UDim.new(0, 6)
+
+        local title = Instance.new("TextLabel")
+        title.Size = UDim2.new(0.65, 0, 0, 18)
+        title.Position = UDim2.new(0, 8, 0, 3)
+        title.BackgroundTransparency = 1
+        title.Text = "⚡ " .. sc.title
+        title.TextColor3 = Color3.fromRGB(255, 215, 0)
+        title.Font = Enum.Font.SourceSansBold
+        title.TextSize = 10
+        title.TextXAlignment = Enum.TextXAlignment.Left
+        title.Parent = card
+
+        local keyBadge = Instance.new("TextLabel")
+        keyBadge.Size = UDim2.new(0.65, 0, 0, 16)
+        keyBadge.Position = UDim2.new(0, 8, 0, 24)
+        keyBadge.BackgroundTransparency = 1
+        keyBadge.Text = (sc.requiresKey == "نعم") and "🔑 يحتاج مفتاح" or "🟢 بدون مفتاح"
+        keyBadge.TextColor3 = (sc.requiresKey == "نعم") and Color3.fromRGB(255, 100, 100) or Color3.fromRGB(100, 255, 100)
+        keyBadge.Font = Enum.Font.SourceSans
+        keyBadge.TextSize = 9
+        keyBadge.TextXAlignment = Enum.TextXAlignment.Left
+        keyBadge.Parent = card
+
+        local runBtn = Instance.new("TextButton")
+        runBtn.Size = UDim2.new(0.28, 0, 0, 28)
+        runBtn.Position = UDim2.new(0.7, 0, 0.5, -14)
+        runBtn.BackgroundColor3 = Color3.fromRGB(160, 25, 35)
+        runBtn.Text = "▶️ تشغيل"
+        runBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+        runBtn.Font = Enum.Font.SourceSansBold
+        runBtn.TextSize = 10
+        runBtn.Parent = card
+        Instance.new("UICorner", runBtn).CornerRadius = UDim.new(0, 5)
+
+        runBtn.MouseButton1Click:Connect(function()
+            pcall(function() loadstring(sc.code)() end)
+            runBtn.Text = "✅ تم التشغيل"
+            task.wait(1.2)
+            runBtn.Text = "▶️ تشغيل"
+        end)
+    end
+    ScriptsScroll.CanvasSize = UDim2.new(0, 0, 0, ScriptsLayout.AbsoluteContentSize.Y + 10)
+    MapsScroll.Visible = false
+    ScriptDetailFrame.Visible = true
+end
+
+local function renderMapCards(filterText)
+    for _, child in ipairs(MapsScroll:GetChildren()) do
+        if child:IsA("Frame") then child:Destroy() end
+    end
+
+    for _, map in ipairs(mapDataList) do
+        if filterText == "" or string.find(string.lower(map.name), string.lower(filterText)) then
+            local card = Instance.new("Frame")
+            card.BackgroundColor3 = Color3.fromRGB(20, 20, 26)
+            card.Parent = MapsScroll
+            Instance.new("UICorner", card).CornerRadius = UDim.new(0, 6)
+
+            local mapImg = Instance.new("ImageLabel")
+            mapImg.Size = UDim2.new(1, 0, 0, 58)
+            mapImg.Image = map.image
+            mapImg.ScaleType = Enum.ScaleType.Crop
+            mapImg.Parent = card
+            Instance.new("UICorner", mapImg).CornerRadius = UDim.new(0, 6)
+
+            local title = Instance.new("TextLabel")
+            title.Size = UDim2.new(1, -8, 0, 16)
+            title.Position = UDim2.new(0, 4, 0, 60)
+            title.BackgroundTransparency = 1
+            title.Text = map.name
+            title.TextColor3 = Color3.fromRGB(255, 255, 255)
+            title.Font = Enum.Font.SourceSansBold
+            title.TextSize = 10
+            title.TextXAlignment = Enum.TextXAlignment.Left
+            title.Parent = card
+
+            local viewBtn = Instance.new("TextButton")
+            viewBtn.Size = UDim2.new(1, -8, 0, 16)
+            viewBtn.Position = UDim2.new(0, 4, 0, 89)
+            viewBtn.BackgroundColor3 = Color3.fromRGB(160, 25, 35)
+            viewBtn.Text = "عرض السكربتات ▶"
+            viewBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+            viewBtn.Font = Enum.Font.SourceSansBold
+            viewBtn.TextSize = 8.5
+            viewBtn.Parent = card
+            Instance.new("UICorner", viewBtn).CornerRadius = UDim.new(0, 3)
+
+            viewBtn.MouseButton1Click:Connect(function() openMapScripts(map) end)
+        end
+    end
+    MapsScroll.CanvasSize = UDim2.new(0, 0, 0, MapsGrid.AbsoluteContentSize.Y + 10)
+end
+
+renderMapCards("")
+MapSearchBox:GetPropertyChangedSignal("Text"):Connect(function()
+    renderMapCards(MapSearchBox.Text)
+end)
+
+---------------------------------------------------------
+-- قسم الإقتراحات
+---------------------------------------------------------
+local SuggestBoxContainer = Instance.new("Frame")
+SuggestBoxContainer.Size = UDim2.new(1, -20, 0, 180)
+SuggestBoxContainer.Position = UDim2.new(0, 0, 0, 25)
+SuggestBoxContainer.BackgroundColor3 = Color3.fromRGB(18, 18, 24)
+SuggestBoxContainer.Parent = SuggestTab
+Instance.new("UICorner", SuggestBoxContainer).CornerRadius = UDim.new(0, 6)
+
+local SuggestTextBox = Instance.new("TextBox")
+SuggestTextBox.Size = UDim2.new(1, -12, 1, -12)
+SuggestTextBox.Position = UDim2.new(0, 6, 0, 6)
+SuggestTextBox.BackgroundTransparency = 1
+SuggestTextBox.PlaceholderText = "اكتب اقتراحك هنا..."
+SuggestTextBox.Text = ""
+SuggestTextBox.TextColor3 = Color3.fromRGB(220, 220, 230)
+SuggestTextBox.Font = Enum.Font.SourceSans
+SuggestTextBox.TextSize = 10.5
+SuggestTextBox.MultiLine = true
+SuggestTextBox.Parent = SuggestBoxContainer
+
+local SendSuggestBtn = Instance.new("TextButton")
+SendSuggestBtn.Size = UDim2.new(1, -20, 0, 26)
+SendSuggestBtn.Position = UDim2.new(0, 0, 0, 215)
+SendSuggestBtn.BackgroundColor3 = Color3.fromRGB(40, 140, 60)
+SendSuggestBtn.Text = "📩 إرسال الاقتراح"
+SendSuggestBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+SendSuggestBtn.Font = Enum.Font.SourceSansBold
+SendSuggestBtn.TextSize = 10.5
+SendSuggestBtn.Parent = SuggestTab
+Instance.new("UICorner", SendSuggestBtn).CornerRadius = UDim.new(0, 5)
+
+SendSuggestBtn.MouseButton1Click:Connect(function()
+    if SuggestTextBox.Text ~= "" then
+        local data = {
+            sender = LocalPlayer.DisplayName ~= "" and LocalPlayer.DisplayName or LocalPlayer.Name,
+            suggestion = SuggestTextBox.Text,
+            timestamp = os.time()
+        }
+        customRequest({
+            Url = FIREBASE_SUGGEST_URL,
+            Method = "POST",
+            Headers = {["Content-Type"] = "application/json"},
+            Body = HttpService:JSONEncode(data)
+        })
+        SuggestTextBox.Text = ""
+        SendSuggestBtn.Text = "✅ تم إرسال الاقتراح!"
+        task.wait(2)
+        SendSuggestBtn.Text = "📩 إرسال الاقتراح"
+    end
+end)
+
+---------------------------------------------------------
+-- قسم الشات المباشر مع صور رأس اللاعبين
+---------------------------------------------------------
+local ChatScroll = Instance.new("ScrollingFrame")
+ChatScroll.Size = UDim2.new(1, -20, 0, 185)
+ChatScroll.Position = UDim2.new(0, 0, 0, 22)
+ChatScroll.BackgroundColor3 = Color3.fromRGB(12, 12, 16)
+ChatScroll.CanvasSize = UDim2.new(0, 0, 0, 0)
+ChatScroll.ScrollBarThickness = 6
+ChatScroll.Active = true
+ChatScroll.Selectable = true
+ChatScroll.ZIndex = 8
+ChatScroll.ScrollingDirection = Enum.ScrollingDirection.Y
+ChatScroll.Parent = ChatTab
+Instance.new("UICorner", ChatScroll).CornerRadius = UDim.new(0, 6)
+
+local ChatLayout = Instance.new("UIListLayout")
+ChatLayout.SortOrder = Enum.SortOrder.LayoutOrder
+ChatLayout.Padding = UDim.new(0, 5)
+ChatLayout.Parent = ChatScroll
+
+ChatLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+    ChatScroll.CanvasSize = UDim2.new(0, 0, 0, ChatLayout.AbsoluteContentSize.Y + 10)
+end)
+
+local ChatInputBox = Instance.new("TextBox")
+ChatInputBox.Size = UDim2.new(0.72, 0, 0, 25)
+ChatInputBox.Position = UDim2.new(0, 0, 0, 215)
+ChatInputBox.BackgroundColor3 = Color3.fromRGB(22, 22, 30)
+ChatInputBox.PlaceholderText = "اكتب رسالتك..."
+ChatInputBox.Text = ""
+ChatInputBox.TextColor3 = Color3.fromRGB(255, 255, 255)
+ChatInputBox.Font = Enum.Font.SourceSans
+ChatInputBox.TextSize = 10
+ChatInputBox.ZIndex = 8
+ChatInputBox.Parent = ChatTab
+Instance.new("UICorner", ChatInputBox).CornerRadius = UDim.new(0, 4)
+
+local SendChatBtn = Instance.new("TextButton")
+SendChatBtn.Size = UDim2.new(0.25, 0, 0, 25)
+SendChatBtn.Position = UDim2.new(0.75, 0, 0, 215)
+SendChatBtn.BackgroundColor3 = Color3.fromRGB(160, 30, 45)
+SendChatBtn.Text = "إرسال 📩"
+SendChatBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+SendChatBtn.Font = Enum.Font.SourceSansBold
+SendChatBtn.TextSize = 10
+SendChatBtn.ZIndex = 8
+SendChatBtn.Parent = ChatTab
+Instance.new("UICorner", SendChatBtn).CornerRadius = UDim.new(0, 4)
+
+local loadedMsgKeys = {}
+
+local function addChatMessage(senderName, msgText, timeStamp, userId)
+    local timeFormatted = os.date("%I:%M %p", timeStamp or os.time())
+    local msgFrame = Instance.new("Frame")
+    msgFrame.Size = UDim2.new(1, -6, 0, 32)
+    msgFrame.BackgroundColor3 = Color3.fromRGB(26, 26, 36)
+    msgFrame.ZIndex = 9
+    msgFrame.Parent = ChatScroll
+    Instance.new("UICorner", msgFrame).CornerRadius = UDim.new(0, 5)
+
+    local avatarImg = Instance.new("ImageLabel")
+    avatarImg.Size = UDim2.new(0, 24, 0, 24)
+    avatarImg.Position = UDim2.new(0, 4, 0.5, -12)
+    avatarImg.BackgroundTransparency = 1
+    avatarImg.ZIndex = 10
+    avatarImg.Parent = msgFrame
+    Instance.new("UICorner", avatarImg).CornerRadius = UDim.new(1, 0)
+
+    if userId and tonumber(userId) then
+        task.spawn(function()
+            pcall(function()
+                local content = Players:GetUserThumbnailAsync(tonumber(userId), Enum.ThumbnailType.HeadShot, Enum.ThumbnailSize.Size150x150)
+                if content then avatarImg.Image = content end
+            end)
+        end)
+    end
+
+    local txtLbl = Instance.new("TextLabel")
+    txtLbl.Size = UDim2.new(1, -36, 1, 0)
+    txtLbl.Position = UDim2.new(0, 32, 0, 0)
+    txtLbl.BackgroundTransparency = 1
+    txtLbl.Text = "<font color=\"#888899\">[" .. timeFormatted .. "]</font> <font color=\"#FFD700\"><b>" .. senderName .. "</b></font>: " .. msgText
+    txtLbl.RichText = true
+    txtLbl.TextColor3 = Color3.fromRGB(240, 240, 250)
+    txtLbl.Font = Enum.Font.SourceSans
+    txtLbl.TextSize = 10
+    txtLbl.TextXAlignment = Enum.TextXAlignment.Left
+    txtLbl.ZIndex = 10
+    txtLbl.Parent = msgFrame
+
+    task.defer(function()
+        ChatScroll.CanvasPosition = Vector2.new(0, ChatScroll.AbsoluteContentSize.Y)
+    end)
+end
+
+SendChatBtn.MouseButton1Click:Connect(function()
+    local text = ChatInputBox.Text
+    if text ~= "" and text ~= " " then
+        if filterBadContent(text) then return end
+        local senderDisplayName = LocalPlayer.DisplayName ~= "" and LocalPlayer.DisplayName or LocalPlayer.Name
+        local data = {
+            sender = senderDisplayName,
+            userId = tostring(LocalPlayer.UserId),
+            msg = text,
+            timestamp = os.time()
+        }
+        customRequest({
+            Url = FIREBASE_CHAT_URL,
+            Method = "POST",
+            Headers = {["Content-Type"] = "application/json"},
+            Body = HttpService:JSONEncode(data)
+        })
+        ChatInputBox.Text = ""
+    end
+end)
+
+task.spawn(function()
+    while true do
+        pcall(function()
+            local res = customRequest({Url = FIREBASE_CHAT_URL, Method = "GET"})
+            if res and res.Body and res.Body ~= "null" and res.Body ~= "" then
+                local msgs = HttpService:JSONDecode(res.Body)
+                if msgs then
+                    local list = {}
+                    for k, m in pairs(msgs) do
+                        if type(m) == "table" and not loadedMsgKeys[k] then
+                            m.key = k
+                            table.insert(list, m)
+                        end
+                    end
+                    table.sort(list, function(a, b)
+                        return (a.timestamp or 0) < (b.timestamp or 0)
+                    end)
+                    for _, m in ipairs(list) do
+                        loadedMsgKeys[m.key] = true
+                        addChatMessage(m.sender or "مجهول", m.msg or "", m.timestamp, m.userId)
                     end
                 end
             end
-        end
-    end
-end
-
-local function OnSubmit()
-    local text = InputBox.Text
-    if text == "" or text:match("^%s*$") then return end
-    local isClean, reason = isCleanText(text)
-    if not isClean then
-        InputBox.Text = ""
-        InputBox.PlaceholderText = reason
-        task.wait(1.5)
-        InputBox.PlaceholderText = "اكتب رسالتك..."
-        return
-    end
-    SendToFirebase(text)
-    InputBox.Text = ""
-    task.wait(0.3)
-    FetchMessages()
-end
-
-SendBtn.MouseButton1Click:Connect(OnSubmit)
-InputBox.FocusLost:Connect(function(enterPressed) if enterPressed then OnSubmit() end end)
-
-task.spawn(function()
-    while ScreenGui and ScreenGui.Parent do
-        FetchMessages()
+        end)
         task.wait(2)
     end
 end)
 
--- ==================== 9. قسم الشروحات والروابط ====================
-local TutScroll = Instance.new("ScrollingFrame", TutorialsPage)
-TutScroll.Size = UDim2.new(1, 0, 1, 0)
-TutScroll.BackgroundTransparency = 1
-TutScroll.ScrollBarThickness = 3
-TutScroll.AutomaticCanvasSize = Enum.AutomaticSize.Y
-TutScroll.CanvasSize = UDim2.new(0, 0, 0, 0)
-TutScroll.ZIndex = 11
+---------------------------------------------------------
+-- مشغل السكربتات البرمجي المعدل (ExecTab)
+---------------------------------------------------------
+local CodeBoxContainer = Instance.new("Frame")
+CodeBoxContainer.Size = UDim2.new(1, -20, 0, 180)
+CodeBoxContainer.Position = UDim2.new(0, 0, 0, 25)
+CodeBoxContainer.BackgroundColor3 = Color3.fromRGB(18, 18, 24)
+CodeBoxContainer.Parent = ExecTab
+Instance.new("UICorner", CodeBoxContainer).CornerRadius = UDim.new(0, 6)
 
-local TutLayout = Instance.new("UIListLayout", TutScroll)
-TutLayout.Padding = UDim.new(0, 6)
+local CodeTextBox = Instance.new("TextBox")
+CodeTextBox.Size = UDim2.new(1, -12, 1, -12)
+CodeTextBox.Position = UDim2.new(0, 6, 0, 6)
+CodeTextBox.BackgroundTransparency = 1
+CodeTextBox.Text = "-- ضع السكربت الخاص بك هنا..."
+CodeTextBox.TextColor3 = Color3.fromRGB(220, 220, 230)
+CodeTextBox.Font = Enum.Font.Code
+CodeTextBox.TextSize = 10.5
+CodeTextBox.ClearTextOnFocus = false
+CodeTextBox.MultiLine = true
+CodeTextBox.TextXAlignment = Enum.TextXAlignment.Left
+CodeTextBox.TextYAlignment = Enum.TextYAlignment.Top
+CodeTextBox.Parent = CodeBoxContainer
 
-local function addSocialCard(title, url, iconAsset)
-    local Card = Instance.new("Frame", TutScroll)
-    Card.Size = UDim2.new(0.98, 0, 0, 44)
-    Card.BackgroundColor3 = Color3.fromRGB(20, 10, 14)
-    Card.ZIndex = 12
-    Instance.new("UICorner", Card).CornerRadius = UDim.new(0, 6)
+local ExecButtonsRow = Instance.new("Frame")
+ExecButtonsRow.Size = UDim2.new(1, -20, 0, 28)
+ExecButtonsRow.Position = UDim2.new(0, 0, 0, 212)
+ExecButtonsRow.BackgroundTransparency = 1
+ExecButtonsRow.Parent = ExecTab
 
-    local IconImg = Instance.new("ImageLabel", Card)
-    IconImg.Size = UDim2.new(0, 32, 0, 32)
-    IconImg.Position = UDim2.new(0.02, 0, 0.14, 0)
-    IconImg.Image = iconAsset
-    IconImg.BackgroundTransparency = 1
-    IconImg.ZIndex = 13
-    Instance.new("UICorner", IconImg).CornerRadius = UDim.new(0, 6)
+local ExecRunBtn = Instance.new("TextButton")
+ExecRunBtn.Size = UDim2.new(0.48, 0, 1, 0)
+ExecRunBtn.Position = UDim2.new(0, 0, 0, 0)
+ExecRunBtn.BackgroundColor3 = Color3.fromRGB(40, 140, 60)
+ExecRunBtn.Text = "▶️ تشغيل السكربت"
+ExecRunBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+ExecRunBtn.Font = Enum.Font.SourceSansBold
+ExecRunBtn.TextSize = 10.5
+ExecRunBtn.Parent = ExecButtonsRow
+Instance.new("UICorner", ExecRunBtn).CornerRadius = UDim.new(0, 5)
 
-    local TxtLbl = Instance.new("TextLabel", Card)
-    TxtLbl.Size = UDim2.new(0.55, 0, 1, 0)
-    TxtLbl.Position = UDim2.new(0.14, 0, 0, 0)
-    TxtLbl.Text = title
-    TxtLbl.TextColor3 = Color3.fromRGB(255, 255, 255)
-    TxtLbl.Font = Enum.Font.SourceSansBold
-    TxtLbl.TextSize = 12
-    TxtLbl.TextXAlignment = Enum.TextXAlignment.Left
-    TxtLbl.BackgroundTransparency = 1
-    TxtLbl.ZIndex = 13
+local ExecClearBtn = Instance.new("TextButton")
+ExecClearBtn.Size = UDim2.new(0.48, 0, 1, 0)
+ExecClearBtn.Position = UDim2.new(0.52, 0, 0, 0)
+ExecClearBtn.BackgroundColor3 = Color3.fromRGB(160, 35, 45)
+ExecClearBtn.Text = "🗑️ مسح الكود"
+ExecClearBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+ExecClearBtn.Font = Enum.Font.SourceSansBold
+ExecClearBtn.TextSize = 10.5
+ExecClearBtn.Parent = ExecButtonsRow
+Instance.new("UICorner", ExecClearBtn).CornerRadius = UDim.new(0, 5)
 
-    local ActionBtn = Instance.new("TextButton", Card)
-    ActionBtn.Size = UDim2.new(0.28, 0, 0, 26)
-    ActionBtn.Position = UDim2.new(0.69, 0, 0.18, 0)
-    ActionBtn.BackgroundColor3 = Color3.fromRGB(190, 25, 35)
-    ActionBtn.Text = "🚀 دخول"
-    ActionBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-    ActionBtn.Font = Enum.Font.SourceSansBold
-    ActionBtn.TextSize = 11
-    ActionBtn.ZIndex = 13
-    Instance.new("UICorner", ActionBtn).CornerRadius = UDim.new(0, 5)
-
-    ActionBtn.MouseButton1Click:Connect(function()
-        pcall(function() GuiService:OpenBrowserWindow(url) end)
-        if setclipboard then setclipboard(url) end
-        ActionBtn.Text = "✔ جاري الفتح..."
-        task.wait(1.5)
-        ActionBtn.Text = "🚀 دخول"
-    end)
-end
-
-addSocialCard("حساب التيك توك", "https://www.tiktok.com/@bir.y5?_r=1&_t=ZS-99wgX3YU9Bt", TIKTOK_IMG)
-addSocialCard("قناة اليوتيوب", "https://youtube.com/@gqj2?si=h5HOuZFmy2oCpKl2", YOUTUBE_IMG)
-addSocialCard("قناة التليجرام", "https://t.me/Ben_5k", TELEGRAM_IMG)
-addSocialCard("سيرفر الديسكورد", "https://discord.gg/exB4EsCCA", DISCORD_IMG)
-
-local FooterCard = Instance.new("Frame", TutScroll)
-FooterCard.Size = UDim2.new(0.98, 0, 0, 36)
-FooterCard.BackgroundColor3 = Color3.fromRGB(30, 15, 20)
-FooterCard.ZIndex = 12
-Instance.new("UICorner", FooterCard).CornerRadius = UDim.new(0, 6)
-
-local FooterText = Instance.new("TextLabel", FooterCard)
-FooterText.Size = UDim2.new(1, 0, 1, 0)
-FooterText.Text = "سكربت عربي من صنع Ben ذي حساباتنا رسميه مواقعنا"
-FooterText.TextColor3 = Color3.fromRGB(255, 215, 0)
-FooterText.Font = Enum.Font.SourceSansBold
-FooterText.TextSize = 11
-FooterText.BackgroundTransparency = 1
-FooterText.ZIndex = 13
-
--- ==================== 10. باقي الأقسام والمفاتيح والسكربتات ====================
-local KeysScroll = Instance.new("ScrollingFrame", KeysPage)
-KeysScroll.Size = UDim2.new(1, 0, 1, 0)
-KeysScroll.BackgroundTransparency = 1
-KeysScroll.ScrollBarThickness = 3
-KeysScroll.AutomaticCanvasSize = Enum.AutomaticSize.Y
-KeysScroll.CanvasSize = UDim2.new(0, 0, 0, 0)
-KeysScroll.ZIndex = 11
-Instance.new("UIListLayout", KeysScroll).Padding = UDim.new(0, 8)
-
-local function createKeyCard(parent, mapTitle, keyTitle, keyText, descText)
-    local Card = Instance.new("Frame", parent)
-    Card.Size = UDim2.new(0.98, 0, 0, keyText ~= "" and 96 or 55)
-    Card.BackgroundColor3 = Color3.fromRGB(25, 12, 15)
-    Card.ZIndex = 12
-    Instance.new("UICorner", Card).CornerRadius = UDim.new(0, 8)
-
-    local MapLbl = Instance.new("TextLabel", Card)
-    MapLbl.Size = UDim2.new(0.95, 0, 0, 18)
-    MapLbl.Position = UDim2.new(0.03, 0, 0, 4)
-    MapLbl.Text = "📌 " .. mapTitle
-    MapLbl.TextColor3 = Color3.fromRGB(255, 70, 80)
-    MapLbl.Font = Enum.Font.SourceSansBold
-    MapLbl.TextSize = 12
-    MapLbl.TextXAlignment = Enum.TextXAlignment.Left
-    MapLbl.BackgroundTransparency = 1
-    MapLbl.ZIndex = 13
-
-    local KeyNameLbl = Instance.new("TextLabel", Card)
-    KeyNameLbl.Size = UDim2.new(0.95, 0, 0, 16)
-    KeyNameLbl.Position = UDim2.new(0.03, 0, 0, 22)
-    KeyNameLbl.Text = keyTitle
-    KeyNameLbl.TextColor3 = Color3.fromRGB(255, 255, 255)
-    KeyNameLbl.Font = Enum.Font.SourceSansBold
-    KeyNameLbl.TextSize = 11
-    KeyNameLbl.TextXAlignment = Enum.TextXAlignment.Left
-    KeyNameLbl.BackgroundTransparency = 1
-    KeyNameLbl.ZIndex = 13
-
-    if keyText ~= "" then
-        local KeyDisplay = Instance.new("TextLabel", Card)
-        KeyDisplay.Size = UDim2.new(0.64, 0, 0, 24)
-        KeyDisplay.Position = UDim2.new(0.03, 0, 0, 42)
-        KeyDisplay.BackgroundColor3 = Color3.fromRGB(15, 8, 10)
-        KeyDisplay.Text = keyText
-        KeyDisplay.TextColor3 = Color3.fromRGB(255, 215, 0)
-        KeyDisplay.Font = Enum.Font.Code
-        KeyDisplay.TextSize = 10
-        KeyDisplay.ZIndex = 13
-        Instance.new("UICorner", KeyDisplay).CornerRadius = UDim.new(0, 4)
-
-        local CopyBtn = Instance.new("TextButton", Card)
-        CopyBtn.Size = UDim2.new(0.28, 0, 0, 24)
-        CopyBtn.Position = UDim2.new(0.69, 0, 0, 42)
-        CopyBtn.BackgroundColor3 = Color3.fromRGB(190, 25, 35)
-        CopyBtn.Text = "📋 نسخ"
-        CopyBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-        CopyBtn.Font = Enum.Font.SourceSansBold
-        CopyBtn.TextSize = 10
-        CopyBtn.ZIndex = 13
-        Instance.new("UICorner", CopyBtn).CornerRadius = UDim.new(0, 4)
-
-        CopyBtn.MouseButton1Click:Connect(function()
-            if setclipboard then setclipboard(keyText) end
-            CopyBtn.Text = "✔ تم النسخ!"
-            task.wait(1.5)
-            CopyBtn.Text = "📋 نسخ"
-        end)
+ExecRunBtn.MouseButton1Click:Connect(function()
+    if CodeTextBox.Text ~= "" then
+        pcall(function() loadstring(CodeTextBox.Text)() end)
     end
-
-    local DescLbl = Instance.new("TextLabel", Card)
-    DescLbl.Size = UDim2.new(0.95, 0, 0, 18)
-    DescLbl.Position = UDim2.new(0.03, 0, 0, keyText ~= "" and 72 or 36)
-    DescLbl.Text = "ℹ️ " .. descText
-    DescLbl.TextColor3 = Color3.fromRGB(180, 180, 180)
-    DescLbl.Font = Enum.Font.SourceSans
-    DescLbl.TextSize = 10
-    DescLbl.TextXAlignment = Enum.TextXAlignment.Left
-    DescLbl.BackgroundTransparency = 1
-    DescLbl.ZIndex = 13
-end
-
-createKeyCard(KeysScroll, "ماب سرقة البيض", "مفتاح سكربت A الاحمر", "jOjjJVBSnckKQnMOotmsUdGxINjetHRH", "يتجدد كل 15 ساعة تلقائياً")
-createKeyCard(KeysScroll, "ماب ركوب الحيوانات", "بدون مفتاح", "", "لا يحتاج إلى مفتاح حالياً")
-
-local function createScriptCard(parentPage, cardTitle, cardDesc, executeCallback, keyTabTargetIndex)
-    local Card = Instance.new("Frame", parentPage)
-    Card.Size = UDim2.new(0.98, 0, 0, 75)
-    Card.BackgroundColor3 = Color3.fromRGB(25, 12, 15)
-    Card.ZIndex = 12
-    Instance.new("UICorner", Card).CornerRadius = UDim.new(0, 8)
-
-    local TitleLbl = Instance.new("TextLabel", Card)
-    TitleLbl.Size = UDim2.new(0.60, 0, 0, 20)
-    TitleLbl.Position = UDim2.new(0.03, 0, 0, 5)
-    TitleLbl.Text = "⚪ " .. cardTitle
-    TitleLbl.TextColor3 = Color3.fromRGB(255, 255, 255)
-    TitleLbl.Font = Enum.Font.SourceSansBold
-    TitleLbl.TextSize = 13
-    TitleLbl.TextXAlignment = Enum.TextXAlignment.Left
-    TitleLbl.BackgroundTransparency = 1
-    TitleLbl.ZIndex = 13
-
-    local DescLbl = Instance.new("TextLabel", Card)
-    DescLbl.Size = UDim2.new(0.60, 0, 0, 22)
-    DescLbl.Position = UDim2.new(0.03, 0, 0, 25)
-    DescLbl.Text = cardDesc
-    DescLbl.TextColor3 = Color3.fromRGB(180, 180, 180)
-    DescLbl.Font = Enum.Font.SourceSans
-    DescLbl.TextSize = 10
-    DescLbl.TextXAlignment = Enum.TextXAlignment.Left
-    DescLbl.TextWrapped = true
-    DescLbl.BackgroundTransparency = 1
-    DescLbl.ZIndex = 13
-
-    local RunCardBtn = Instance.new("TextButton", Card)
-    RunCardBtn.Size = UDim2.new(0.32, 0, 0, 26)
-    RunCardBtn.Position = UDim2.new(0.65, 0, 0, 8)
-    RunCardBtn.BackgroundColor3 = Color3.fromRGB(190, 25, 35)
-    RunCardBtn.Text = "◀ تشغيل"
-    RunCardBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-    RunCardBtn.Font = Enum.Font.SourceSansBold
-    RunCardBtn.TextSize = 11
-    RunCardBtn.ZIndex = 13
-    Instance.new("UICorner", RunCardBtn).CornerRadius = UDim.new(0, 6)
-
-    RunCardBtn.MouseButton1Click:Connect(function()
-        RunCardBtn.Text = "⏳ جاري..."
-        executeCallback()
-        task.wait(1)
-        RunCardBtn.Text = "تم التشغيل"
-        task.wait(1.5)
-        RunCardBtn.Text = "◀ تشغيل"
-    end)
-
-    if keyTabTargetIndex then
-        local KeyRedirectBtn = Instance.new("TextButton", Card)
-        KeyRedirectBtn.Size = UDim2.new(0.32, 0, 0, 24)
-        KeyRedirectBtn.Position = UDim2.new(0.65, 0, 0, 42)
-        KeyRedirectBtn.BackgroundColor3 = Color3.fromRGB(45, 25, 30)
-        KeyRedirectBtn.Text = "🔑 المفتاح"
-        KeyRedirectBtn.TextColor3 = Color3.fromRGB(255, 200, 100)
-        KeyRedirectBtn.Font = Enum.Font.SourceSansBold
-        KeyRedirectBtn.TextSize = 10
-        KeyRedirectBtn.ZIndex = 13
-        Instance.new("UICorner", KeyRedirectBtn).CornerRadius = UDim.new(0, 5)
-
-        KeyRedirectBtn.MouseButton1Click:Connect(function() switchToTab(keyTabTargetIndex) end)
-    end
-end
-
--- سرقة البيض
-local StealEggScroll = Instance.new("ScrollingFrame", StealEggPage)
-StealEggScroll.Size = UDim2.new(1, 0, 1, 0)
-StealEggScroll.BackgroundTransparency = 1
-StealEggScroll.ScrollBarThickness = 3
-StealEggScroll.AutomaticCanvasSize = Enum.AutomaticSize.Y
-StealEggScroll.CanvasSize = UDim2.new(0, 0, 0, 0)
-StealEggScroll.ZIndex = 11
-Instance.new("UIListLayout", StealEggScroll).Padding = UDim.new(0, 6)
-
-createScriptCard(StealEggScroll, "سكربت A الاحمر", "تجميع أحداث وتفريخ البيض تلقائياً", function()
-    pcall(function() loadstring(game:HttpGet("https://raw.githubusercontent.com/virtuososvisualedits-prog/Ww/refs/heads/main/final-obfuscated.lua"))() end)
-end, KeysIndex)
-
-createScriptCard(StealEggScroll, "سكربت الازراق", "سكربت ممتاز لحدث البيض", function()
-    pcall(function() loadstring(game:HttpGet("https://raw.githubusercontent.com/PulseZax/Loader/refs/heads/main/.lua"))() end)
 end)
 
--- ركوب الحيوانات
-local RidePetScroll = Instance.new("ScrollingFrame", RidePetPage)
-RidePetScroll.Size = UDim2.new(1, 0, 1, 0)
-RidePetScroll.BackgroundTransparency = 1
-RidePetScroll.ScrollBarThickness = 3
-RidePetScroll.AutomaticCanvasSize = Enum.AutomaticSize.Y
-RidePetScroll.CanvasSize = UDim2.new(0, 0, 0, 0)
-RidePetScroll.ZIndex = 11
-Instance.new("UIListLayout", RidePetScroll).Padding = UDim.new(0, 6)
-
-createScriptCard(RidePetScroll, "سكربت كامل المطور", "تجميع + سرعة فائقة وجميع الميزات", function()
-    pcall(function() loadstring(game:HttpGet("https://raw.githubusercontent.com/afkar-gg/sc/refs/heads/main/Linkhive/RideAPet.lua"))() end)
+ExecClearBtn.MouseButton1Click:Connect(function()
+    CodeTextBox.Text = ""
 end)
-
--- مشغل السكربتات
-local ExecBox = Instance.new("TextBox", ExecutorPage)
-ExecBox.Size = UDim2.new(0.98, 0, 0.7, 0)
-ExecBox.Position = UDim2.new(0, 0, 0, 5)
-ExecBox.BackgroundColor3 = Color3.fromRGB(20, 10, 14)
-ExecBox.PlaceholderText = "-- اكتب كود السكربت هنا..."
-ExecBox.TextColor3 = Color3.fromRGB(255, 255, 255)
-ExecBox.Font = Enum.Font.Code
-ExecBox.TextSize = 11
-ExecBox.TextXAlignment = Enum.TextXAlignment.Left
-ExecBox.TextYAlignment = Enum.TextYAlignment.Top
-ExecBox.ClearTextOnFocus = false
-ExecBox.ZIndex = 12
-Instance.new("UICorner", ExecBox).CornerRadius = UDim.new(0, 6)
-
-local RunBtn = Instance.new("TextButton", ExecutorPage)
-RunBtn.Size = UDim2.new(0.48, 0, 0, 30)
-RunBtn.Position = UDim2.new(0, 0, 0.82, 0)
-RunBtn.BackgroundColor3 = Color3.fromRGB(190, 25, 35)
-RunBtn.Text = "⚡ تشغيل السكربت"
-RunBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-RunBtn.Font = Enum.Font.SourceSansBold
-RunBtn.TextSize = 11
-RunBtn.ZIndex = 12
-Instance.new("UICorner", RunBtn).CornerRadius = UDim.new(0, 5)
-
-RunBtn.MouseButton1Click:Connect(function()
-    if ExecBox.Text ~= "" then pcall(function() loadstring(ExecBox.Text)() end) end
-end)
-
-local ClearBtn = Instance.new("TextButton", ExecutorPage)
-ClearBtn.Size = UDim2.new(0.48, 0, 0, 30)
-ClearBtn.Position = UDim2.new(0.5, 0, 0.82, 0)
-ClearBtn.BackgroundColor3 = Color3.fromRGB(40, 20, 25)
-ClearBtn.Text = "🗑️ مسح"
-ClearBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-ClearBtn.Font = Enum.Font.SourceSansBold
-ClearBtn.TextSize = 11
-ClearBtn.ZIndex = 12
-Instance.new("UICorner", ClearBtn).CornerRadius = UDim.new(0, 5)
-
-ClearBtn.MouseButton1Click:Connect(function() ExecBox.Text = "" end)
-
--- قسم الاقتراحات
-local SugBox = Instance.new("TextBox", SuggestionsPage)
-SugBox.Size = UDim2.new(0.98, 0, 0, 140)
-SugBox.Position = UDim2.new(0, 0, 0, 10)
-SugBox.BackgroundColor3 = Color3.fromRGB(20, 10, 14)
-SugBox.PlaceholderText = "اكتب اقتراحك هنا ليتم إرساله للمطور..."
-SugBox.TextColor3 = Color3.fromRGB(255, 255, 255)
-SugBox.Font = Enum.Font.SourceSans
-SugBox.TextSize = 11
-SugBox.TextXAlignment = Enum.TextXAlignment.Left
-SugBox.TextYAlignment = Enum.TextYAlignment.Top
-SugBox.ClearTextOnFocus = false
-SugBox.MultiLine = true
-SugBox.ZIndex = 12
-Instance.new("UICorner", SugBox).CornerRadius = UDim.new(0, 6)
-
-local SendSugBtn = Instance.new("TextButton", SuggestionsPage)
-SendSugBtn.Size = UDim2.new(0.98, 0, 0, 30)
-SendSugBtn.Position = UDim2.new(0, 0, 0, 160)
-SendSugBtn.BackgroundColor3 = Color3.fromRGB(190, 25, 35)
-SendSugBtn.Text = "🚀 إرسال الاقتراح"
-SendSugBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-SendSugBtn.Font = Enum.Font.SourceSansBold
-SendSugBtn.TextSize = 11
-SendSugBtn.ZIndex = 12
-Instance.new("UICorner", SendSugBtn).CornerRadius = UDim.new(0, 6)
-
-SendSugBtn.MouseButton1Click:Connect(function()
-    local text = SugBox.Text
-    if text == "" or text:match("^%s*$") then return end
-    local isClean, reason = isCleanText(text)
-    if not isClean then
-        SugBox.Text = ""
-        SugBox.PlaceholderText = reason
-        task.wait(1.5)
-        SugBox.PlaceholderText = "اكتب اقتراحك هنا..."
-        return
-    end
-    SendSugBtn.Text = "⏳ جاري الإرسال..."
-    if request then
-        pcall(function()
-            request({
-                Url = SUGGESTION_WEBHOOK,
-                Method = "POST",
-                Headers = {["Content-Type"] = "application/json"},
-                Body = HttpService:JSONEncode({
-                    username = "Ben Hub Suggestions",
-                    embeds = {{
-                        title = "💡 اقتراح جديد",
-                        description = text,
-                        color = 16711680,
-                        fields = {{name = "اللاعب", value = LocalPlayer.Name, inline = true}}
-                    }}
-                })
-            })
-        end)
-    end
-    task.wait(1)
-    SugBox.Text = ""
-    SendSugBtn.Text = "✔ تم الإرسال بنجاح!"
-    task.wait(2)
-    SendSugBtn.Text = "🚀 إرسال الاقتراح"
-end)
-
-switchToTab(1)
-
