@@ -1,4 +1,4 @@
--- Ben Script Hub - Blox Fruits & New Maps Edition (99 Nights Map Added & Others Removed)
+-- Ben Script Hub - Ultimate Edition (All Maps & Scripts Added)
 local CoreGui = game:GetService("CoreGui")
 local Players = game:GetService("Players")
 local TweenService = game:GetService("TweenService")
@@ -32,7 +32,7 @@ local logoAsset = fetchAsset("https://j.top4top.io/p_39224zme21.png", "logo_ben"
 local bannerAsset = fetchAsset("https://c.top4top.io/p_3933a1ntu0.png", "banner_new")
 
 local particlesEnabled = true
-local configFile = "BenHub_Config_v9.txt"
+local configFile = "BenHub_Config_v10.txt"
 
 if isfile and readfile and isfile(configFile) then
     pcall(function()
@@ -1030,7 +1030,7 @@ local UpdatesTitle = Instance.new("TextLabel")
 UpdatesTitle.Size = UDim2.new(1, -10, 0, 20)
 UpdatesTitle.Position = UDim2.new(0, 5, 0, 3)
 UpdatesTitle.BackgroundTransparency = 1
-UpdatesTitle.Text = "📢 آخر التحديثات:"
+UpdatesTitle.Text = "📢 آخر التحديثات الشاملة:"
 UpdatesTitle.TextColor3 = Color3.fromRGB(255, 215, 0)
 UpdatesTitle.Font = Enum.Font.SourceSansBold
 UpdatesTitle.TextSize = 10.5
@@ -1041,7 +1041,7 @@ local UpdatesText = Instance.new("TextLabel")
 UpdatesText.Size = UDim2.new(1, -14, 0, 95)
 UpdatesText.Position = UDim2.new(0, 7, 0, 24)
 UpdatesText.BackgroundTransparency = 1
-UpdatesText.Text = "• إضافة ماب 99 ليلة الجديد مع سكربتاته.\n• حذف ماب كسر البيض وماب كيبورد.\n• تفعيل ميزات التتبع والمراقبة والشات المحمي."
+UpdatesText.Text = "• إضافة وتحديث مابات (99 ليلة، كسر البيض، كيبورد، ركوب حيوانات، سرقة البيض وبلوكس فروت).\n• دمج أحدث السكربتات القوية لكل ماب وتحديث ميزات التتبع والشات."
 UpdatesText.TextColor3 = Color3.fromRGB(200, 200, 210)
 UpdatesText.Font = Enum.Font.SourceSans
 UpdatesText.TextSize = 9.5
@@ -1050,7 +1050,7 @@ UpdatesText.TextYAlignment = Enum.TextYAlignment.Top
 UpdatesText.Parent = UpdatesBox
 
 ---------------------------------------------------------
--- 2. الإعدادات + نظام المراقبة + نظام كشف وتتبع الأماكن (ESP Tracker)
+-- 2. الإعدادات + نظام المراقبة + كشف وتتبع الأماكن (ESP Tracker)
 ---------------------------------------------------------
 local ChangeServerBtn = Instance.new("TextButton")
 ChangeServerBtn.Size = UDim2.new(1, -20, 0, 28)
@@ -1466,7 +1466,7 @@ end
 TrackerModalBtn.MouseButton1Click:Connect(updateTrackerPlayersList)
 
 ---------------------------------------------------------
--- 3. سكربتات المابات (إضافة ماب 99 ليلة الجديد)
+-- 3. سكربتات المابات المحدثة بالكامل
 ---------------------------------------------------------
 local mapDataList = {
     {
@@ -1477,7 +1477,8 @@ local mapDataList = {
             {title = "الأزرق (كسر حماية)", requiresKey = "لا", code = [[loadstring(game:HttpGet("https://raw.githubusercontent.com/PulseZax/Loader/refs/heads/main/.lua"))()]]},
             {title = "سكربت ليون", requiresKey = "لا", code = [[loadstring(game:HttpGet("https://raw.githubusercontent.com/lennonxscripts/lennonfarmv2/refs/heads/main/stealanegg"))()]]},
             {title = "تجميد الوحوش", requiresKey = "لا", code = [[loadstring(game:HttpGet("https://raw.githubusercontent.com/alix77-r/Krov/refs/heads/main/AntiHitKrovScript.txt"))()]]},
-            {title = "ميراندا هوب", requiresKey = "لا", code = [[loadstring(game:HttpGet("https://raw.githubusercontent.com/miirandahub/loader/refs/heads/main/mirandaafk.lua"))()]]}
+            {title = "ميراندا هوب", requiresKey = "لا", code = [[loadstring(game:HttpGet("https://raw.githubusercontent.com/miirandahub/loader/refs/heads/main/mirandaafk.lua"))()]]},
+            {title = "سكربت سرقة البيض الجديد", requiresKey = "لا", code = [[loadstring(game:HttpGet("https://pastefy.app/YoZocJ8O/raw"))()]]}
         }
     },
     {
@@ -1485,22 +1486,49 @@ local mapDataList = {
         image = fetchAsset("https://g.top4top.io/p_39369bu7i0.jpeg", "nights_99"),
         scripts = {
             {title = "سكربت فاب فيودوير", requiresKey = "لا", code = [[loadstring(game:HttpGet("https://raw.githubusercontent.com/VapeVoidware/VW-Add/main/nightsintheforest.lua", true))()]]},
-            {title = "سكربت هوتاو هوب", requiresKey = "لا", code = [[loadstring(game:HttpGet("https://raw.githubusercontent.com/SLK-gaming/Hutao-Hub/refs/heads/main/99-Nights-In-The-Forest.txt"))()]]}
+            {title = "سكربت هوتاو هوب", requiresKey = "لا", code = [[loadstring(game:HttpGet("https://raw.githubusercontent.com/SLK-gaming/Hutao-Hub/refs/heads/main/99-Nights-In-The-Forest.txt"))()]]},
+            {title = "سكربت جيك لودر", requiresKey = "لا", code = [[loadstring(game:HttpGet("https://raw.githubusercontent.com/GEC0/gec/refs/heads/main/Gec.Loader", true))()]]},
+            {title = "سكربت ستري هوب", requiresKey = "لا", code = [[loadstring(game:HttpGet("https://raw.githubusercontent.com/create-stree/STREE-HUB/refs/heads/main/Loader/Main.lua", true))()]]}
+        }
+    },
+    {
+        name = "كسر البيض",
+        image = fetchAsset("https://h.top4top.io/p_39365mdcw1.jpg", "egg_crack_new"),
+        scripts = {
+            {title = "سكربت أوروبوروس الجديد", requiresKey = "لا", code = [[loadstring(game:HttpGet("https://raw.githubusercontent.com/joustingmatch/Ouroboros/main/loader.lua"))()]]}
+        }
+    },
+    {
+        name = "ماب كيبورد",
+        image = fetchAsset("https://i.top4top.io/p_3936thjrk0.jpg", "keyboard_map_new"),
+        scripts = {
+            {title = "هوشي هوب", requiresKey = "لا", code = [[loadstring(game:HttpGet("https://hoshihub.site/loader.lua"))()]]},
+            {title = "أولينكا موبلينكا", requiresKey = "لا", code = [[loadstring(game:HttpGet("https://raw.githubusercontent.com/OlejenkaMolejenka1337/script/refs/heads/main/scriptOBF.txt"))()]]},
+            {title = "شيزا هوب", requiresKey = "لا", code = [[loadstring(game:HttpGet("https://raw.githubusercontent.com/Gerreiro68/ShizaHub/refs/heads/main/loader.lua"))()]]},
+            {title = "سحابة سنوي هوب", requiresKey = "لا", code = [[loadstring(game:HttpGet("https://rawscripts.net/raw/X2-+1-Speed-Keyboard-Escape-or-Candy-and-Chocolate-Snowy-Hub-Auto-Win-Bypass-Obstacles-Teleport-More-238320"))()]]},
+            {title = "أفرليك هوب", requiresKey = "لا", code = [[loadstring(game:HttpGet("https://raw.githubusercontent.com/Tarmaster/AverlikHub/refs/heads/main/Loader"))()]]}
         }
     },
     {
         name = "بلوكس فروت",
         image = fetchAsset("https://f.top4top.io/p_3923xn5tv0.png", "blox_fruits"),
         scripts = {
-            {title = "سكربت موز المباشر", requiresKey = "لا", code = [[loadstring(game:HttpGet("https://raw.githubusercontent.com/bloxfruitsnokey/Banana/refs/heads/main/DB/script.luau"))()]]}
+            {title = "سكربت موز المباشر", requiresKey = "لا", code = [[loadstring(game:HttpGet("https://raw.githubusercontent.com/bloxfruitsnokey/Banana/refs/heads/main/DB/script.luau"))()]]},
+            {title = "كوانتم أونيكس", requiresKey = "لا", code = [[loadstring(game:HttpGet("https://raw.githubusercontent.com/Trustmenotcondom/QTONYX/refs/heads/main/QuantumOnyx.lua"))()]]},
+            {title = "جانتنج هوب", requiresKey = "لا", code = [[loadstring(game:HttpGet("https://isnahamzah.site/SubscribeYTisnahamzah/gantenghub30"))()]]},
+            {title = "كايتون فايند فروت", requiresKey = "لا", code = [[loadstring(game:HttpGet("https://raw.githubusercontent.com/WhiteX1208/Scripts/refs/heads/main/KaitunFindFruit.luau"))()]]},
+            {title = "ريدز في 2", requiresKey = "لا", code = [[loadstring(game:HttpGet("https://raw.githubusercontent.com/UCT-hub/main/refs/heads/main/redz-v2"))()]]},
+            {title = "ايم بوت ديف أكسل PVP", requiresKey = "لا", code = [[loadstring(game:HttpGet("https://raw.githubusercontent.com/itzaxl/DEVAXL/refs/heads/main/axlpvpblox.lua"))()]]},
+            {title = "دراغون أكس", requiresKey = "لا", code = [[loadstring(game:HttpGet("https://raw.githubusercontent.com/Tdk-Dragon/DragonX.lua/refs/heads/main/DragonX.lua.txt"))()]]}
         }
     },
     {
         name = "ركوب حيوانات",
         image = fetchAsset("https://c.top4top.io/p_39220ivke0.png", "ride_pet"),
         scripts = {
-            {title = "سكربت اصفر", requiresKey = "لا", code = [[loadstring(game:HttpGet("https://raw.githubusercontent.com/afkar-gg/sc/refs/heads/main/Linkhive/RideAPet.lua"))()]]},
-            {title = "كشف حيوانات اوتو", requiresKey = "لا", code = [[loadstring(game:HttpGet("https://pastefy.app/AsNICbLa/raw"))()]]}
+            {title = "سكربت ركوب الحيوانات الجديد 1", requiresKey = "لا", code = [[loadstring(game:HttpGet("https://pastefy.app/P5tUDr3n/raw"))()]]},
+            {title = "سكربت هايڤ هوب", requiresKey = "لا", code = [[loadstring(game:HttpGet("https://script.hive-hub.workers.dev/hive.lua"))()]]},
+            {title = "سكربت نولاج", requiresKey = "لا", code = [[loadstring(game:HttpGet("https://nolag.wtf/script.lua"))()]]}
         }
     }
 }
