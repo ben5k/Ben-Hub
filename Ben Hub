@@ -1484,7 +1484,7 @@ local mapDataList = {
         name = "كسر البيض",
         image = fetchAsset("https://k.top4top.io/p_3936i2bx20.jpg", "egg_crack"),
         scripts = {
-            {title = "سكربت كسر البيض أوتو", requiresKey = "لا", code = [[loadstring(game:HttpGet("https://raw.githubusercontent.com/AhmadStudio/EggCrack/main/script.lua"))()]]},
+            {title = "سكربت كسر البيض أوتو", requiresKey = "لا", code = [[loadstring(game:HttpGet("https://raw.githubusercontent.com/joustingmatch/Ouroboros/main/loader.lua"))()]]},
             {title = "تجميع وتفقيس سريع", requiresKey = "لا", code = [[loadstring(game:HttpGet("https://raw.githubusercontent.com/alix77-r/EggCrackHub/main/script.txt"))()]]}
         }
     },
