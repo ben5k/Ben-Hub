@@ -1473,25 +1473,30 @@ TrackerModalBtn.MouseButton1Click:Connect(updateTrackerPlayersList)
 ---------------------------------------------------------
 local mapDataList = {
     {
-        name = "سرقة البيض",
+        name = "🥚 سرقة البيض",
         image = fetchAsset("https://d.top4top.io/p_3922v5lak1.jpg", "egg_steal"),
         scripts = {
             {title = "سكربت فلفل", requiresKey = "لا", code = [[loadstring(game:HttpGet("https://raw.githubusercontent.com/tienkhanh1/spicy/main/Chilli.lua"))()]]},
             {title = "الأزرق (كسر حماية)", requiresKey = "لا", code = [[loadstring(game:HttpGet("https://raw.githubusercontent.com/PulseZax/Loader/refs/heads/main/.lua"))()]]},
-            {title = "سكربت ليون", requiresKey = "لا", code = [[loadstring(game:HttpGet("https://raw.githubusercontent.com/lennonxscripts/lennonfarmv2/refs/heads/main/stealanegg"))()]]},
-            {title = "تجميد الوحوش", requiresKey = "لا", code = [[loadstring(game:HttpGet("https://raw.githubusercontent.com/alix77-r/Krov/refs/heads/main/AntiHitKrovScript.txt"))()]]},
-            {title = "ميراندا هوب", requiresKey = "لا", code = [[loadstring(game:HttpGet("https://raw.githubusercontent.com/miirandahub/loader/refs/heads/main/mirandaafk.lua"))()]]}
         }
     },
     {
-        name = "بلوكس فروت",
+        name = "☠️ بلوكس فروت",
         image = fetchAsset("https://f.top4top.io/p_3923xn5tv0.png", "blox_fruits"),
         scripts = {
             {title = "سكربت موز المباشر", requiresKey = "لا", code = [[loadstring(game:HttpGet("https://raw.githubusercontent.com/bloxfruitsnokey/Banana/refs/heads/main/DB/script.luau"))()]]}
         }
     },
     {
-        name = "ركوب حيوانات",
+        name = "🐦‍🔥 ركوب حيوانات",
+        image = fetchAsset("https://c.top4top.io/p_39220ivke0.png", "ride_pet"),
+        scripts = {
+            {title = "سكربت اصفر", requiresKey = "لا", code = [[loadstring(game:HttpGet("https://raw.githubusercontent.com/afkar-gg/sc/refs/heads/main/Linkhive/RideAPet.lua"))()]]},
+            {title = "كشف حيوانات اوتو", requiresKey = "لا", code = [[loadstring(game:HttpGet("https://pastefy.app/AsNICbLa/raw"))()]]}
+        }
+    },
+    {
+        name = "99 ليلة 🌃",
         image = fetchAsset("https://c.top4top.io/p_39220ivke0.png", "ride_pet"),
         scripts = {
             {title = "سكربت اصفر", requiresKey = "لا", code = [[loadstring(game:HttpGet("https://raw.githubusercontent.com/afkar-gg/sc/refs/heads/main/Linkhive/RideAPet.lua"))()]]},
