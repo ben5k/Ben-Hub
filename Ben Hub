@@ -1,4 +1,4 @@
--- Ben Script Hub - Ultimate Stream Edition (Mobile Fixed)
+-- Ben Script Hub - Final Top4Top Image Edition (Mobile Fixed)
 local CoreGui = game:GetService("CoreGui")
 local Players = game:GetService("Players")
 local TweenService = game:GetService("TweenService")
@@ -17,8 +17,13 @@ local function customRequest(options)
     if req then return req(options) else return {StatusCode = 400, Body = ""} end
 end
 
+-- دالة تحويل روابط top4top لتعمل بشكل مباشر وصحيح داخل روبلوكس
+local function getProxyImg(url)
+    return "https://images.weserv.nl/?url=" .. url:gsub("https://", "")
+end
+
 local particlesEnabled = true
-local configFile = "BenHub_Config_v13.txt"
+local configFile = "BenHub_Config_v14.txt"
 
 if isfile and readfile and isfile(configFile) then
     pcall(function()
@@ -1035,7 +1040,7 @@ local UpdatesText = Instance.new("TextLabel")
 UpdatesText.Size = UDim2.new(1, -14, 0, 95)
 UpdatesText.Position = UDim2.new(0, 7, 0, 24)
 UpdatesText.BackgroundTransparency = 1
-UpdatesText.Text = "• تفعيل الأيقونات والإيموجيات الفخمة لضمان عمل الواجهة 100% بدون أخطاء أو صور رمادية.\n• إضافة ماب كيبورد، 99 ليلة وماب كسر البيض.\n• إضافة نظام تتبع وكشف مكان اللاعبين (ESP)."
+UpdatesText.Text = "• تفعيل نظام عرض صور Top4Top عبر البروكسي المباشر لتظهر بدقة كاملة على الموبايل.\n• إضافة ماب 99 ليلة، كسر البيض، وركوب الحيوانات بالصور الجديدة.\n• تفعيل نظام التتبع والكشف (ESP)."
 UpdatesText.TextColor3 = Color3.fromRGB(200, 200, 210)
 UpdatesText.Font = Enum.Font.SourceSans
 UpdatesText.TextSize = 9.5
@@ -1460,13 +1465,12 @@ end
 TrackerModalBtn.MouseButton1Click:Connect(updateTrackerPlayersList)
 
 ---------------------------------------------------------
--- 3. سكربتات المابات (بأيقونات وتدرجات لونية فخمة تظهر فوراً بالبث)
+-- 3. سكربتات المابات (باستخدام روابط صورك المباشرة عبر البروكسي)
 ---------------------------------------------------------
 local mapDataList = {
     {
-        name = "99 ليلة",
-        icon = "🌲",
-        color = Color3.fromRGB(35, 120, 70),
+        name = "ماب 99 ليلة",
+        image = getProxyImg("https://g.top4top.io/p_39369bu7i0.jpeg"),
         scripts = {
             {title = "فيب وايدوير", requiresKey = "لا", code = [[loadstring(game:HttpGet("https://raw.githubusercontent.com/VapeVoidware/VW-Add/main/nightsintheforest.lua", true))()]]},
             {title = "هوتاو هب", requiresKey = "لا", code = [[loadstring(game:HttpGet("https://raw.githubusercontent.com/SLK-gaming/Hutao-Hub/refs/heads/main/99-Nights-In-The-Forest.txt"))()]]},
@@ -1475,25 +1479,15 @@ local mapDataList = {
         }
     },
     {
-        name = "ماب كيبورد",
-        icon = "⌨️",
-        color = Color3.fromRGB(35, 100, 180),
-        scripts = {
-            {title = "سكربت كيبورد سريع", requiresKey = "لا", code = [[loadstring(game:HttpGet("https://scriptblox.com/raw/W3or-+1-Speed-Keyboard-Escape-or-Candy-and-Chocolate-Galactic-Scripts-240518"))()]]}
-        }
-    },
-    {
         name = "ماب كسر البيض",
-        icon = "🥚",
-        color = Color3.fromRGB(200, 120, 20),
+        image = getProxyImg("https://h.top4top.io/p_39365mdcw1.jpg"),
         scripts = {
             {title = "سكربت كسر البيض أوتو", requiresKey = "لا", code = [[loadstring(game:HttpGet("https://raw.githubusercontent.com/joustingmatch/Ouroboros/main/loader.lua"))()]]}
         }
     },
     {
         name = "ماب ركوب حيوانات",
-        icon = "🐾",
-        color = Color3.fromRGB(140, 40, 160),
+        image = getProxyImg("https://j.top4top.io/p_3936d8fe23.png"),
         scripts = {
             {title = "سكربت جديد", requiresKey = "لا", code = [[loadstring(game:HttpGet('https://raw.githubusercontent.com/xRoxyHubx/Ride-A-Pet/refs/heads/main/Script'))()]]},
             {title = "كشف حيوانات اوتو", requiresKey = "لا", code = [[loadstring(game:HttpGet("https://pastefy.app/AsNICbLa/raw"))()]]}
@@ -1501,16 +1495,14 @@ local mapDataList = {
     },
     {
         name = "ماب بلوكس فروت",
-        icon = "🏴‍☠️",
-        color = Color3.fromRGB(180, 25, 35),
+        image = getProxyImg("https://i.top4top.io/p_3936f7ypp2.png"),
         scripts = {
             {title = "سكربت موز المباشر", requiresKey = "لا", code = [[loadstring(game:HttpGet("https://raw.githubusercontent.com/bloxfruitsnokey/Redz/refs/heads/main/Aquamarine/script.luau"))()]]}
         }
     },
     {
         name = "ماب سرقة البيض",
-        icon = "🐣",
-        color = Color3.fromRGB(200, 80, 30),
+        image = getProxyImg("https://j.top4top.io/p_393609yal0.jpg"),
         scripts = {
             {title = "سكربت فلفل", requiresKey = "لا", code = [[loadstring(game:HttpGet("https://raw.githubusercontent.com/tienkhanh1/spicy/main/Chilli.lua"))()]]},
             {title = "الأزرق (كسر حماية)", requiresKey = "لا", code = [[loadstring(game:HttpGet("https://raw.githubusercontent.com/PulseZax/Loader/refs/heads/main/.lua"))()]]}
@@ -1650,18 +1642,13 @@ local function renderMapCards(filterText)
             card.Parent = MapsScroll
             Instance.new("UICorner", card).CornerRadius = UDim.new(0, 8)
 
-            local mapHeader = Instance.new("Frame")
-            mapHeader.Size = UDim2.new(1, 0, 0, 60)
-            mapHeader.BackgroundColor3 = map.color
-            mapHeader.Parent = card
-            Instance.new("UICorner", mapHeader).CornerRadius = UDim.new(0, 8)
-
-            local iconLbl = Instance.new("TextLabel")
-            iconLbl.Size = UDim2.new(1, 0, 1, 0)
-            iconLbl.BackgroundTransparency = 1
-            iconLbl.Text = map.icon
-            iconLbl.TextSize = 28
-            iconLbl.Parent = mapHeader
+            local mapImg = Instance.new("ImageLabel")
+            mapImg.Size = UDim2.new(1, 0, 0, 60)
+            mapImg.BackgroundColor3 = Color3.fromRGB(30, 30, 40)
+            mapImg.Image = map.image
+            mapImg.ScaleType = Enum.ScaleType.Crop
+            mapImg.Parent = card
+            Instance.new("UICorner", mapImg).CornerRadius = UDim.new(0, 8)
 
             local title = Instance.new("TextLabel")
             title.Size = UDim2.new(1, -8, 0, 18)
@@ -1722,7 +1709,6 @@ SendSuggestBtn.Position = UDim2.new(0, 0, 0, 215)
 SendSuggestBtn.BackgroundColor3 = Color3.fromRGB(40, 140, 60)
 SendSuggestBtn.Text = "📩 إرسال الاقتراح"
 SendSuggestBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-SendCardsRow = CardsRow
 SendSuggestBtn.Font = Enum.Font.SourceSansBold
 SendSuggestBtn.TextSize = 11.5
 SendSuggestBtn.Parent = SuggestTab
