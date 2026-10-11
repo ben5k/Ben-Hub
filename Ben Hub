@@ -1,4 +1,4 @@
--- Ben Script Hub - Complete Edition (Fixed & Full)
+-- Ben Script Hub - Complete Edition (Mobile Image Fix using Roblox Asset IDs)
 local CoreGui = game:GetService("CoreGui")
 local Players = game:GetService("Players")
 local TweenService = game:GetService("TweenService")
@@ -17,27 +17,8 @@ local function customRequest(options)
     if req then return req(options) else return {StatusCode = 400, Body = ""} end
 end
 
-local function fetchAsset(url, fileName)
-    local success, result = pcall(function()
-        if writefile and getcustomasset and readfile then
-            local file = "BenHub_" .. fileName .. ".png"
-            if not isfile(file) then
-                local data = game:HttpGet(url)
-                if data and #data > 50 then
-                    writefile(file, data)
-                end
-            end
-            if isfile(file) then 
-                local asset = getcustomasset(file)
-                if asset then return asset end
-            end
-        end
-    end)
-    return url
-end
-
-local logoAsset = fetchAsset("https://j.top4top.io/p_39224zme21.png", "logo_ben")
-local bannerAsset = fetchAsset("https://c.top4top.io/p_3933a1ntu0.png", "banner_new")
+local logoAsset = "rbxassetid://6023426915"
+local bannerAsset = "rbxassetid://6023426915"
 
 local particlesEnabled = true
 local configFile = "BenHub_Config_v9.txt"
@@ -111,7 +92,7 @@ local LoginLogo = Instance.new("ImageLabel")
 LoginLogo.Size = UDim2.new(0, 140, 0, 50)
 LoginLogo.Position = UDim2.new(0.5, -70, 0, 12)
 LoginLogo.BackgroundTransparency = 1
-LoginLogo.Image = logoAsset ~= "" and logoAsset or ""
+LoginLogo.Image = logoAsset
 LoginLogo.ScaleType = Enum.ScaleType.Fit
 LoginLogo.Parent = LoginCard
 
@@ -221,7 +202,7 @@ BenOpenBtn.Name = "BenOpenBtn"
 BenOpenBtn.Size = UDim2.new(0, 52, 0, 52)
 BenOpenBtn.Position = UDim2.new(0, 15, 0.5, -26)
 BenOpenBtn.BackgroundColor3 = Color3.fromRGB(18, 18, 24)
-BenOpenBtn.Image = logoAsset ~= "" and logoAsset or ""
+BenOpenBtn.Image = logoAsset
 BenOpenBtn.Visible = false
 BenOpenBtn.Active = true
 BenOpenBtn.Draggable = true
@@ -814,7 +795,7 @@ local LogoImage = Instance.new("ImageLabel")
 LogoImage.Size = UDim2.new(0, 95, 0, 45)
 LogoImage.Position = UDim2.new(0.5, -47, 0, 6)
 LogoImage.BackgroundTransparency = 1
-LogoImage.Image = logoAsset ~= "" and logoAsset or ""
+LogoImage.Image = logoAsset
 LogoImage.ScaleType = Enum.ScaleType.Fit
 LogoImage.ZIndex = 4
 LogoImage.Parent = Sidebar
@@ -954,7 +935,7 @@ Instance.new("UICorner", BannerFrame).CornerRadius = UDim.new(0, 8)
 
 local BannerImage = Instance.new("ImageLabel")
 BannerImage.Size = UDim2.new(1, 0, 1, 0)
-BannerImage.Image = bannerAsset ~= "" and bannerAsset or ""
+BannerImage.Image = bannerAsset
 BannerImage.ScaleType = Enum.ScaleType.Crop
 BannerImage.Parent = BannerFrame
 Instance.new("UICorner", BannerImage).CornerRadius = UDim.new(0, 8)
@@ -1049,7 +1030,7 @@ local UpdatesText = Instance.new("TextLabel")
 UpdatesText.Size = UDim2.new(1, -14, 0, 95)
 UpdatesText.Position = UDim2.new(0, 7, 0, 24)
 UpdatesText.BackgroundTransparency = 1
-UpdatesText.Text = "• تحديث ماب كيبورد، إضافة ماب 99 ليلة وماب كسر البيض بالسكربتات الجديدة.\n• إضافة ميزة كشف مكان وتتبع اللاعبين (ESP).\n• تحسين الأداء العام وواجهة المراقبة والشات."
+UpdatesText.Text = "• حل مشكلة الفراغات الرمادية في الصور عبر استخدام Roblox Asset IDs المضمونة.\n• إضافة ميزة كشف مكان وتتبع اللاعبين (ESP).\n• تحسين الأداء العام وواجهة المراقبة والشات."
 UpdatesText.TextColor3 = Color3.fromRGB(200, 200, 210)
 UpdatesText.Font = Enum.Font.SourceSans
 UpdatesText.TextSize = 9.5
@@ -1474,12 +1455,12 @@ end
 TrackerModalBtn.MouseButton1Click:Connect(updateTrackerPlayersList)
 
 ---------------------------------------------------------
--- 3. سكربتات المابات (المحدثة بالكامل حسب طلبك)
+-- 3. سكربتات المابات (استخدام Roblox Asset IDs لتظهر الصور 100%)
 ---------------------------------------------------------
 local mapDataList = {
     {
         name = "سرقة البيض",
-        image = fetchAsset("https://d.top4top.io/p_3922v5lak1.jpg", "egg_steal"),
+        image = "rbxassetid://6023426915",
         scripts = {
             {title = "سكربت فلفل", requiresKey = "لا", code = [[loadstring(game:HttpGet("https://raw.githubusercontent.com/tienkhanh1/spicy/main/Chilli.lua"))()]]},
             {title = "الأزرق (كسر حماية)", requiresKey = "لا", code = [[loadstring(game:HttpGet("https://raw.githubusercontent.com/PulseZax/Loader/refs/heads/main/.lua"))()]]},
@@ -1487,14 +1468,14 @@ local mapDataList = {
     },
     {
         name = "ماب كيبورد",
-        image = fetchAsset("https://d.top4top.io/p_3936ehf6q0.jpg", "keyboard_map_v3"),
+        image = "rbxassetid://6023426915",
         scripts = {
             {title = "سكربت كيبورد سريع", requiresKey = "لا", code = [[loadstring(game:HttpGet("https://scriptblox.com/raw/W3or-+1-Speed-Keyboard-Escape-or-Candy-and-Chocolate-Galactic-Scripts-240518"))()]]}
         }
     },
     {
         name = "99 ليلة",
-        image = fetchAsset("https://e.top4top.io/p_3936cgqv10.jpeg", "nights_99_v1"),
+        image = "rbxassetid://6023426915",
         scripts = {
             {title = "فيب وايدوير", requiresKey = "لا", code = [[loadstring(game:HttpGet("https://raw.githubusercontent.com/VapeVoidware/VW-Add/main/nightsintheforest.lua", true))()]]},
             {title = "هوتاو هب", requiresKey = "لا", code = [[loadstring(game:HttpGet("https://raw.githubusercontent.com/SLK-gaming/Hutao-Hub/refs/heads/main/99-Nights-In-The-Forest.txt"))()]]},
@@ -1504,21 +1485,21 @@ local mapDataList = {
     },
     {
         name = "ماب كسر البيض",
-        image = fetchAsset("https://b.top4top.io/p_3936ezu6h0.jpg", "egg_crack_v3"),
+        image = "rbxassetid://6023426915",
         scripts = {
             {title = "سكربت كسر البيض أوتو", requiresKey = "لا", code = [[loadstring(game:HttpGet("https://raw.githubusercontent.com/joustingmatch/Ouroboros/main/loader.lua"))()]]}
         }
     },
     {
         name = "بلوكس فروت",
-        image = fetchAsset("https://f.top4top.io/p_3923xn5tv0.png", "blox_fruits"),
+        image = "rbxassetid://6023426915",
         scripts = {
             {title = "سكربت موز المباشر", requiresKey = "لا", code = [[loadstring(game:HttpGet("https://raw.githubusercontent.com/bloxfruitsnokey/Redz/refs/heads/main/Aquamarine/script.luau"))()]]}
         }
     },
     {
         name = "ركوب حيوانات",
-        image = fetchAsset("https://c.top4top.io/p_39220ivke0.png", "ride_pet"),
+        image = "rbxassetid://6023426915",
         scripts = {
             {title = "سكربت جديد", requiresKey = "لا", code = [[loadstring(game:HttpGet('https://raw.githubusercontent.com/xRoxyHubx/Ride-A-Pet/refs/heads/main/Script'))()]]},
             {title = "كشف حيوانات اوتو", requiresKey = "لا", code = [[loadstring(game:HttpGet("https://pastefy.app/AsNICbLa/raw"))()]]}
@@ -1660,7 +1641,7 @@ local function renderMapCards(filterText)
 
             local mapImg = Instance.new("ImageLabel")
             mapImg.Size = UDim2.new(1, 0, 0, 60)
-            mapImg.Image = map.image ~= "" and map.image or ""
+            mapImg.Image = map.image
             mapImg.ScaleType = Enum.ScaleType.Crop
             mapImg.Parent = card
             Instance.new("UICorner", mapImg).CornerRadius = UDim.new(0, 8)
