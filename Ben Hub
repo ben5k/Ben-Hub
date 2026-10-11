@@ -1,4 +1,4 @@
--- Ben Script Hub - Blox Fruits & New Maps Edition (Updated Map Images)
+-- Ben Script Hub - Blox Fruits & New Maps Edition (ESP Tracker & New Maps Added)
 local CoreGui = game:GetService("CoreGui")
 local Players = game:GetService("Players")
 local TweenService = game:GetService("TweenService")
@@ -1041,7 +1041,7 @@ local UpdatesText = Instance.new("TextLabel")
 UpdatesText.Size = UDim2.new(1, -14, 0, 95)
 UpdatesText.Position = UDim2.new(0, 7, 0, 24)
 UpdatesText.BackgroundTransparency = 1
-UpdatesText.Text = "• تحديث صور ماب كسر البيض وماب كيبورد بنجاح.\n• إضافة ميزة كشف مكان وتتبع اللاعبين (ESP) بتصميم خفيف ومناسب للجوال.\n• تحسين الأداء العام وواجهة المراقبة والشات."
+UpdatesText.Text = "• إضافة ميزة كشف مكان وتتبع اللاعبين (ESP) بتصميم خفيف ومناسب للجوال.\n• إضافة ماب كسر البيض وماب كيبورد لقائمة السكربتات.\n• تحسين الأداء العام وواجهة المراقبة والشات."
 UpdatesText.TextColor3 = Color3.fromRGB(200, 200, 210)
 UpdatesText.Font = Enum.Font.SourceSans
 UpdatesText.TextSize = 9.5
@@ -1333,6 +1333,7 @@ TrackerLayout.Parent = TrackerScroll
 TrackerModalBtn.MouseButton1Click:Connect(function() TrackerFrame.Visible = true end)
 CloseTrackerBtn.MouseButton1Click:Connect(function() TrackerFrame.Visible = false end)
 
+-- شاشة علامات كشف الموقع الخفيفة (مؤشر جانبي خفيف لا يغطي الشاشة)
 local activeTrackers = {}
 
 local function removeTracker(player)
@@ -1395,6 +1396,7 @@ local function toggleTracker(player)
     end
 end
 
+-- حلقة تحديث موقع الكشف والمسافة باستمرار
 RunService.RenderStepped:Connect(function()
     for p, data in pairs(activeTrackers) do
         if p and p.Character and p.Character:FindFirstChild("HumanoidRootPart") and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
@@ -1467,7 +1469,7 @@ end
 TrackerModalBtn.MouseButton1Click:Connect(updateTrackerPlayersList)
 
 ---------------------------------------------------------
--- 3. سكربتات المابات (مع تحديث الصور الجديدة)
+-- 3. سكربتات المابات (إضافة ماب كسر البيض وماب كيبورد)
 ---------------------------------------------------------
 local mapDataList = {
     {
@@ -1476,36 +1478,39 @@ local mapDataList = {
         scripts = {
             {title = "سكربت فلفل", requiresKey = "لا", code = [[loadstring(game:HttpGet("https://raw.githubusercontent.com/tienkhanh1/spicy/main/Chilli.lua"))()]]},
             {title = "الأزرق (كسر حماية)", requiresKey = "لا", code = [[loadstring(game:HttpGet("https://raw.githubusercontent.com/PulseZax/Loader/refs/heads/main/.lua"))()]]},
+            {title = "سكربت ليون", requiresKey = "لا", code = [[loadstring(game:HttpGet("https://raw.githubusercontent.com/lennonxscripts/lennonfarmv2/refs/heads/main/stealanegg"))()]]},
+            {title = "تجميد الوحوش", requiresKey = "لا", code = [[loadstring(game:HttpGet("https://raw.githubusercontent.com/alix77-r/Krov/refs/heads/main/AntiHitKrovScript.txt"))()]]},
+            {title = "ميراندا هوب", requiresKey = "لا", code = [[loadstring(game:HttpGet("https://raw.githubusercontent.com/miirandahub/loader/refs/heads/main/mirandaafk.lua"))()]]}
         }
     },
     {
         name = "كسر البيض",
-        image = fetchAsset("https://k.top4top.io/p_3936i2bx20.jpg", "egg_crack"), -- تم تحديث الصورة هنا بنجاح
+        image = fetchAsset("https://d.top4top.io/p_3922v5lak1.jpg", "egg_crack"),
         scripts = {
-            {title = "سكربت كسر البيض أوتو", requiresKey = "لا", code = [[loadstring(game:HttpGet("https://raw.githubusercontent.com/joustingmatch/Ouroboros/main/loader.lua"))()]]},
+            {title = "سكربت كسر البيض أوتو", requiresKey = "لا", code = [[loadstring(game:HttpGet("https://raw.githubusercontent.com/AhmadStudio/EggCrack/main/script.lua"))()]]},
             {title = "تجميع وتفقيس سريع", requiresKey = "لا", code = [[loadstring(game:HttpGet("https://raw.githubusercontent.com/alix77-r/EggCrackHub/main/script.txt"))()]]}
         }
     },
     {
         name = "ماب كيبورد",
-        image = fetchAsset("https://d.top4top.io/p_3936khd150.png", "keyboard_map"), -- تم تحديث الصورة هنا بنجاح
+        image = fetchAsset("https://c.top4top.io/p_39220ivke0.png", "keyboard_map"),
         scripts = {
-            {title = "سكربت كيبورد أوتو تايب", requiresKey = "لا", code = [[loadstring(game:HttpGet("https://raw.githubusercontent.com/OlejenkaMolejenka1337/script/refs/heads/main/scriptOBF.txt"))()]]},
-            {title = "ماب 99 قوي", requiresKey = "لا", code = [[loadstring(game:HttpGet("https://raw.githubusercontent.com/Kixdev/99NITF/main/script", true))()]]}
+            {title = "سكربت كيبورد أوتو تايب", requiresKey = "لا", code = [[loadstring(game:HttpGet("https://raw.githubusercontent.com/KeyboardRacer/Auto/main/loader.lua"))()]]},
+            {title = "تلفيل كيبورد سريع", requiresKey = "لا", code = [[loadstring(game:HttpGet("https://raw.githubusercontent.com/afkar-gg/sc/refs/heads/main/Keyboard.lua"))()]]}
         }
     },
     {
         name = "بلوكس فروت",
         image = fetchAsset("https://f.top4top.io/p_3923xn5tv0.png", "blox_fruits"),
         scripts = {
-            {title = "سكربت موز المباشر", requiresKey = "لا", code = [[loadstring(game:HttpGet("https://raw.githubusercontent.com/bloxfruitsnokey/Redz/refs/heads/main/Aquamarine/script.luau"))()]]}
+            {title = "سكربت موز المباشر", requiresKey = "لا", code = [[loadstring(game:HttpGet("https://raw.githubusercontent.com/bloxfruitsnokey/Banana/refs/heads/main/DB/script.luau"))()]]}
         }
     },
     {
         name = "ركوب حيوانات",
         image = fetchAsset("https://c.top4top.io/p_39220ivke0.png", "ride_pet"),
         scripts = {
-            {title = "سكربت جديد", requiresKey = "لا", code = [[loadstring(game:HttpGet('https://raw.githubusercontent.com/xRoxyHubx/Ride-A-Pet/refs/heads/main/Script'))()]]},
+            {title = "سكربت اصفر", requiresKey = "لا", code = [[loadstring(game:HttpGet("https://raw.githubusercontent.com/afkar-gg/sc/refs/heads/main/Linkhive/RideAPet.lua"))()]]},
             {title = "كشف حيوانات اوتو", requiresKey = "لا", code = [[loadstring(game:HttpGet("https://pastefy.app/AsNICbLa/raw"))()]]}
         }
     }
