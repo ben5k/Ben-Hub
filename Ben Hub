@@ -1482,7 +1482,7 @@ local mapDataList = {
     },
     {
         name = "كسر البيض",
-        image = fetchAsset("https://d.top4top.io/p_3922v5lak1.jpg", "egg_crack"),
+        image = fetchAsset("https://k.top4top.io/p_3936i2bx20.jpg", "egg_crack"),
         scripts = {
             {title = "سكربت كسر البيض أوتو", requiresKey = "لا", code = [[loadstring(game:HttpGet("https://raw.githubusercontent.com/AhmadStudio/EggCrack/main/script.lua"))()]]},
             {title = "تجميع وتفقيس سريع", requiresKey = "لا", code = [[loadstring(game:HttpGet("https://raw.githubusercontent.com/alix77-r/EggCrackHub/main/script.txt"))()]]}
@@ -1490,7 +1490,7 @@ local mapDataList = {
     },
     {
         name = "ماب كيبورد",
-        image = fetchAsset("https://c.top4top.io/p_39220ivke0.png", "keyboard_map"),
+        image = fetchAsset("https://up6.cc/2026/10/179173577387112.jpg", "keyboard_map"),
         scripts = {
             {title = "سكربت كيبورد أوتو تايب", requiresKey = "لا", code = [[loadstring(game:HttpGet("https://raw.githubusercontent.com/KeyboardRacer/Auto/main/loader.lua"))()]]},
             {title = "تلفيل كيبورد سريع", requiresKey = "لا", code = [[loadstring(game:HttpGet("https://raw.githubusercontent.com/afkar-gg/sc/refs/heads/main/Keyboard.lua"))()]]}
