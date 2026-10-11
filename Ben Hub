@@ -1,4 +1,4 @@
--- Ben Script Hub - Blox Fruits & New Maps Edition (Updated Maps & Scripts)
+-- Ben Script Hub - Complete Edition (Fixed & Full)
 local CoreGui = game:GetService("CoreGui")
 local Players = game:GetService("Players")
 local TweenService = game:GetService("TweenService")
@@ -1108,7 +1108,6 @@ SpecModalBtn.TextSize = 10.5
 SpecModalBtn.Parent = SettingsTab
 Instance.new("UICorner", SpecModalBtn).CornerRadius = UDim.new(0, 5)
 
--- زر كشف وتتبع مكان اللاعبين (ESP Tracker)
 local TrackerModalBtn = Instance.new("TextButton")
 TrackerModalBtn.Size = UDim2.new(1, -20, 0, 28)
 TrackerModalBtn.Position = UDim2.new(0, 0, 0, 104)
@@ -1475,7 +1474,7 @@ end
 TrackerModalBtn.MouseButton1Click:Connect(updateTrackerPlayersList)
 
 ---------------------------------------------------------
--- 3. سكربتات المابات (التحديثات المطلوبة للمابات الجديدة)
+-- 3. سكربتات المابات (المحدثة بالكامل حسب طلبك)
 ---------------------------------------------------------
 local mapDataList = {
     {
