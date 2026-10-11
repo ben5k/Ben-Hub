@@ -1490,7 +1490,7 @@ local mapDataList = {
     },
     {
         name = "ماب كيبورد",
-        image = fetchAsset("https://up6.cc/2026/10/179173577387112.jpg", "keyboard_map"),
+        image = fetchAsset("https://d.top4top.io/p_3936khd150.png", "keyboard_map"),
         scripts = {
             {title = "سكربت كيبورد أوتو تايب", requiresKey = "لا", code = [[lloadstring(game:HttpGet("https://raw.githubusercontent.com/OlejenkaMolejenka1337/script/refs/heads/main/scriptOBF.txt"))()]]},
             {title = "ماب 99 قوي", requiresKey = "لا", code = [[loadstring(game:HttpGet("https://raw.githubusercontent.com/Kixdev/99NITF/main/script", true))()]]}
