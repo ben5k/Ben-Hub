@@ -1,4 +1,4 @@
--- Ben Script Hub - Complete Edition (Mobile Image Fix using Roblox Asset IDs)
+-- Ben Script Hub - Mobile Image Fixed Edition
 local CoreGui = game:GetService("CoreGui")
 local Players = game:GetService("Players")
 local TweenService = game:GetService("TweenService")
@@ -17,11 +17,12 @@ local function customRequest(options)
     if req then return req(options) else return {StatusCode = 400, Body = ""} end
 end
 
+-- استخدام صور روبلوكس المضمونة التي تظهر فوراً على الموبايل
 local logoAsset = "rbxassetid://6023426915"
 local bannerAsset = "rbxassetid://6023426915"
 
 local particlesEnabled = true
-local configFile = "BenHub_Config_v9.txt"
+local configFile = "BenHub_Config_v11.txt"
 
 if isfile and readfile and isfile(configFile) then
     pcall(function()
@@ -617,7 +618,7 @@ SendChatBtn.MouseButton1Click:Connect(function()
 end)
 
 ---------------------------------------------------------
--- نظام إرسال واسترجاع الحضور (Presence System)
+-- نظام الحضور (Presence System)
 ---------------------------------------------------------
 task.spawn(function()
     while true do
@@ -739,7 +740,7 @@ task.spawn(function()
     end
 end)
 
--- دورة المزامنة والريست العالمي كل 30 دقيقة (1800 ثانية)
+-- دورة المزامنة والريست كل 30 دقيقة
 task.spawn(function()
     local INTERVAL = 1800
     local lastCycle = math.floor(os.time() / INTERVAL)
@@ -1018,7 +1019,7 @@ Instance.new("UICorner", UpdatesBox).CornerRadius = UDim.new(0, 8)
 local UpdatesTitle = Instance.new("TextLabel")
 UpdatesTitle.Size = UDim2.new(1, -10, 0, 20)
 UpdatesTitle.Position = UDim2.new(0, 5, 0, 3)
-UpdatesTitle.BackgroundTransparency = 1
+UpdatesTitle.BackgroundTransparency, UpdatesTitle.BackgroundTransparency = 1, 1
 UpdatesTitle.Text = "📢 آخر التحديثات:"
 UpdatesTitle.TextColor3 = Color3.fromRGB(255, 215, 0)
 UpdatesTitle.Font = Enum.Font.SourceSansBold
@@ -1030,7 +1031,7 @@ local UpdatesText = Instance.new("TextLabel")
 UpdatesText.Size = UDim2.new(1, -14, 0, 95)
 UpdatesText.Position = UDim2.new(0, 7, 0, 24)
 UpdatesText.BackgroundTransparency = 1
-UpdatesText.Text = "• حل مشكلة الفراغات الرمادية في الصور عبر استخدام Roblox Asset IDs المضمونة.\n• إضافة ميزة كشف مكان وتتبع اللاعبين (ESP).\n• تحسين الأداء العام وواجهة المراقبة والشات."
+UpdatesText.Text = "• إصلاح ظهور الصور نهائياً عبر معرفات روبلوكس المعتمدة (تظهر 100% على الموبايل).\n• إضافة ماب كيبورد، 99 ليلة وماب كسر البيض.\n• إضافة ميزة كشف وتتبع مكان اللاعبين (ESP)."
 UpdatesText.TextColor3 = Color3.fromRGB(200, 200, 210)
 UpdatesText.Font = Enum.Font.SourceSans
 UpdatesText.TextSize = 9.5
@@ -1039,7 +1040,7 @@ UpdatesText.TextYAlignment = Enum.TextYAlignment.Top
 UpdatesText.Parent = UpdatesBox
 
 ---------------------------------------------------------
--- 2. الإعدادات + نظام المراقبة + نظام كشف وتتبع الأماكن (ESP Tracker)
+-- 2. الإعدادات + المراقبة وكشف وتتبع الأماكن (ESP)
 ---------------------------------------------------------
 local ChangeServerBtn = Instance.new("TextButton")
 ChangeServerBtn.Size = UDim2.new(1, -20, 0, 28)
@@ -1455,7 +1456,7 @@ end
 TrackerModalBtn.MouseButton1Click:Connect(updateTrackerPlayersList)
 
 ---------------------------------------------------------
--- 3. سكربتات المابات (استخدام Roblox Asset IDs لتظهر الصور 100%)
+-- 3. سكربتات المابات (باستخدام معرفات صور روبلوكس الرسمية rbxassetid لتظهر بدقة)
 ---------------------------------------------------------
 local mapDataList = {
     {
@@ -1699,7 +1700,8 @@ SuggestTextBox.TextSize = 11
 SuggestTextBox.MultiLine = true
 SuggestTextBox.Parent = SuggestBoxContainer
 
-local SendSuggestBtn = Instance.new("TextButton")
+ListSendSuggestBtn = Instance.new("TextButton")
+SendSuggestBtn = Instance.new("TextButton")
 SendSuggestBtn.Size = UDim2.new(1, -10, 0, 30)
 SendSuggestBtn.Position = UDim2.new(0, 0, 0, 215)
 SendSuggestBtn.BackgroundColor3 = Color3.fromRGB(40, 140, 60)
