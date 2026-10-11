@@ -1496,11 +1496,11 @@ local mapDataList = {
         }
     },
     {
-        name = "99 ليلة 🌃",
-        image = fetchAsset("https://c.top4top.io/p_39220ivke0.png", "ride_pet"),
+        name = "🌃 99ليلة ",
+        image = fetchAsset("https://g.top4top.io/p_39369bu7i0.jpeg", "ride_pet"),
         scripts = {
-            {title = "سكربت اصفر", requiresKey = "لا", code = [[loadstring(game:HttpGet("https://raw.githubusercontent.com/afkar-gg/sc/refs/heads/main/Linkhive/RideAPet.lua"))()]]},
-            {title = "كشف حيوانات اوتو", requiresKey = "لا", code = [[loadstring(game:HttpGet("https://pastefy.app/AsNICbLa/raw"))()]]}
+            {title = "سكربت فويد", requiresKey = "لا", code = [[loadstring(game:HttpGet("https://raw.githubusercontent.com/VapeVoidware/VW-Add/main/nightsintheforest.lua", true))()]]},
+            {title = "فوكس", requiresKey = "لا", code = [[loadstring(game:HttpGet("https://raw.githubusercontent.com/caomod2077/Script/refs/heads/main/FoxnameHub.lua"))()]]}
         }
     }
 }
