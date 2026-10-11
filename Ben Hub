@@ -1478,9 +1478,6 @@ local mapDataList = {
         scripts = {
             {title = "سكربت فلفل", requiresKey = "لا", code = [[loadstring(game:HttpGet("https://raw.githubusercontent.com/tienkhanh1/spicy/main/Chilli.lua"))()]]},
             {title = "الأزرق (كسر حماية)", requiresKey = "لا", code = [[loadstring(game:HttpGet("https://raw.githubusercontent.com/PulseZax/Loader/refs/heads/main/.lua"))()]]},
-            {title = "سكربت ليون", requiresKey = "لا", code = [[loadstring(game:HttpGet("https://raw.githubusercontent.com/lennonxscripts/lennonfarmv2/refs/heads/main/stealanegg"))()]]},
-            {title = "تجميد الوحوش", requiresKey = "لا", code = [[loadstring(game:HttpGet("https://raw.githubusercontent.com/alix77-r/Krov/refs/heads/main/AntiHitKrovScript.txt"))()]]},
-            {title = "ميراندا هوب", requiresKey = "لا", code = [[loadstring(game:HttpGet("https://raw.githubusercontent.com/miirandahub/loader/refs/heads/main/mirandaafk.lua"))()]]}
         }
     },
     {
