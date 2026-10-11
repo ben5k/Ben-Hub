@@ -1492,22 +1492,22 @@ local mapDataList = {
         name = "ماب كيبورد",
         image = fetchAsset("https://up6.cc/2026/10/179173577387112.jpg", "keyboard_map"),
         scripts = {
-            {title = "سكربت كيبورد أوتو تايب", requiresKey = "لا", code = [[loadstring(game:HttpGet("https://raw.githubusercontent.com/KeyboardRacer/Auto/main/loader.lua"))()]]},
-            {title = "تلفيل كيبورد سريع", requiresKey = "لا", code = [[loadstring(game:HttpGet("https://raw.githubusercontent.com/afkar-gg/sc/refs/heads/main/Keyboard.lua"))()]]}
+            {title = "سكربت كيبورد أوتو تايب", requiresKey = "لا", code = [[lloadstring(game:HttpGet("https://raw.githubusercontent.com/OlejenkaMolejenka1337/script/refs/heads/main/scriptOBF.txt"))()]]},
+            {title = "ماب 99 قوي", requiresKey = "لا", code = [[loadstring(game:HttpGet("https://raw.githubusercontent.com/Kixdev/99NITF/main/script", true))()]]}
         }
     },
     {
         name = "بلوكس فروت",
         image = fetchAsset("https://f.top4top.io/p_3923xn5tv0.png", "blox_fruits"),
         scripts = {
-            {title = "سكربت موز المباشر", requiresKey = "لا", code = [[loadstring(game:HttpGet("https://raw.githubusercontent.com/bloxfruitsnokey/Banana/refs/heads/main/DB/script.luau"))()]]}
+            {title = "سكربت موز المباشر", requiresKey = "لا", code = [[loadstring(game:HttpGet("https://raw.githubusercontent.com/bloxfruitsnokey/Redz/refs/heads/main/Aquamarine/script.luau"))()]]}
         }
     },
     {
         name = "ركوب حيوانات",
         image = fetchAsset("https://c.top4top.io/p_39220ivke0.png", "ride_pet"),
         scripts = {
-            {title = "سكربت اصفر", requiresKey = "لا", code = [[loadstring(game:HttpGet("https://raw.githubusercontent.com/afkar-gg/sc/refs/heads/main/Linkhive/RideAPet.lua"))()]]},
+            {title = "سكربت جديد", requiresKey = "لا", code = [[loadstring(game:HttpGet('https://raw.githubusercontent.com/xRoxyHubx/Ride-A-Pet/refs/heads/main/Script'))()"))()]]},
             {title = "كشف حيوانات اوتو", requiresKey = "لا", code = [[loadstring(game:HttpGet("https://pastefy.app/AsNICbLa/raw"))()]]}
         }
     }
