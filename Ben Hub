@@ -1,4 +1,4 @@
--- Ben Script Hub - Mobile Image Fixed Edition
+-- Ben Script Hub - Custom Images Edition (Fixed for Mobile)
 local CoreGui = game:GetService("CoreGui")
 local Players = game:GetService("Players")
 local TweenService = game:GetService("TweenService")
@@ -17,12 +17,8 @@ local function customRequest(options)
     if req then return req(options) else return {StatusCode = 400, Body = ""} end
 end
 
--- استخدام صور روبلوكس المضمونة التي تظهر فوراً على الموبايل
-local logoAsset = "rbxassetid://6023426915"
-local bannerAsset = "rbxassetid://6023426915"
-
 local particlesEnabled = true
-local configFile = "BenHub_Config_v11.txt"
+local configFile = "BenHub_Config_v12.txt"
 
 if isfile and readfile and isfile(configFile) then
     pcall(function()
@@ -89,17 +85,19 @@ LoginStroke.Color = Color3.fromRGB(255, 215, 0)
 LoginStroke.Thickness = 1.8
 LoginStroke.Parent = LoginCard
 
-local LoginLogo = Instance.new("ImageLabel")
-LoginLogo.Size = UDim2.new(0, 140, 0, 50)
-LoginLogo.Position = UDim2.new(0.5, -70, 0, 12)
+local LoginLogo = Instance.new("TextLabel")
+LoginLogo.Size = UDim2.new(0, 200, 0, 40)
+LoginLogo.Position = UDim2.new(0.5, -100, 0, 15)
 LoginLogo.BackgroundTransparency = 1
-LoginLogo.Image = logoAsset
-LoginLogo.ScaleType = Enum.ScaleType.Fit
+LoginLogo.Text = "👑 BEN HUB 👑"
+LoginLogo.TextColor3 = Color3.fromRGB(255, 215, 0)
+LoginLogo.Font = Enum.Font.SourceSansBold
+LoginLogo.TextSize = 22
 LoginLogo.Parent = LoginCard
 
 local WelcomeTitle = Instance.new("TextLabel")
 WelcomeTitle.Size = UDim2.new(1, 0, 0, 20)
-WelcomeTitle.Position = UDim2.new(0, 0, 0, 68)
+WelcomeTitle.Position = UDim2.new(0, 0, 0, 62)
 WelcomeTitle.BackgroundTransparency = 1
 WelcomeTitle.Text = "أهلاً بك: " .. (LocalPlayer.DisplayName ~= "" and LocalPlayer.DisplayName or LocalPlayer.Name)
 WelcomeTitle.TextColor3 = Color3.fromRGB(255, 255, 255)
@@ -109,7 +107,7 @@ WelcomeTitle.Parent = LoginCard
 
 local LoginAvatar = Instance.new("ImageLabel")
 LoginAvatar.Size = UDim2.new(0, 50, 0, 50)
-LoginAvatar.Position = UDim2.new(0.5, -25, 0, 92)
+LoginAvatar.Position = UDim2.new(0.5, -25, 0, 88)
 LoginAvatar.BackgroundColor3 = Color3.fromRGB(30, 30, 40)
 LoginAvatar.Image = "rbxthumb://type=AvatarHeadShot&id=" .. LocalPlayer.UserId .. "&w=150&h=150"
 LoginAvatar.Parent = LoginCard
@@ -198,12 +196,13 @@ CloseBtn.ZIndex = 10
 CloseBtn.Parent = Main
 Instance.new("UICorner", CloseBtn).CornerRadius = UDim.new(0, 5)
 
-local BenOpenBtn = Instance.new("ImageButton")
+local BenOpenBtn = Instance.new("TextButton")
 BenOpenBtn.Name = "BenOpenBtn"
 BenOpenBtn.Size = UDim2.new(0, 52, 0, 52)
 BenOpenBtn.Position = UDim2.new(0, 15, 0.5, -26)
 BenOpenBtn.BackgroundColor3 = Color3.fromRGB(18, 18, 24)
-BenOpenBtn.Image = logoAsset
+BenOpenBtn.Text = "👑"
+BenOpenBtn.TextSize = 22
 BenOpenBtn.Visible = false
 BenOpenBtn.Active = true
 BenOpenBtn.Draggable = true
@@ -792,14 +791,16 @@ Sidebar.ZIndex = 3
 Sidebar.Parent = Main
 Instance.new("UICorner", Sidebar).CornerRadius = UDim.new(0, 10)
 
-local LogoImage = Instance.new("ImageLabel")
-LogoImage.Size = UDim2.new(0, 95, 0, 45)
-LogoImage.Position = UDim2.new(0.5, -47, 0, 6)
-LogoImage.BackgroundTransparency = 1
-LogoImage.Image = logoAsset
-LogoImage.ScaleType = Enum.ScaleType.Fit
-LogoImage.ZIndex = 4
-LogoImage.Parent = Sidebar
+local LogoTitle = Instance.new("TextLabel")
+LogoTitle.Size = UDim2.new(0, 120, 0, 45)
+LogoTitle.Position = UDim2.new(0.5, -60, 0, 6)
+LogoTitle.BackgroundTransparency = 1
+LogoTitle.Text = "👑 BEN HUB"
+LogoTitle.TextColor3 = Color3.fromRGB(255, 215, 0)
+LogoTitle.Font = Enum.Font.SourceSansBold
+LogoTitle.TextSize = 16
+LogoTitle.ZIndex = 4
+LogoTitle.Parent = Sidebar
 
 local ButtonsHolder = Instance.new("Frame")
 ButtonsHolder.Size = UDim2.new(1, -12, 0, 150)
@@ -930,16 +931,19 @@ ServerStatus.Parent = HomeTab
 local BannerFrame = Instance.new("Frame")
 BannerFrame.Size = UDim2.new(1, -10, 0, 80)
 BannerFrame.Position = UDim2.new(0, 0, 0, 20)
-BannerFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 30)
+BannerFrame.BackgroundColor3 = Color3.fromRGB(180, 25, 35)
 BannerFrame.Parent = HomeTab
 Instance.new("UICorner", BannerFrame).CornerRadius = UDim.new(0, 8)
 
-local BannerImage = Instance.new("ImageLabel")
-BannerImage.Size = UDim2.new(1, 0, 1, 0)
-BannerImage.Image = bannerAsset
-BannerImage.ScaleType = Enum.ScaleType.Crop
-BannerImage.Parent = BannerFrame
-Instance.new("UICorner", BannerImage).CornerRadius = UDim.new(0, 8)
+local BannerText = Instance.new("TextLabel")
+BannerText.Size = UDim2.new(1, 0, 1, 0)
+BannerText.BackgroundTransparency = 1
+BannerText.Text = "🔥 BEN SCRIPT HUB 🔥\nأفضل سكربت عربي للمابات والسيستم"
+BannerText.TextColor3 = Color3.fromRGB(255, 255, 255)
+BannerText.Font = Enum.Font.SourceSansBold
+BannerText.TextSize = 13
+BannerText.TextWrapped = true
+BannerText.Parent = BannerFrame
 
 local CardsRow = Instance.new("Frame")
 CardsRow.Size = UDim2.new(1, -10, 0, 34)
@@ -1019,7 +1023,7 @@ Instance.new("UICorner", UpdatesBox).CornerRadius = UDim.new(0, 8)
 local UpdatesTitle = Instance.new("TextLabel")
 UpdatesTitle.Size = UDim2.new(1, -10, 0, 20)
 UpdatesTitle.Position = UDim2.new(0, 5, 0, 3)
-UpdatesTitle.BackgroundTransparency, UpdatesTitle.BackgroundTransparency = 1, 1
+UpdatesTitle.BackgroundTransparency = 1
 UpdatesTitle.Text = "📢 آخر التحديثات:"
 UpdatesTitle.TextColor3 = Color3.fromRGB(255, 215, 0)
 UpdatesTitle.Font = Enum.Font.SourceSansBold
@@ -1031,7 +1035,7 @@ local UpdatesText = Instance.new("TextLabel")
 UpdatesText.Size = UDim2.new(1, -14, 0, 95)
 UpdatesText.Position = UDim2.new(0, 7, 0, 24)
 UpdatesText.BackgroundTransparency = 1
-UpdatesText.Text = "• إصلاح ظهور الصور نهائياً عبر معرفات روبلوكس المعتمدة (تظهر 100% على الموبايل).\n• إضافة ماب كيبورد، 99 ليلة وماب كسر البيض.\n• إضافة ميزة كشف وتتبع مكان اللاعبين (ESP)."
+UpdatesText.Text = "• تحديث صور المابات بروابطك المباشرة الجديدة من ibb.co.\n• تفعيل دعم العرض السريع داخل مأوى الموبايل والتتبع (ESP)."
 UpdatesText.TextColor3 = Color3.fromRGB(200, 200, 210)
 UpdatesText.Font = Enum.Font.SourceSans
 UpdatesText.TextSize = 9.5
@@ -1040,7 +1044,7 @@ UpdatesText.TextYAlignment = Enum.TextYAlignment.Top
 UpdatesText.Parent = UpdatesBox
 
 ---------------------------------------------------------
--- 2. الإعدادات + المراقبة وكشف وتتبع الأماكن (ESP)
+-- 2. الإعدادات + المراقبة وتتبع الأماكن (ESP)
 ---------------------------------------------------------
 local ChangeServerBtn = Instance.new("TextButton")
 ChangeServerBtn.Size = UDim2.new(1, -20, 0, 28)
@@ -1456,27 +1460,12 @@ end
 TrackerModalBtn.MouseButton1Click:Connect(updateTrackerPlayersList)
 
 ---------------------------------------------------------
--- 3. سكربتات المابات (باستخدام معرفات صور روبلوكس الرسمية rbxassetid لتظهر بدقة)
+-- 3. سكربتات المابات (بناءً على روابط صورك المباشرة)
 ---------------------------------------------------------
 local mapDataList = {
     {
-        name = "سرقة البيض",
-        image = "rbxassetid://6023426915",
-        scripts = {
-            {title = "سكربت فلفل", requiresKey = "لا", code = [[loadstring(game:HttpGet("https://raw.githubusercontent.com/tienkhanh1/spicy/main/Chilli.lua"))()]]},
-            {title = "الأزرق (كسر حماية)", requiresKey = "لا", code = [[loadstring(game:HttpGet("https://raw.githubusercontent.com/PulseZax/Loader/refs/heads/main/.lua"))()]]},
-        }
-    },
-    {
-        name = "ماب كيبورد",
-        image = "rbxassetid://6023426915",
-        scripts = {
-            {title = "سكربت كيبورد سريع", requiresKey = "لا", code = [[loadstring(game:HttpGet("https://scriptblox.com/raw/W3or-+1-Speed-Keyboard-Escape-or-Candy-and-Chocolate-Galactic-Scripts-240518"))()]]}
-        }
-    },
-    {
         name = "99 ليلة",
-        image = "rbxassetid://6023426915",
+        image = "https://i.ibb.co/VYHPCmtv/images.jpg",
         scripts = {
             {title = "فيب وايدوير", requiresKey = "لا", code = [[loadstring(game:HttpGet("https://raw.githubusercontent.com/VapeVoidware/VW-Add/main/nightsintheforest.lua", true))()]]},
             {title = "هوتاو هب", requiresKey = "لا", code = [[loadstring(game:HttpGet("https://raw.githubusercontent.com/SLK-gaming/Hutao-Hub/refs/heads/main/99-Nights-In-The-Forest.txt"))()]]},
@@ -1485,25 +1474,40 @@ local mapDataList = {
         }
     },
     {
+        name = "ماب كيبورد",
+        image = "https://i.ibb.co/HfwMs26K/4fc6215dd7f1ed04f8651975d935da09.jpg",
+        scripts = {
+            {title = "سكربت كيبورد سريع", requiresKey = "لا", code = [[loadstring(game:HttpGet("https://scriptblox.com/raw/W3or-+1-Speed-Keyboard-Escape-or-Candy-and-Chocolate-Galactic-Scripts-240518"))()]]}
+        }
+    },
+    {
         name = "ماب كسر البيض",
-        image = "rbxassetid://6023426915",
+        image = "https://i.ibb.co/S4SgpNML/IMG.jpg",
         scripts = {
             {title = "سكربت كسر البيض أوتو", requiresKey = "لا", code = [[loadstring(game:HttpGet("https://raw.githubusercontent.com/joustingmatch/Ouroboros/main/loader.lua"))()]]}
         }
     },
     {
-        name = "بلوكس فروت",
-        image = "rbxassetid://6023426915",
+        name = "ماب ركوب حيوانات",
+        image = "https://i.ibb.co/jvLv1Lxw/no-Filter.png",
+        scripts = {
+            {title = "سكربت جديد", requiresKey = "لا", code = [[loadstring(game:HttpGet('https://raw.githubusercontent.com/xRoxyHubx/Ride-A-Pet/refs/heads/main/Script'))()]]},
+            {title = "كشف حيوانات اوتو", requiresKey = "لا", code = [[loadstring(game:HttpGet("https://pastefy.app/AsNICbLa/raw"))()]]}
+        }
+    },
+    {
+        name = "ماب بلوكس فروت",
+        image = "https://i.ibb.co/G4hmKt41/no-Filter-1.png",
         scripts = {
             {title = "سكربت موز المباشر", requiresKey = "لا", code = [[loadstring(game:HttpGet("https://raw.githubusercontent.com/bloxfruitsnokey/Redz/refs/heads/main/Aquamarine/script.luau"))()]]}
         }
     },
     {
-        name = "ركوب حيوانات",
-        image = "rbxassetid://6023426915",
+        name = "ماب سرقة البيض",
+        image = "https://i.ibb.co/QjkdqfSB/b2415314283a1bdedb9b658508d6c84c.jpg",
         scripts = {
-            {title = "سكربت جديد", requiresKey = "لا", code = [[loadstring(game:HttpGet('https://raw.githubusercontent.com/xRoxyHubx/Ride-A-Pet/refs/heads/main/Script'))()]]},
-            {title = "كشف حيوانات اوتو", requiresKey = "لا", code = [[loadstring(game:HttpGet("https://pastefy.app/AsNICbLa/raw"))()]]}
+            {title = "سكربت فلفل", requiresKey = "لا", code = [[loadstring(game:HttpGet("https://raw.githubusercontent.com/tienkhanh1/spicy/main/Chilli.lua"))()]]},
+            {title = "الأزرق (كسر حماية)", requiresKey = "لا", code = [[loadstring(game:HttpGet("https://raw.githubusercontent.com/PulseZax/Loader/refs/heads/main/.lua"))()]]}
         }
     }
 }
@@ -1642,6 +1646,7 @@ local function renderMapCards(filterText)
 
             local mapImg = Instance.new("ImageLabel")
             mapImg.Size = UDim2.new(1, 0, 0, 60)
+            mapImg.BackgroundColor3 = Color3.fromRGB(30, 30, 40)
             mapImg.Image = map.image
             mapImg.ScaleType = Enum.ScaleType.Crop
             mapImg.Parent = card
@@ -1700,8 +1705,7 @@ SuggestTextBox.TextSize = 11
 SuggestTextBox.MultiLine = true
 SuggestTextBox.Parent = SuggestBoxContainer
 
-ListSendSuggestBtn = Instance.new("TextButton")
-SendSuggestBtn = Instance.new("TextButton")
+local SendSuggestBtn = Instance.new("TextButton")
 SendSuggestBtn.Size = UDim2.new(1, -10, 0, 30)
 SendSuggestBtn.Position = UDim2.new(0, 0, 0, 215)
 SendSuggestBtn.BackgroundColor3 = Color3.fromRGB(40, 140, 60)
