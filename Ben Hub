@@ -1,4 +1,4 @@
--- Ben Script Hub - Blox Fruits & New Maps Edition (Safe Asset Fix)
+-- Ben Script Hub - Blox Fruits & New Maps Edition (Updated Maps & Scripts)
 local CoreGui = game:GetService("CoreGui")
 local Players = game:GetService("Players")
 local TweenService = game:GetService("TweenService")
@@ -33,7 +33,6 @@ local function fetchAsset(url, fileName)
             end
         end
     end)
-    -- في حال فشل التنزيل، نرجع رابط احتياطي أو فارغ لتجنب توقف السكربت
     return url
 end
 
@@ -1050,7 +1049,7 @@ local UpdatesText = Instance.new("TextLabel")
 UpdatesText.Size = UDim2.new(1, -14, 0, 95)
 UpdatesText.Position = UDim2.new(0, 7, 0, 24)
 UpdatesText.BackgroundTransparency = 1
-UpdatesText.Text = "• إصلاح مشكلة تحميل الأصول وحماية السكربت من التوقف.\n• إضافة ميزة كشف مكان وتتبع اللاعبين (ESP).\n• تحسين الأداء العام وواجهة المراقبة والشات."
+UpdatesText.Text = "• تحديث ماب كيبورد، إضافة ماب 99 ليلة وماب كسر البيض بالسكربتات الجديدة.\n• إضافة ميزة كشف مكان وتتبع اللاعبين (ESP).\n• تحسين الأداء العام وواجهة المراقبة والشات."
 UpdatesText.TextColor3 = Color3.fromRGB(200, 200, 210)
 UpdatesText.Font = Enum.Font.SourceSans
 UpdatesText.TextSize = 9.5
@@ -1274,4 +1273,479 @@ end
 SpecModalBtn.MouseButton1Click:Connect(updateSpecPlayersList)
 
 ---------------------------------------------------------
--- نافذة وميزة كشف وتتبع مكان شخص (ESP Tracker Syste
+-- نافذة وميزة كشف وتتبع مكان شخص (ESP Tracker System)
+---------------------------------------------------------
+local TrackerFrame = Instance.new("Frame")
+TrackerFrame.Size = UDim2.new(1, 0, 1, 0)
+TrackerFrame.BackgroundColor3 = Color3.fromRGB(16, 16, 24)
+TrackerFrame.Visible = false
+TrackerFrame.ZIndex = 20
+TrackerFrame.Parent = SettingsTab
+
+local TrackerHeader = Instance.new("Frame")
+TrackerHeader.Size = UDim2.new(1, 0, 0, 32)
+TrackerHeader.BackgroundColor3 = Color3.fromRGB(22, 22, 32)
+TrackerHeader.ZIndex = 21
+TrackerHeader.Parent = TrackerFrame
+
+local TrackerTitle = Instance.new("TextLabel")
+TrackerTitle.Size = UDim2.new(1, -70, 1, 0)
+TrackerTitle.Position = UDim2.new(0, 10, 0, 0)
+TrackerTitle.BackgroundTransparency = 1
+TrackerTitle.Text = "📍 اختر لاعباً لكشف وتتبع مكانه:"
+TrackerTitle.TextColor3 = Color3.fromRGB(255, 215, 0)
+TrackerTitle.Font = Enum.Font.SourceSansBold
+TrackerTitle.TextSize = 11.5
+TrackerTitle.TextXAlignment = Enum.TextXAlignment.Left
+TrackerTitle.ZIndex = 22
+TrackerTitle.Parent = TrackerHeader
+
+local CloseTrackerBtn = Instance.new("TextButton")
+CloseTrackerBtn.Size = UDim2.new(0, 50, 0, 22)
+CloseTrackerBtn.Position = UDim2.new(1, -55, 0, 5)
+CloseTrackerBtn.BackgroundColor3 = Color3.fromRGB(180, 30, 40)
+CloseTrackerBtn.Text = "إغلاق"
+CloseTrackerBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+CloseTrackerBtn.Font = Enum.Font.SourceSansBold
+CloseTrackerBtn.TextSize = 10
+CloseTrackerBtn.ZIndex = 22
+CloseTrackerBtn.Parent = TrackerHeader
+Instance.new("UICorner", CloseTrackerBtn).CornerRadius = UDim.new(0, 4)
+
+local StopAllTrackBtn = Instance.new("TextButton")
+StopAllTrackBtn.Size = UDim2.new(1, -20, 0, 26)
+StopAllTrackBtn.Position = UDim2.new(0, 10, 0, 38)
+StopAllTrackBtn.BackgroundColor3 = Color3.fromRGB(180, 30, 40)
+StopAllTrackBtn.Text = "❌ إيقاف كشف وتتبع الجميع"
+StopAllTrackBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+StopAllTrackBtn.Font = Enum.Font.SourceSansBold
+StopAllTrackBtn.TextSize = 11
+StopAllTrackBtn.ZIndex = 21
+StopAllTrackBtn.Parent = TrackerFrame
+Instance.new("UICorner", StopAllTrackBtn).CornerRadius = UDim.new(0, 5)
+
+local TrackerScroll = Instance.new("ScrollingFrame")
+TrackerScroll.Size = UDim2.new(1, -20, 1, -74)
+TrackerScroll.Position = UDim2.new(0, 10, 0, 68)
+TrackerScroll.BackgroundTransparency = 1
+TrackerScroll.CanvasSize = UDim2.new(0, 0, 0, 0)
+TrackerScroll.ScrollBarThickness = 3
+TrackerScroll.ZIndex = 21
+TrackerScroll.Parent = TrackerFrame
+
+local TrackerLayout = Instance.new("UIListLayout")
+TrackerLayout.SortOrder = Enum.SortOrder.LayoutOrder
+TrackerLayout.Padding = UDim.new(0, 5)
+TrackerLayout.Parent = TrackerScroll
+
+TrackerModalBtn.MouseButton1Click:Connect(function() TrackerFrame.Visible = true end)
+CloseTrackerBtn.MouseButton1Click:Connect(function() TrackerFrame.Visible = false end)
+
+local activeTrackers = {}
+
+local function removeTracker(player)
+    if activeTrackers[player] then
+        if activeTrackers[player].gui then activeTrackers[player].gui:Destroy() end
+        activeTrackers[player] = nil
+    end
+end
+
+StopAllTrackBtn.MouseButton1Click:Connect(function()
+    for p, _ in pairs(activeTrackers) do
+        removeTracker(p)
+    end
+end)
+
+local function toggleTracker(player)
+    if activeTrackers[player] then
+        removeTracker(player)
+        return false
+    else
+        local trGui = Instance.new("BillboardGui")
+        trGui.Name = "BenESPTracker_" .. player.Name
+        trGui.Size = UDim2.new(0, 130, 0, 30)
+        trGui.AlwaysOnTop = true
+        trGui.Parent = ScreenGui
+
+        local trFrame = Instance.new("Frame")
+        trFrame.Size = UDim2.new(1, 0, 1, 0)
+        trFrame.BackgroundColor3 = Color3.fromRGB(18, 18, 26)
+        trFrame.BackgroundTransparency = 0.2
+        trFrame.Parent = trGui
+        Instance.new("UICorner", trFrame).CornerRadius = UDim.new(0, 6)
+
+        local trStroke = Instance.new("UIStroke")
+        trStroke.Color = Color3.fromRGB(255, 180, 0)
+        trStroke.Thickness = 1.2
+        trStroke.Parent = trFrame
+
+        local pImg = Instance.new("ImageLabel")
+        pImg.Size = UDim2.new(0, 22, 0, 22)
+        pImg.Position = UDim2.new(0, 4, 0.5, -11)
+        pImg.BackgroundColor3 = Color3.fromRGB(30, 30, 40)
+        pImg.Image = "rbxthumb://type=AvatarHeadShot&id=" .. tostring(player.UserId) .. "&w=150&h=150"
+        pImg.Parent = trFrame
+        Instance.new("UICorner", pImg).CornerRadius = UDim.new(1, 0)
+
+        local trLbl = Instance.new("TextLabel")
+        trLbl.Size = UDim2.new(1, -30, 1, 0)
+        trLbl.Position = UDim2.new(0, 28, 0, 0)
+        trLbl.BackgroundTransparency = 1
+        trLbl.Text = (player.DisplayName ~= "" and player.DisplayName or player.Name) .. "\n..."
+        trLbl.TextColor3 = Color3.fromRGB(255, 255, 255)
+        trLbl.Font = Enum.Font.SourceSansBold
+        trLbl.TextSize = 9.5
+        trLbl.TextXAlignment = Enum.TextXAlignment.Left
+        trLbl.Parent = trFrame
+
+        activeTrackers[player] = {gui = trGui, label = trLbl}
+        return true
+    end
+end
+
+RunService.RenderStepped:Connect(function()
+    for p, data in pairs(activeTrackers) do
+        if p and p.Character and p.Character:FindFirstChild("HumanoidRootPart") and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
+            data.gui.Adornee = p.Character.HumanoidRootPart
+            local dist = math.floor((p.Character.HumanoidRootPart.Position - LocalPlayer.Character.HumanoidRootPart.Position).Magnitude)
+            data.label.Text = (p.DisplayName ~= "" and p.DisplayName or p.Name) .. "\n📍 " .. tostring(dist) .. " m"
+        else
+            data.label.Text = (p.DisplayName ~= "" and p.DisplayName or p.Name) .. "\n❌ غائب"
+        end
+    end
+end)
+
+local function updateTrackerPlayersList()
+    for _, child in ipairs(TrackerScroll:GetChildren()) do
+        if child:IsA("Frame") then child:Destroy() end
+    end
+
+    for _, p in ipairs(Players:GetPlayers()) do
+        if p ~= LocalPlayer then
+            local card = Instance.new("Frame")
+            card.Size = UDim2.new(1, -6, 0, 36)
+            card.BackgroundColor3 = Color3.fromRGB(24, 24, 34)
+            card.ZIndex = 22
+            card.Parent = TrackerScroll
+            Instance.new("UICorner", card).CornerRadius = UDim.new(0, 5)
+
+            local pImg = Instance.new("ImageLabel")
+            pImg.Size = UDim2.new(0, 28, 0, 28)
+            pImg.Position = UDim2.new(0, 5, 0.5, -14)
+            pImg.BackgroundColor3 = Color3.fromRGB(35, 35, 45)
+            pImg.Image = "rbxthumb://type=AvatarHeadShot&id=" .. tostring(p.UserId) .. "&w=150&h=150"
+            pImg.ZIndex = 23
+            pImg.Parent = card
+            Instance.new("UICorner", pImg).CornerRadius = UDim.new(1, 0)
+
+            local pName = Instance.new("TextLabel")
+            pName.Size = UDim2.new(1, -110, 1, 0)
+            pName.Position = UDim2.new(0, 38, 0, 0)
+            pName.BackgroundTransparency = 1
+            pName.Text = p.DisplayName ~= "" and p.DisplayName or p.Name
+            pName.TextColor3 = Color3.fromRGB(255, 255, 255)
+            pName.Font = Enum.Font.SourceSansBold
+            pName.TextSize = 11.5
+            pName.TextXAlignment = Enum.TextXAlignment.Left
+            pName.ZIndex = 23
+            pName.Parent = card
+
+            local trackBtn = Instance.new("TextButton")
+            trackBtn.Size = UDim2.new(0, 62, 0, 24)
+            trackBtn.Position = UDim2.new(1, -68, 0.5, -12)
+            trackBtn.BackgroundColor3 = activeTrackers[p] and Color3.fromRGB(180, 40, 40) or Color3.fromRGB(180, 110, 30)
+            trackBtn.Text = activeTrackers[p] and "إلغاء ❌" or "تتبع 📍"
+            trackBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+            trackBtn.Font = Enum.Font.SourceSansBold
+            trackBtn.TextSize = 10
+            trackBtn.ZIndex = 23
+            trackBtn.Parent = card
+            Instance.new("UICorner", trackBtn).CornerRadius = UDim.new(0, 4)
+
+            trackBtn.MouseButton1Click:Connect(function()
+                local isTracking = toggleTracker(p)
+                trackBtn.Text = isTracking and "إلغاء ❌" or "تتبع 📍"
+                trackBtn.BackgroundColor3 = isTracking and Color3.fromRGB(180, 40, 40) or Color3.fromRGB(180, 110, 30)
+            end)
+        end
+    end
+    TrackerScroll.CanvasSize = UDim2.new(0, 0, 0, TrackerLayout.AbsoluteContentSize.Y + 10)
+end
+
+TrackerModalBtn.MouseButton1Click:Connect(updateTrackerPlayersList)
+
+---------------------------------------------------------
+-- 3. سكربتات المابات (التحديثات المطلوبة للمابات الجديدة)
+---------------------------------------------------------
+local mapDataList = {
+    {
+        name = "سرقة البيض",
+        image = fetchAsset("https://d.top4top.io/p_3922v5lak1.jpg", "egg_steal"),
+        scripts = {
+            {title = "سكربت فلفل", requiresKey = "لا", code = [[loadstring(game:HttpGet("https://raw.githubusercontent.com/tienkhanh1/spicy/main/Chilli.lua"))()]]},
+            {title = "الأزرق (كسر حماية)", requiresKey = "لا", code = [[loadstring(game:HttpGet("https://raw.githubusercontent.com/PulseZax/Loader/refs/heads/main/.lua"))()]]},
+        }
+    },
+    {
+        name = "ماب كيبورد",
+        image = fetchAsset("https://d.top4top.io/p_3936ehf6q0.jpg", "keyboard_map_v3"),
+        scripts = {
+            {title = "سكربت كيبورد سريع", requiresKey = "لا", code = [[loadstring(game:HttpGet("https://scriptblox.com/raw/W3or-+1-Speed-Keyboard-Escape-or-Candy-and-Chocolate-Galactic-Scripts-240518"))()]]}
+        }
+    },
+    {
+        name = "99 ليلة",
+        image = fetchAsset("https://e.top4top.io/p_3936cgqv10.jpeg", "nights_99_v1"),
+        scripts = {
+            {title = "فيب وايدوير", requiresKey = "لا", code = [[loadstring(game:HttpGet("https://raw.githubusercontent.com/VapeVoidware/VW-Add/main/nightsintheforest.lua", true))()]]},
+            {title = "هوتاو هب", requiresKey = "لا", code = [[loadstring(game:HttpGet("https://raw.githubusercontent.com/SLK-gaming/Hutao-Hub/refs/heads/main/99-Nights-In-The-Forest.txt"))()]]},
+            {title = "ريفتون هب", requiresKey = "لا", code = [[loadstring(game:HttpGet("https://rifton.top/loader.lua"))()]]},
+            {title = "فوكس نيم هب", requiresKey = "لا", code = [[loadstring(game:HttpGet("https://raw.githubusercontent.com/caomod2077/Script/refs/heads/main/FoxnameHub.lua"))()]]}
+        }
+    },
+    {
+        name = "ماب كسر البيض",
+        image = fetchAsset("https://b.top4top.io/p_3936ezu6h0.jpg", "egg_crack_v3"),
+        scripts = {
+            {title = "سكربت كسر البيض أوتو", requiresKey = "لا", code = [[loadstring(game:HttpGet("https://raw.githubusercontent.com/joustingmatch/Ouroboros/main/loader.lua"))()]]}
+        }
+    },
+    {
+        name = "بلوكس فروت",
+        image = fetchAsset("https://f.top4top.io/p_3923xn5tv0.png", "blox_fruits"),
+        scripts = {
+            {title = "سكربت موز المباشر", requiresKey = "لا", code = [[loadstring(game:HttpGet("https://raw.githubusercontent.com/bloxfruitsnokey/Redz/refs/heads/main/Aquamarine/script.luau"))()]]}
+        }
+    },
+    {
+        name = "ركوب حيوانات",
+        image = fetchAsset("https://c.top4top.io/p_39220ivke0.png", "ride_pet"),
+        scripts = {
+            {title = "سكربت جديد", requiresKey = "لا", code = [[loadstring(game:HttpGet('https://raw.githubusercontent.com/xRoxyHubx/Ride-A-Pet/refs/heads/main/Script'))()]]},
+            {title = "كشف حيوانات اوتو", requiresKey = "لا", code = [[loadstring(game:HttpGet("https://pastefy.app/AsNICbLa/raw"))()]]}
+        }
+    }
+}
+
+local MapSearchBox = Instance.new("TextBox")
+MapSearchBox.Size = UDim2.new(1, -10, 0, 26)
+MapSearchBox.BackgroundColor3 = Color3.fromRGB(22, 22, 30)
+MapSearchBox.PlaceholderText = "🔍 البحث عن ماب أو سكربت..."
+MapSearchBox.Text = ""
+MapSearchBox.TextColor3 = Color3.fromRGB(255, 255, 255)
+MapSearchBox.Font = Enum.Font.SourceSans
+MapSearchBox.TextSize = 11
+MapSearchBox.Parent = MapScriptsTab
+Instance.new("UICorner", MapSearchBox).CornerRadius = UDim.new(0, 6)
+
+local MapsScroll = Instance.new("ScrollingFrame")
+MapsScroll.Size = UDim2.new(1, -10, 0, 240)
+MapsScroll.Position = UDim2.new(0, 0, 0, 32)
+MapsScroll.BackgroundTransparency = 1
+MapsScroll.CanvasSize = UDim2.new(0, 0, 0, 0)
+MapsScroll.ScrollBarThickness = 3
+MapsScroll.Parent = MapScriptsTab
+
+local MapsGrid = Instance.new("UIGridLayout")
+MapsGrid.CellSize = UDim2.new(0, 175, 0, 110)
+MapsGrid.CellPadding = UDim2.new(0, 10, 0, 10)
+MapsGrid.Parent = MapsScroll
+
+local ScriptDetailFrame = Instance.new("Frame")
+ScriptDetailFrame.Size = UDim2.new(1, -10, 0, 240)
+ScriptDetailFrame.Position = UDim2.new(0, 0, 0, 32)
+ScriptDetailFrame.BackgroundTransparency = 1
+ScriptDetailFrame.Visible = false
+ScriptDetailFrame.Parent = MapScriptsTab
+
+local BackToMapsBtn = Instance.new("TextButton")
+BackToMapsBtn.Size = UDim2.new(0, 100, 0, 22)
+BackToMapsBtn.BackgroundColor3 = Color3.fromRGB(180, 30, 40)
+BackToMapsBtn.Text = "↩ عودة للمابات"
+BackToMapsBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+BackToMapsBtn.Font = Enum.Font.SourceSansBold
+BackToMapsBtn.TextSize = 10
+BackToMapsBtn.Parent = ScriptDetailFrame
+Instance.new("UICorner", BackToMapsBtn).CornerRadius = UDim.new(0, 5)
+
+local ScriptsScroll = Instance.new("ScrollingFrame")
+ScriptsScroll.Size = UDim2.new(1, 0, 0, 212)
+ScriptsScroll.Position = UDim2.new(0, 0, 0, 28)
+ScriptsScroll.BackgroundTransparency = 1
+ScriptsScroll.CanvasSize = UDim2.new(0, 0, 0, 0)
+ScriptsScroll.ScrollBarThickness = 3
+ScriptsScroll.Parent = ScriptDetailFrame
+
+local ScriptsLayout = Instance.new("UIListLayout")
+ScriptsLayout.SortOrder = Enum.SortOrder.LayoutOrder
+ScriptsLayout.Padding = UDim.new(0, 6)
+ScriptsLayout.Parent = ScriptsScroll
+
+BackToMapsBtn.MouseButton1Click:Connect(function()
+    ScriptDetailFrame.Visible = false
+    MapsScroll.Visible = true
+end)
+
+local function openMapScripts(mapInfo)
+    for _, child in ipairs(ScriptsScroll:GetChildren()) do
+        if child:IsA("Frame") then child:Destroy() end
+    end
+
+    for _, sc in ipairs(mapInfo.scripts) do
+        local card = Instance.new("Frame")
+        card.Size = UDim2.new(1, -6, 0, 54)
+        card.BackgroundColor3 = Color3.fromRGB(22, 22, 30)
+        card.Parent = ScriptsScroll
+        Instance.new("UICorner", card).CornerRadius = UDim.new(0, 6)
+
+        local title = Instance.new("TextLabel")
+        title.Size = UDim2.new(0.65, 0, 0, 20)
+        title.Position = UDim2.new(0, 8, 0, 4)
+        title.BackgroundTransparency = 1
+        title.Text = "⚡ " .. sc.title
+        title.TextColor3 = Color3.fromRGB(255, 215, 0)
+        title.Font = Enum.Font.SourceSansBold
+        title.TextSize = 11
+        title.TextXAlignment = Enum.TextXAlignment.Left
+        title.Parent = card
+
+        local keyBadge = Instance.new("TextLabel")
+        keyBadge.Size = UDim2.new(0.65, 0, 0, 18)
+        keyBadge.Position = UDim2.new(0, 8, 0, 26)
+        keyBadge.BackgroundTransparency = 1
+        keyBadge.Text = (sc.requiresKey == "نعم") and "🔑 يحتاج مفتاح" or "🟢 بدون مفتاح"
+        keyBadge.TextColor3 = (sc.requiresKey == "نعم") and Color3.fromRGB(255, 100, 100) or Color3.fromRGB(100, 255, 100)
+        keyBadge.Font = Enum.Font.SourceSans
+        keyBadge.TextSize = 9.5
+        keyBadge.TextXAlignment = Enum.TextXAlignment.Left
+        keyBadge.Parent = card
+
+        local runBtn = Instance.new("TextButton")
+        runBtn.Size = UDim2.new(0.28, 0, 0, 30)
+        runBtn.Position = UDim2.new(0.7, 0, 0.5, -15)
+        runBtn.BackgroundColor3 = Color3.fromRGB(180, 25, 35)
+        runBtn.Text = "▶️ تشغيل"
+        runBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+        runBtn.Font = Enum.Font.SourceSansBold
+        runBtn.TextSize = 10.5
+        runBtn.Parent = card
+        Instance.new("UICorner", runBtn).CornerRadius = UDim.new(0, 5)
+
+        runBtn.MouseButton1Click:Connect(function()
+            local success, err = pcall(function()
+                local func, loadErr = loadstring(sc.code)
+                if func then func() else error(loadErr) end
+            end)
+            runBtn.Text = success and "✅ تم التشغيل" or "❌ فشل التشغيل"
+            task.wait(1.5)
+            runBtn.Text = "▶️ تشغيل"
+        end)
+    end
+    ScriptsScroll.CanvasSize = UDim2.new(0, 0, 0, ScriptsLayout.AbsoluteContentSize.Y + 10)
+    MapsScroll.Visible = false
+    ScriptDetailFrame.Visible = true
+end
+
+local function renderMapCards(filterText)
+    for _, child in ipairs(MapsScroll:GetChildren()) do
+        if child:IsA("Frame") then child:Destroy() end
+    end
+
+    for _, map in ipairs(mapDataList) do
+        if filterText == "" or string.find(string.lower(map.name), string.lower(filterText)) then
+            local card = Instance.new("Frame")
+            card.BackgroundColor3 = Color3.fromRGB(22, 22, 30)
+            card.ClipsDescendants = true
+            card.Parent = MapsScroll
+            Instance.new("UICorner", card).CornerRadius = UDim.new(0, 8)
+
+            local mapImg = Instance.new("ImageLabel")
+            mapImg.Size = UDim2.new(1, 0, 0, 60)
+            mapImg.Image = map.image ~= "" and map.image or ""
+            mapImg.ScaleType = Enum.ScaleType.Crop
+            mapImg.Parent = card
+            Instance.new("UICorner", mapImg).CornerRadius = UDim.new(0, 8)
+
+            local title = Instance.new("TextLabel")
+            title.Size = UDim2.new(1, -8, 0, 18)
+            title.Position = UDim2.new(0, 4, 0, 62)
+            title.BackgroundTransparency = 1
+            title.Text = map.name
+            title.TextColor3 = Color3.fromRGB(255, 255, 255)
+            title.Font = Enum.Font.SourceSansBold
+            title.TextSize = 10.5
+            title.TextXAlignment = Enum.TextXAlignment.Left
+            title.Parent = card
+
+            local viewBtn = Instance.new("TextButton")
+            viewBtn.Size = UDim2.new(1, -8, 0, 22)
+            viewBtn.Position = UDim2.new(0, 4, 0, 82)
+            viewBtn.BackgroundColor3 = Color3.fromRGB(180, 25, 35)
+            viewBtn.Text = "عرض السكربتات ▶"
+            viewBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+            viewBtn.Font = Enum.Font.SourceSansBold
+            viewBtn.TextSize = 9.5
+            viewBtn.Parent = card
+            Instance.new("UICorner", viewBtn).CornerRadius = UDim.new(0, 4)
+
+            viewBtn.MouseButton1Click:Connect(function() openMapScripts(map) end)
+        end
+    end
+    MapsScroll.CanvasSize = UDim2.new(0, 0, 0, MapsGrid.AbsoluteContentSize.Y + 10)
+end
+
+renderMapCards("")
+MapSearchBox:GetPropertyChangedSignal("Text"):Connect(function() renderMapCards(MapSearchBox.Text) end)
+
+---------------------------------------------------------
+-- 4. الاقتراحات
+---------------------------------------------------------
+local SuggestBoxContainer = Instance.new("Frame")
+SuggestBoxContainer.Size = UDim2.new(1, -10, 0, 190)
+SuggestBoxContainer.Position = UDim2.new(0, 0, 0, 15)
+SuggestBoxContainer.BackgroundColor3 = Color3.fromRGB(20, 20, 26)
+SuggestBoxContainer.Parent = SuggestTab
+Instance.new("UICorner", SuggestBoxContainer).CornerRadius = UDim.new(0, 8)
+
+local SuggestTextBox = Instance.new("TextBox")
+SuggestTextBox.Size = UDim2.new(1, -12, 1, -12)
+SuggestTextBox.Position = UDim2.new(0, 6, 0, 6)
+SuggestTextBox.BackgroundTransparency = 1
+SuggestTextBox.PlaceholderText = "اكتب اقتراحك هنا..."
+SuggestTextBox.Text = ""
+SuggestTextBox.TextColor3 = Color3.fromRGB(220, 220, 230)
+SuggestTextBox.Font = Enum.Font.SourceSans
+SuggestTextBox.TextSize = 11
+SuggestTextBox.MultiLine = true
+SuggestTextBox.Parent = SuggestBoxContainer
+
+local SendSuggestBtn = Instance.new("TextButton")
+SendSuggestBtn.Size = UDim2.new(1, -10, 0, 30)
+SendSuggestBtn.Position = UDim2.new(0, 0, 0, 215)
+SendSuggestBtn.BackgroundColor3 = Color3.fromRGB(40, 140, 60)
+SendSuggestBtn.Text = "📩 إرسال الاقتراح"
+SendSuggestBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+SendSuggestBtn.Font = Enum.Font.SourceSansBold
+SendSuggestBtn.TextSize = 11.5
+SendSuggestBtn.Parent = SuggestTab
+Instance.new("UICorner", SendSuggestBtn).CornerRadius = UDim.new(0, 6)
+
+SendSuggestBtn.MouseButton1Click:Connect(function()
+    if SuggestTextBox.Text ~= "" then
+        local data = {
+            sender = LocalPlayer.DisplayName ~= "" and LocalPlayer.DisplayName or LocalPlayer.Name,
+            suggestion = SuggestTextBox.Text,
+            timestamp = os.time()
+        }
+        customRequest({
+            Url = FIREBASE_SUGGEST_URL,
+            Method = "POST",
+            Headers = {["Content-Type"] = "application/json"},
+            Body = HttpService:JSONEncode(data)
+        })
+        SuggestTextBox.Text = ""
+        SendSuggestBtn.Text = "✅ تم إرسال الاقتراح!"
+        task.wait(2)
+        SendSuggestBtn.Text = "📩 إرسال الاقتراح"
+    end
+end)
