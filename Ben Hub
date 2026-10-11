@@ -1,4 +1,4 @@
--- Ben Script Hub - Blox Fruits & New Maps Edition (ESP Tracker & New Maps Added)
+-- Ben Script Hub - Blox Fruits & New Maps Edition (99 Nights Map Added & Others Removed)
 local CoreGui = game:GetService("CoreGui")
 local Players = game:GetService("Players")
 local TweenService = game:GetService("TweenService")
@@ -1041,7 +1041,7 @@ local UpdatesText = Instance.new("TextLabel")
 UpdatesText.Size = UDim2.new(1, -14, 0, 95)
 UpdatesText.Position = UDim2.new(0, 7, 0, 24)
 UpdatesText.BackgroundTransparency = 1
-UpdatesText.Text = "• إضافة ميزة كشف مكان وتتبع اللاعبين (ESP) بتصميم خفيف ومناسب للجوال.\n• إضافة ماب كسر البيض وماب كيبورد لقائمة السكربتات.\n• تحسين الأداء العام وواجهة المراقبة والشات."
+UpdatesText.Text = "• إضافة ماب 99 ليلة الجديد مع سكربتاته.\n• حذف ماب كسر البيض وماب كيبورد.\n• تفعيل ميزات التتبع والمراقبة والشات المحمي."
 UpdatesText.TextColor3 = Color3.fromRGB(200, 200, 210)
 UpdatesText.Font = Enum.Font.SourceSans
 UpdatesText.TextSize = 9.5
@@ -1100,7 +1100,6 @@ SpecModalBtn.TextSize = 10.5
 SpecModalBtn.Parent = SettingsTab
 Instance.new("UICorner", SpecModalBtn).CornerRadius = UDim.new(0, 5)
 
--- زر كشف وتتبع مكان اللاعبين (ESP Tracker)
 local TrackerModalBtn = Instance.new("TextButton")
 TrackerModalBtn.Size = UDim2.new(1, -20, 0, 28)
 TrackerModalBtn.Position = UDim2.new(0, 0, 0, 104)
@@ -1333,7 +1332,6 @@ TrackerLayout.Parent = TrackerScroll
 TrackerModalBtn.MouseButton1Click:Connect(function() TrackerFrame.Visible = true end)
 CloseTrackerBtn.MouseButton1Click:Connect(function() TrackerFrame.Visible = false end)
 
--- شاشة علامات كشف الموقع الخفيفة (مؤشر جانبي خفيف لا يغطي الشاشة)
 local activeTrackers = {}
 
 local function removeTracker(player)
@@ -1396,7 +1394,6 @@ local function toggleTracker(player)
     end
 end
 
--- حلقة تحديث موقع الكشف والمسافة باستمرار
 RunService.RenderStepped:Connect(function()
     for p, data in pairs(activeTrackers) do
         if p and p.Character and p.Character:FindFirstChild("HumanoidRootPart") and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
@@ -1469,38 +1466,41 @@ end
 TrackerModalBtn.MouseButton1Click:Connect(updateTrackerPlayersList)
 
 ---------------------------------------------------------
--- 3. سكربتات المابات (إضافة ماب كسر البيض وماب كيبورد)
+-- 3. سكربتات المابات (إضافة ماب 99 ليلة الجديد)
 ---------------------------------------------------------
 local mapDataList = {
     {
-        name = "🥚 سرقة البيض",
+        name = "سرقة البيض",
         image = fetchAsset("https://d.top4top.io/p_3922v5lak1.jpg", "egg_steal"),
         scripts = {
             {title = "سكربت فلفل", requiresKey = "لا", code = [[loadstring(game:HttpGet("https://raw.githubusercontent.com/tienkhanh1/spicy/main/Chilli.lua"))()]]},
             {title = "الأزرق (كسر حماية)", requiresKey = "لا", code = [[loadstring(game:HttpGet("https://raw.githubusercontent.com/PulseZax/Loader/refs/heads/main/.lua"))()]]},
+            {title = "سكربت ليون", requiresKey = "لا", code = [[loadstring(game:HttpGet("https://raw.githubusercontent.com/lennonxscripts/lennonfarmv2/refs/heads/main/stealanegg"))()]]},
+            {title = "تجميد الوحوش", requiresKey = "لا", code = [[loadstring(game:HttpGet("https://raw.githubusercontent.com/alix77-r/Krov/refs/heads/main/AntiHitKrovScript.txt"))()]]},
+            {title = "ميراندا هوب", requiresKey = "لا", code = [[loadstring(game:HttpGet("https://raw.githubusercontent.com/miirandahub/loader/refs/heads/main/mirandaafk.lua"))()]]}
         }
     },
     {
-        name = "☠️ بلوكس فروت",
+        name = "99 ليلة",
+        image = fetchAsset("https://g.top4top.io/p_39369bu7i0.jpeg", "nights_99"),
+        scripts = {
+            {title = "سكربت فاب فيودوير", requiresKey = "لا", code = [[loadstring(game:HttpGet("https://raw.githubusercontent.com/VapeVoidware/VW-Add/main/nightsintheforest.lua", true))()]]},
+            {title = "سكربت هوتاو هوب", requiresKey = "لا", code = [[loadstring(game:HttpGet("https://raw.githubusercontent.com/SLK-gaming/Hutao-Hub/refs/heads/main/99-Nights-In-The-Forest.txt"))()]]}
+        }
+    },
+    {
+        name = "بلوكس فروت",
         image = fetchAsset("https://f.top4top.io/p_3923xn5tv0.png", "blox_fruits"),
         scripts = {
             {title = "سكربت موز المباشر", requiresKey = "لا", code = [[loadstring(game:HttpGet("https://raw.githubusercontent.com/bloxfruitsnokey/Banana/refs/heads/main/DB/script.luau"))()]]}
         }
     },
     {
-        name = "🐦‍🔥 ركوب حيوانات",
+        name = "ركوب حيوانات",
         image = fetchAsset("https://c.top4top.io/p_39220ivke0.png", "ride_pet"),
         scripts = {
             {title = "سكربت اصفر", requiresKey = "لا", code = [[loadstring(game:HttpGet("https://raw.githubusercontent.com/afkar-gg/sc/refs/heads/main/Linkhive/RideAPet.lua"))()]]},
             {title = "كشف حيوانات اوتو", requiresKey = "لا", code = [[loadstring(game:HttpGet("https://pastefy.app/AsNICbLa/raw"))()]]}
-        }
-    },
-    {
-        name = "🌃 99ليلة ",
-        image = fetchAsset("https://g.top4top.io/p_39369bu7i0.jpeg", "ride_pet"),
-        scripts = {
-            {title = "سكربت فويد", requiresKey = "لا", code = [[loadstring(game:HttpGet("https://raw.githubusercontent.com/VapeVoidware/VW-Add/main/nightsintheforest.lua", true))()]]},
-            {title = "فوكس", requiresKey = "لا", code = [[loadstring(game:HttpGet("https://raw.githubusercontent.com/caomod2077/Script/refs/heads/main/FoxnameHub.lua"))()]]}
         }
     }
 }
