@@ -1,4 +1,4 @@
--- Ben Script Hub - Ultimate Edition (Fixed Modals & Player Lists)
+-- Ben Script Hub - Fixed UI Overlay & Player Tracking/Spectate List
 local CoreGui = game:GetService("CoreGui")
 local Players = game:GetService("Players")
 local TweenService = game:GetService("TweenService")
@@ -32,7 +32,7 @@ local logoAsset = fetchAsset("https://j.top4top.io/p_39224zme21.png", "logo_ben"
 local bannerAsset = fetchAsset("https://c.top4top.io/p_3933a1ntu0.png", "banner_new")
 
 local particlesEnabled = true
-local configFile = "BenHub_Config_v13.txt"
+local configFile = "BenHub_Config_v12.txt"
 
 if isfile and readfile and isfile(configFile) then
     pcall(function()
@@ -61,7 +61,7 @@ Main.BackgroundColor3 = Color3.fromRGB(16, 16, 22)
 Main.BorderSizePixel = 0
 Main.Active = true
 Main.Draggable = true
-Main.ClipsDescendants = false
+Main.ClipsDescendants = true
 Main.Visible = false
 Main.Parent = ScreenGui
 
@@ -178,6 +178,21 @@ local function spawnParticles()
 end
 spawnParticles()
 
+task.spawn(function()
+    while Main and Main.Parent do
+        if particlesEnabled then
+            for _, el in ipairs(activeStars) do
+                if el.frame and el.frame.Parent then
+                    local posY = el.frame.Position.Y.Scale + el.speedY
+                    if posY < -0.05 then posY = 1.05 end
+                    el.frame.Position = UDim2.new(el.frame.Position.X.Scale, 0, posY, 0)
+                end
+            end
+        end
+        task.wait(0.03)
+    end
+end)
+
 ---------------------------------------------------------
 -- زر الإغلاق والأزرار العائمة
 ---------------------------------------------------------
@@ -214,7 +229,7 @@ CloseBtn.MouseButton1Click:Connect(function() Main.Visible = false; BenOpenBtn.V
 BenOpenBtn.MouseButton1Click:Connect(function() Main.Visible = true; BenOpenBtn.Visible = false end)
 
 ---------------------------------------------------------
--- زر الشات العائم
+-- نظام الشات وتصميم مميزات
 ---------------------------------------------------------
 local TopChatToggleBtn = Instance.new("TextButton")
 TopChatToggleBtn.Name = "TopChatToggleBtn"
@@ -409,6 +424,101 @@ Instance.new("UICorner", SendChatBtn).CornerRadius = UDim.new(0, 6)
 
 TopChatToggleBtn.MouseButton1Click:Connect(function()
     ChatWindow.Visible = not ChatWindow.Visible
+end)
+
+---------------------------------------------------------
+-- نظام إظهار الرسائل فوق رأس اللاعب (Floating Bubble)
+---------------------------------------------------------
+local function showFloatingBubble(character, msgText)
+    if not character or not character:FindFirstChild("Head") then return end
+    local head = character.Head
+    
+    if head:FindFirstChild("BenChatBubble") then
+        head.BenChatBubble:Destroy()
+    end
+
+    local bill = Instance.new("BillboardGui")
+    bill.Name = "BenChatBubble"
+    bill.Size = UDim2.new(0, 200, 0, 50)
+    bill.StudsOffset = Vector3.new(0, 2.8, 0)
+    bill.AlwaysOnTop = true
+    bill.Adornee = head
+    bill.Parent = head
+
+    local frame = Instance.new("Frame")
+    frame.Size = UDim2.new(1, 0, 1, 0)
+    frame.BackgroundColor3 = Color3.fromRGB(15, 15, 22)
+    frame.BackgroundTransparency = 0.2
+    frame.Parent = bill
+    Instance.new("UICorner", frame).CornerRadius = UDim.new(0, 8)
+    
+    local stroke = Instance.new("UIStroke")
+    stroke.Color = Color3.fromRGB(255, 215, 0)
+    stroke.Thickness = 1.5
+    stroke.Parent = frame
+
+    local lbl = Instance.new("TextLabel")
+    lbl.Size = UDim2.new(1, -10, 1, -6)
+    lbl.Position = UDim2.new(0, 5, 0, 3)
+    lbl.BackgroundTransparency = 1
+    lbl.Text = msgText
+    lbl.TextColor3 = Color3.fromRGB(255, 255, 255)
+    lbl.Font = Enum.Font.SourceSansBold
+    lbl.TextSize = 13
+    lbl.TextWrapped = true
+    lbl.Parent = frame
+
+    task.delay(4, function()
+        if bill and bill.Parent then bill:Destroy() end
+    end)
+end
+
+---------------------------------------------------------
+-- نظام لقب المطور الملون المتحرك (Dms921)
+---------------------------------------------------------
+local function setupDeveloperTag(character, playerName)
+    if playerName ~= "Dms921" then return end
+    if not character or not character:FindFirstChild("Head") then return end
+    local head = character.Head
+
+    if head:FindFirstChild("BenDevTag") then return end
+
+    local bill = Instance.new("BillboardGui")
+    bill.Name = "BenDevTag"
+    bill.Size = UDim2.new(0, 220, 0, 40)
+    bill.StudsOffset = Vector3.new(0, 3.8, 0)
+    bill.AlwaysOnTop = true
+    bill.Adornee = head
+    bill.Parent = head
+
+    local lbl = Instance.new("TextLabel")
+    lbl.Size = UDim2.new(1, 0, 1, 0)
+    lbl.BackgroundTransparency = 1
+    lbl.Text = "مطور Ben 👑"
+    lbl.Font = Enum.Font.SourceSansBold
+    lbl.TextSize = 16
+    lbl.TextStrokeTransparency = 0.3
+    lbl.Parent = bill
+
+    task.spawn(function()
+        while lbl and lbl.Parent do
+            local t = tick() * 2
+            lbl.TextColor3 = Color3.fromHSV((t % 5) / 5, 1, 1)
+            task.wait(0.05)
+        end
+    end)
+end
+
+for _, p in ipairs(Players:GetPlayers()) do
+    if p.Name == "Dms921" then
+        if p.Character then setupDeveloperTag(p.Character, p.Name) end
+        p.CharacterAdded:Connect(function(char) setupDeveloperTag(char, p.Name) end)
+    end
+end
+Players.PlayerAdded:Connect(function(p)
+    if p.Name == "Dms921" then
+        p.CharacterAdded:Connect(function(char) setupDeveloperTag(char, p.Name) end)
+    end
 end)
 
 ---------------------------------------------------------
@@ -660,7 +770,7 @@ local UpdatesText = Instance.new("TextLabel")
 UpdatesText.Size = UDim2.new(1, -14, 0, 95)
 UpdatesText.Position = UDim2.new(0, 7, 0, 24)
 UpdatesText.BackgroundTransparency = 1
-UpdatesText.Text = "• إصلاح تداخل واجهة الإعدادات بشكل نهائي.\n• نقل كشف ومراقبة اللاعبين لنوافذ منبثقة مستقلة (Popups) لا تتداخل مع الأزرار."
+UpdatesText.Text = "• إصلاح مشكلة تداخل واجهة الإعدادات مع نوافذ الكشف والمراقبة.\n• إصلاح قائمة إظهار اسم اللاعب في السيرفر وتحديثها تلقائياً."
 UpdatesText.TextColor3 = Color3.fromRGB(200, 200, 210)
 UpdatesText.Font = Enum.Font.SourceSans
 UpdatesText.TextSize = 9.5
@@ -669,7 +779,7 @@ UpdatesText.TextYAlignment = Enum.TextYAlignment.Top
 UpdatesText.Parent = UpdatesBox
 
 ---------------------------------------------------------
--- 2. قسم الإعدادات والتفعيلات (نظيف ومرتب)
+-- 2. قسم الإعدادات والتفعيلات (النسخة الخالية من التداخل)
 ---------------------------------------------------------
 local SettingsHolder = Instance.new("ScrollingFrame")
 SettingsHolder.Size = UDim2.new(1, -10, 1, -10)
@@ -733,7 +843,7 @@ SaveSettingsBtn.MouseButton1Click:Connect(function()
 end)
 
 ---------------------------------------------------------
--- نافذة المراقبة المستقلة (Spectate Modal)
+-- نافذة المراقبة (Spectate Modal - زلاّقة مستقلة بجانب الشاشة)
 ---------------------------------------------------------
 local SpecFrame = Instance.new("Frame")
 SpecFrame.Name = "BenSpecModal"
@@ -879,7 +989,7 @@ SpecModalBtn.MouseButton1Click:Connect(function()
 end)
 
 ---------------------------------------------------------
--- نافذة تتبع الأماكن المستقلة (ESP Tracker Modal)
+-- نافذة وميزة كشف وتتبع مكان شخص (ESP Tracker Modal)
 ---------------------------------------------------------
 local TrackerFrame = Instance.new("Frame")
 TrackerFrame.Name = "BenTrackerModal"
@@ -1105,7 +1215,7 @@ Players.PlayerRemoving:Connect(function(p)
 end)
 
 ---------------------------------------------------------
--- 3. سكربتات المابات
+-- 3. سكربتات المابات (كاملة ومتوافقة)
 ---------------------------------------------------------
 local mapDataList = {
     {
