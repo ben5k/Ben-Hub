@@ -1,4 +1,4 @@
--- Ben Script Hub - Owner Broadcast, Map Scripts & Controls Update
+-- Ben Script Hub - Owner Admin Search & Control Update
 local CoreGui = game:GetService("CoreGui")
 local Players = game:GetService("Players")
 local TweenService = game:GetService("TweenService")
@@ -38,7 +38,7 @@ local eggEventMapAsset = fetchAsset("https://b.top4top.io/p_39455j3oh0.jpg", "eg
 
 local particlesEnabled = true
 local floatingClockEnabled = false
-local configFile = "BenHub_Config_v16.txt"
+local configFile = "BenHub_Config_v17.txt"
 
 if isfile and readfile and isfile(configFile) then
     pcall(function()
@@ -239,7 +239,7 @@ CloseBtn.MouseButton1Click:Connect(function() Main.Visible = false; BenOpenBtn.V
 BenOpenBtn.MouseButton1Click:Connect(function() Main.Visible = true; BenOpenBtn.Visible = false end)
 
 ---------------------------------------------------------
--- تصميم البث المطور (اسم Ben أحمر كبير + علامة ✔ زرقاء + كلام كبير بدون خلفية)
+-- تصميم البث المطور
 ---------------------------------------------------------
 local BroadcastGui = Instance.new("ScreenGui")
 BroadcastGui.Name = "BenAdminBroadcastGui"
@@ -274,7 +274,6 @@ local function showBroadcastPopup(senderName, senderUserId, messageText)
     avatarImg.Parent = popFrame
     Instance.new("UICorner", avatarImg).CornerRadius = UDim.new(1, 0)
 
-    -- اسم Ben بلون أحمر #FF0000 + الصح الزرقاء #00A2FF + الكلام كبير بدون خلفية
     local textLbl = Instance.new("TextLabel")
     textLbl.Size = UDim2.new(1, -75, 1, 0)
     textLbl.Position = UDim2.new(0, 68, 0, 0)
@@ -1153,7 +1152,7 @@ local UpdatesText = Instance.new("TextLabel")
 UpdatesText.Size = UDim2.new(1, -14, 0, 95)
 UpdatesText.Position = UDim2.new(0, 7, 0, 24)
 UpdatesText.BackgroundTransparency = 1
-UpdatesText.Text = "• جعل اسم Ben باللون الأحمر وعلامة التوثيق زرقاء بشكل واضح.\n• ربط وتفعيل خصائص المراقبة (Spectate) وكشف المكان (ESP) من قسم الإعدادات."
+UpdatesText.Text = "• إضافة ميزة البحث المباشر عن اسم أي لاعب داخل لوحة تحكم الأدمن.\n• تسهيل اختيار الشخص المراد بث إشعار أو رسالة خاصة له بسرعة."
 UpdatesText.TextColor3 = Color3.fromRGB(200, 200, 210)
 UpdatesText.Font = Enum.Font.SourceSans
 UpdatesText.TextSize = 9.5
@@ -1162,7 +1161,7 @@ UpdatesText.TextYAlignment = Enum.TextYAlignment.Top
 UpdatesText.Parent = UpdatesBox
 
 ---------------------------------------------------------
--- 2. قسم لوحة الأدمن الخاصة بالأونر (Owner Admin Tab)
+-- 2. قسم لوحة الأدمن الخاصة بالأونر + البحث عن لاعب (Dms921)
 ---------------------------------------------------------
 local AdminTitleLbl = Instance.new("TextLabel")
 AdminTitleLbl.Size = UDim2.new(1, -10, 0, 24)
@@ -1248,9 +1247,23 @@ CloseSelectBtn.ZIndex = 62
 CloseSelectBtn.Parent = SelectHeader
 Instance.new("UICorner", CloseSelectBtn).CornerRadius = UDim.new(0, 4)
 
+-- مربع البحث عن اللاعبين
+local UserSearchBox = Instance.new("TextBox")
+UserSearchBox.Size = UDim2.new(1, -10, 0, 28)
+UserSearchBox.Position = UDim2.new(0, 5, 0, 36)
+UserSearchBox.BackgroundColor3 = Color3.fromRGB(24, 24, 34)
+UserSearchBox.PlaceholderText = "🔍 ابحث عن اسم لاعب..."
+UserSearchBox.Text = ""
+UserSearchBox.TextColor3 = Color3.fromRGB(255, 255, 255)
+UserSearchBox.Font = Enum.Font.SourceSans
+UserSearchBox.TextSize = 11
+UserSearchBox.ZIndex = 62
+UserSearchBox.Parent = SelectUserModal
+Instance.new("UICorner", UserSearchBox).CornerRadius = UDim.new(0, 5)
+
 local SelectScroll = Instance.new("ScrollingFrame")
-SelectScroll.Size = UDim2.new(1, 0, 1, -40)
-SelectScroll.Position = UDim2.new(0, 0, 0, 38)
+SelectScroll.Size = UDim2.new(1, 0, 1, -70)
+SelectScroll.Position = UDim2.new(0, 0, 0, 68)
 SelectScroll.BackgroundTransparency = 1
 SelectScroll.CanvasSize = UDim2.new(0, 0, 0, 0)
 SelectScroll.ScrollBarThickness = 3
@@ -1262,34 +1275,38 @@ SelectLayout.SortOrder = Enum.SortOrder.LayoutOrder
 SelectLayout.Padding = UDim.new(0, 5)
 SelectLayout.Parent = SelectScroll
 
-TargetSelectBtn.MouseButton1Click:Connect(function()
-    SelectUserModal.Visible = true
+local function renderUsersList(filterText)
     for _, child in ipairs(SelectScroll:GetChildren()) do
         if child:IsA("Frame") then child:Destroy() end
     end
 
-    local allCard = Instance.new("Frame")
-    allCard.Size = UDim2.new(1, -6, 0, 36)
-    allCard.BackgroundColor3 = Color3.fromRGB(30, 30, 45)
-    allCard.ZIndex = 62
-    allCard.Parent = SelectScroll
-    Instance.new("UICorner", allCard).CornerRadius = UDim.new(0, 5)
+    filterText = string.lower(filterText or "")
 
-    local allBtn = Instance.new("TextButton")
-    allBtn.Size = UDim2.new(1, 0, 1, 0)
-    allBtn.BackgroundTransparency = 1
-    allBtn.Text = "🌐 بث لجميع المستخدمين (All Users)"
-    allBtn.TextColor3 = Color3.fromRGB(255, 215, 0)
-    allBtn.Font = Enum.Font.SourceSansBold
-    allBtn.TextSize = 11.5
-    allBtn.ZIndex = 63
-    allBtn.Parent = allCard
+    -- خيار "الجميع" يظهر دائماً في بداية القائمة
+    if filterText == "" or string.find("الجميع all users", filterText) then
+        local allCard = Instance.new("Frame")
+        allCard.Size = UDim2.new(1, -6, 0, 36)
+        allCard.BackgroundColor3 = Color3.fromRGB(30, 30, 45)
+        allCard.ZIndex = 62
+        allCard.Parent = SelectScroll
+        Instance.new("UICorner", allCard).CornerRadius = UDim.new(0, 5)
 
-    allBtn.MouseButton1Click:Connect(function()
-        selectedTargetUserId = 0
-        TargetSelectBtn.Text = "🎯 المستهدف: الجميع (All Users)"
-        SelectUserModal.Visible = false
-    end)
+        local allBtn = Instance.new("TextButton")
+        allBtn.Size = UDim2.new(1, 0, 1, 0)
+        allBtn.BackgroundTransparency = 1
+        allBtn.Text = "🌐 بث لجميع المستخدمين (All Users)"
+        allBtn.TextColor3 = Color3.fromRGB(255, 215, 0)
+        allBtn.Font = Enum.Font.SourceSansBold
+        allBtn.TextSize = 11.5
+        allBtn.ZIndex = 63
+        allBtn.Parent = allCard
+
+        allBtn.MouseButton1Click:Connect(function()
+            selectedTargetUserId = 0
+            TargetSelectBtn.Text = "🎯 المستهدف: الجميع (All Users)"
+            SelectUserModal.Visible = false
+        end)
+    end
 
     pcall(function()
         local res = customRequest({Url = FIREBASE_PRESENCE_URL .. ".json", Method = "GET"})
@@ -1298,50 +1315,63 @@ TargetSelectBtn.MouseButton1Click:Connect(function()
             if data then
                 for _, usr in pairs(data) do
                     if type(usr) == "table" and usr.userId then
-                        local uCard = Instance.new("Frame")
-                        uCard.Size = UDim2.new(1, -6, 0, 36)
-                        uCard.BackgroundColor3 = Color3.fromRGB(24, 24, 34)
-                        uCard.ZIndex = 62
-                        uCard.Parent = SelectScroll
-                        Instance.new("UICorner", uCard).CornerRadius = UDim.new(0, 5)
+                        local nameToSearch = string.lower((usr.displayName or "") .. " " .. (usr.name or ""))
+                        if filterText == "" or string.find(nameToSearch, filterText) then
+                            local uCard = Instance.new("Frame")
+                            uCard.Size = UDim2.new(1, -6, 0, 36)
+                            uCard.BackgroundColor3 = Color3.fromRGB(24, 24, 34)
+                            uCard.ZIndex = 62
+                            uCard.Parent = SelectScroll
+                            Instance.new("UICorner", uCard).CornerRadius = UDim.new(0, 5)
 
-                        local uNameLbl = Instance.new("TextLabel")
-                        uNameLbl.Size = UDim2.new(1, -10, 1, 0)
-                        uNameLbl.Position = UDim2.new(0, 10, 0, 0)
-                        uNameLbl.BackgroundTransparency = 1
-                        uNameLbl.Text = "👤 " .. (usr.displayName or usr.name or "مستخدم")
-                        uNameLbl.TextColor3 = Color3.fromRGB(255, 255, 255)
-                        uNameLbl.Font = Enum.Font.SourceSansBold
-                        uNameLbl.TextSize = 11
-                        uNameLbl.TextXAlignment = Enum.TextXAlignment.Left
-                        uNameLbl.ZIndex = 63
-                        uNameLbl.Parent = uCard
+                            local uNameLbl = Instance.new("TextLabel")
+                            uNameLbl.Size = UDim2.new(1, -10, 1, 0)
+                            uNameLbl.Position = UDim2.new(0, 10, 0, 0)
+                            uNameLbl.BackgroundTransparency = 1
+                            uNameLbl.Text = "👤 " .. (usr.displayName or usr.name or "مستخدم")
+                            uNameLbl.TextColor3 = Color3.fromRGB(255, 255, 255)
+                            uNameLbl.Font = Enum.Font.SourceSansBold
+                            uNameLbl.TextSize = 11
+                            uNameLbl.TextXAlignment = Enum.TextXAlignment.Left
+                            uNameLbl.ZIndex = 63
+                            uNameLbl.Parent = uCard
 
-                        local pickBtn = Instance.new("TextButton")
-                        pickBtn.Size = UDim2.new(0, 60, 0, 24)
-                        pickBtn.Position = UDim2.new(1, -66, 0.5, -12)
-                        pickBtn.BackgroundColor3 = Color3.fromRGB(40, 140, 60)
-                        pickBtn.Text = "اختيار"
-                        pickBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-                        pickBtn.Font = Enum.Font.SourceSansBold
-                        pickBtn.TextSize = 10
-                        pickBtn.ZIndex = 63
-                        pickBtn.Parent = uCard
-                        Instance.new("UICorner", pickBtn).CornerRadius = UDim.new(0, 4)
+                            local pickBtn = Instance.new("TextButton")
+                            pickBtn.Size = UDim2.new(0, 60, 0, 24)
+                            pickBtn.Position = UDim2.new(1, -66, 0.5, -12)
+                            pickBtn.BackgroundColor3 = Color3.fromRGB(40, 140, 60)
+                            pickBtn.Text = "اختيار"
+                            pickBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+                            pickBtn.Font = Enum.Font.SourceSansBold
+                            pickBtn.TextSize = 10
+                            pickBtn.ZIndex = 63
+                            pickBtn.Parent = uCard
+                            Instance.new("UICorner", pickBtn).CornerRadius = UDim.new(0, 4)
 
-                        local capturedUserId = usr.userId
-                        local capturedName = usr.displayName or usr.name
-                        pickBtn.MouseButton1Click:Connect(function()
-                            selectedTargetUserId = capturedUserId
-                            TargetSelectBtn.Text = "🎯 المستهدف: " .. tostring(capturedName)
-                            SelectUserModal.Visible = false
-                        end)
+                            local capturedUserId = usr.userId
+                            local capturedName = usr.displayName or usr.name
+                            pickBtn.MouseButton1Click:Connect(function()
+                                selectedTargetUserId = capturedUserId
+                                TargetSelectBtn.Text = "🎯 المستهدف: " .. tostring(capturedName)
+                                SelectUserModal.Visible = false
+                            end)
+                        end
                     end
                 end
             end
         end
     end)
     SelectScroll.CanvasSize = UDim2.new(0, 0, 0, SelectLayout.AbsoluteContentSize.Y + 10)
+end
+
+TargetSelectBtn.MouseButton1Click:Connect(function()
+    SelectUserModal.Visible = true
+    UserSearchBox.Text = ""
+    renderUsersList("")
+end)
+
+UserSearchBox:GetPropertyChangedSignal("Text"):Connect(function()
+    renderUsersList(UserSearchBox.Text)
 end)
 
 CloseSelectBtn.MouseButton1Click:Connect(function() SelectUserModal.Visible = false end)
@@ -1538,7 +1568,6 @@ local mapDataList = {
         image = fetchAsset("https://d.top4top.io/p_3922v5lak1.jpg", "egg_steal"),
         scripts = {
             {title = "سكربت فلفل (Chilli V5)", requiresKey = "لا", code = [[loadstring(game:HttpGet("https://raw.githubusercontent.com/kadit9999/stealanegg/refs/heads/main/ChilliV5BaKhi.lua"))()]]},
-            {title = "سكربت فلفل (Chilli الاصلي)", requiresKey = "لا", code = [[loadstring(game:HttpGet("https://raw.githubusercontent.com/tienkhanh1/spicy/main/Chilli.lua"))()]]},
             {title = "الأزرق (كسر حماية)", requiresKey = "لا", code = [[loadstring(game:HttpGet("https://raw.githubusercontent.com/PulseZax/Loader/refs/heads/main/.lua"))()]]},
             {title = "سكربت الأحمر", requiresKey = "لا", code = [[loadstring(game:HttpGet("https://api.luarmor.net/files/v4/loaders/271f96ca25f29ae395be1c0f9e6f4ead.lua"))()]]},
             {title = "سكربت الأدمن", requiresKey = "لا", code = [[loadstring(game:HttpGet("https://raw.githubusercontent.com/Dayvinksthik/Script/refs/heads/main/Games/JoshBNS-Crack.lua"))()]]}
@@ -1870,7 +1899,6 @@ ActionLayout.Parent = ActionScroll
 
 CloseActionBtn.MouseButton1Click:Connect(function() ActionModal.Visible = false end)
 
--- نظام المراقبة (Spectate System)
 local isSpectating = false
 local currentSpectateTarget = nil
 
@@ -1954,7 +1982,6 @@ SpecModalBtn.MouseButton1Click:Connect(function()
     ActionScroll.CanvasSize = UDim2.new(0, 0, 0, ActionLayout.AbsoluteContentSize.Y + 10)
 end)
 
--- نظام الكشف وتحديد المكان (ESP Tracker System)
 local espEnabled = false
 local espHighlights = {}
 
