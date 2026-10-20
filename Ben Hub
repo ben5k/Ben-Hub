@@ -1,4 +1,4 @@
--- Ben Script Hub - Ultimate Edition (All Maps & Scripts Added)
+-- Ben Script Hub - Ultimate Edition (Redesigned Settings & Toggles)
 local CoreGui = game:GetService("CoreGui")
 local Players = game:GetService("Players")
 local TweenService = game:GetService("TweenService")
@@ -32,7 +32,7 @@ local logoAsset = fetchAsset("https://j.top4top.io/p_39224zme21.png", "logo_ben"
 local bannerAsset = fetchAsset("https://c.top4top.io/p_3933a1ntu0.png", "banner_new")
 
 local particlesEnabled = true
-local configFile = "BenHub_Config_v10.txt"
+local configFile = "BenHub_Config_v11.txt"
 
 if isfile and readfile and isfile(configFile) then
     pcall(function()
@@ -628,7 +628,7 @@ SendChatBtn.MouseButton1Click:Connect(function()
 end)
 
 ---------------------------------------------------------
--- نظام إرسال واسترجاع الحضور (Presence System)
+-- نظام الحضور (Presence System)
 ---------------------------------------------------------
 task.spawn(function()
     while true do
@@ -750,7 +750,7 @@ task.spawn(function()
     end
 end)
 
--- دورة المزامنة والريست العالمي كل 30 دقيقة (1800 ثانية)
+-- دورة المزامنة والريست العالمي كل 30 دقيقة
 task.spawn(function()
     local INTERVAL = 1800
     local lastCycle = math.floor(os.time() / INTERVAL)
@@ -1030,7 +1030,7 @@ local UpdatesTitle = Instance.new("TextLabel")
 UpdatesTitle.Size = UDim2.new(1, -10, 0, 20)
 UpdatesTitle.Position = UDim2.new(0, 5, 0, 3)
 UpdatesTitle.BackgroundTransparency = 1
-UpdatesTitle.Text = "📢 آخر التحديثات الشاملة:"
+UpdatesTitle.Text = "📢 آخر التحديثات:"
 UpdatesTitle.TextColor3 = Color3.fromRGB(255, 215, 0)
 UpdatesTitle.Font = Enum.Font.SourceSansBold
 UpdatesTitle.TextSize = 10.5
@@ -1041,7 +1041,7 @@ local UpdatesText = Instance.new("TextLabel")
 UpdatesText.Size = UDim2.new(1, -14, 0, 95)
 UpdatesText.Position = UDim2.new(0, 7, 0, 24)
 UpdatesText.BackgroundTransparency = 1
-UpdatesText.Text = "• إضافة وتحديث مابات (99 ليلة، كسر البيض، كيبورد، ركوب حيوانات، سرقة البيض وبلوكس فروت).\n• دمج أحدث السكربتات القوية لكل ماب وتحديث ميزات التتبع والشات."
+UpdatesText.Text = "• إعادة ترتيب وتصميم قسم الإعدادات والتفعيلات بشكل Grid عصري وأنيق.\n• تحسين تجربة الاستخدام وسرعة الوصول لكل الأدوات."
 UpdatesText.TextColor3 = Color3.fromRGB(200, 200, 210)
 UpdatesText.Font = Enum.Font.SourceSans
 UpdatesText.TextSize = 9.5
@@ -1050,81 +1050,55 @@ UpdatesText.TextYAlignment = Enum.TextYAlignment.Top
 UpdatesText.Parent = UpdatesBox
 
 ---------------------------------------------------------
--- 2. الإعدادات + نظام المراقبة + كشف وتتبع الأماكن (ESP Tracker)
+-- 2. قسم الإعدادات والتفعيلات (معاد تصميمه وترتيبه بشكل Grid احترافي)
 ---------------------------------------------------------
-local ChangeServerBtn = Instance.new("TextButton")
-ChangeServerBtn.Size = UDim2.new(1, -20, 0, 28)
-ChangeServerBtn.Position = UDim2.new(0, 0, 0, 8)
-ChangeServerBtn.BackgroundColor3 = Color3.fromRGB(180, 30, 40)
-ChangeServerBtn.Text = "🔄 تغيير السيرفر (Rejoin)"
-ChangeServerBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-ChangeServerBtn.Font = Enum.Font.SourceSansBold
-ChangeServerBtn.TextSize = 10.5
-ChangeServerBtn.Parent = SettingsTab
-Instance.new("UICorner", ChangeServerBtn).CornerRadius = UDim.new(0, 5)
+local SettingsGrid = Instance.new("UIGridLayout")
+SettingsGrid.CellSize = UDim2.new(0, 175, 0, 38)
+SettingsGrid.CellPadding = UDim2.new(0, 10, 0, 10)
+SettingsGrid.Parent = SettingsTab
 
+local function createSettingButton(text, color, parentTab)
+    local btn = Instance.new("TextButton")
+    btn.Size = UDim2.new(0, 175, 0, 38)
+    btn.BackgroundColor3 = color
+    btn.Text = text
+    btn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    btn.Font = Enum.Font.SourceSansBold
+    btn.TextSize = 10.5
+    btn.Parent = parentTab
+    Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 6)
+    local stroke = Instance.new("UIStroke")
+    stroke.Color = Color3.fromRGB(255, 255, 255)
+    stroke.Transparency = 0.7
+    stroke.Thickness = 1
+    stroke.Parent = btn
+    return btn
+end
+
+local ChangeServerBtn = createSettingButton("🔄 تغيير السيرفر (Rejoin)", Color3.fromRGB(180, 30, 40), SettingsTab)
 ChangeServerBtn.MouseButton1Click:Connect(function() TeleportService:Teleport(game.PlaceId, LocalPlayer) end)
 
-local ToggleParticlesBtn = Instance.new("TextButton")
-ToggleParticlesBtn.Size = UDim2.new(1, -20, 0, 28)
-ToggleParticlesBtn.Position = UDim2.new(0, 0, 0, 40)
-ToggleParticlesBtn.BackgroundColor3 = particlesEnabled and Color3.fromRGB(40, 130, 60) or Color3.fromRGB(130, 40, 40)
-ToggleParticlesBtn.Text = particlesEnabled and "✨ تأثيرات البارتكلز: مفعلة" or "❌ تأثيرات البارتكلز: معطلة"
-ToggleParticlesBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-ToggleParticlesBtn.Font = Enum.Font.SourceSansBold
-ToggleParticlesBtn.TextSize = 10.5
-ToggleParticlesBtn.Parent = SettingsTab
-Instance.new("UICorner", ToggleParticlesBtn).CornerRadius = UDim.new(0, 5)
-
+local ToggleParticlesBtn = createSettingButton(particlesEnabled and "✨ البارتكلز: مفعلة" or "❌ البارتكلز: معطلة", particlesEnabled and Color3.fromRGB(40, 130, 60) or Color3.fromRGB(130, 40, 40), SettingsTab)
 ToggleParticlesBtn.MouseButton1Click:Connect(function()
     particlesEnabled = not particlesEnabled
     if particlesEnabled then
-        ToggleParticlesBtn.Text = "✨ تأثيرات البارتكلز: مفعلة"
+        ToggleParticlesBtn.Text = "✨ البارتكلز: مفعلة"
         ToggleParticlesBtn.BackgroundColor3 = Color3.fromRGB(40, 130, 60)
         spawnParticles()
     else
-        ToggleParticlesBtn.Text = "❌ تأثيرات البارتكلز: معطلة"
+        ToggleParticlesBtn.Text = "❌ البارتكلز: معطلة"
         ToggleParticlesBtn.BackgroundColor3 = Color3.fromRGB(130, 40, 40)
         clearParticles()
     end
 end)
 
-local SpecModalBtn = Instance.new("TextButton")
-SpecModalBtn.Size = UDim2.new(1, -20, 0, 28)
-SpecModalBtn.Position = UDim2.new(0, 0, 0, 72)
-SpecModalBtn.BackgroundColor3 = Color3.fromRGB(30, 100, 180)
-SpecModalBtn.Text = "👁️ مراقبة لاعب (Spectate)"
-SpecModalBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-SpecModalBtn.Font = Enum.Font.SourceSansBold
-SpecModalBtn.TextSize = 10.5
-SpecModalBtn.Parent = SettingsTab
-Instance.new("UICorner", SpecModalBtn).CornerRadius = UDim.new(0, 5)
+local SpecModalBtn = createSettingButton("👁️ مراقبة لاعب (Spectate)", Color3.fromRGB(30, 100, 180), SettingsTab)
+local TrackerModalBtn = createSettingButton("📍 كشف مكان لاعب (ESP)", Color3.fromRGB(180, 110, 30), SettingsTab)
 
-local TrackerModalBtn = Instance.new("TextButton")
-TrackerModalBtn.Size = UDim2.new(1, -20, 0, 28)
-TrackerModalBtn.Position = UDim2.new(0, 0, 0, 104)
-TrackerModalBtn.BackgroundColor3 = Color3.fromRGB(180, 110, 30)
-TrackerModalBtn.Text = "📍 كشف مكان لاعب (ESP Tracker)"
-TrackerModalBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-TrackerModalBtn.Font = Enum.Font.SourceSansBold
-TrackerModalBtn.TextSize = 10.5
-TrackerModalBtn.Parent = SettingsTab
-Instance.new("UICorner", TrackerModalBtn).CornerRadius = UDim.new(0, 5)
-
-local SaveSettingsBtn = Instance.new("TextButton")
-SaveSettingsBtn.Size = UDim2.new(1, -20, 0, 28)
-SaveSettingsBtn.Position = UDim2.new(0, 0, 0, 136)
-SaveSettingsBtn.BackgroundColor3 = Color3.fromRGB(40, 140, 60)
-SaveSettingsBtn.Text = "💾 حفظ الإعدادات"
-SaveSettingsBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-SaveSettingsBtn.Font = Enum.Font.SourceSansBold
-SaveSettingsBtn.TextSize = 10.5
-SaveSettingsBtn.Parent = SettingsTab
-Instance.new("UICorner", SaveSettingsBtn).CornerRadius = UDim.new(0, 5)
-
+local SaveSettingsBtn = createSettingButton("💾 حفظ الإعدادات", Color3.fromRGB(40, 140, 60), SettingsTab)
 SaveSettingsBtn.MouseButton1Click:Connect(function()
     if writefile then writefile(configFile, HttpService:JSONEncode({particles = particlesEnabled})) end
-    SaveSettingsBtn.Text = "✅ تم الحفظ بنجاح!"
+    SaveSettingsBtn.Text = "✅ تم الحفظ!"
     task.wait(1.5)
     SaveSettingsBtn.Text = "💾 حفظ الإعدادات"
 end)
@@ -1466,7 +1440,7 @@ end
 TrackerModalBtn.MouseButton1Click:Connect(updateTrackerPlayersList)
 
 ---------------------------------------------------------
--- 3. سكربتات المابات المحدثة بالكامل
+-- 3. سكربتات المابات (كاملة كما طلبتها مسبقاً)
 ---------------------------------------------------------
 local mapDataList = {
     {
@@ -1475,7 +1449,10 @@ local mapDataList = {
         scripts = {
             {title = "سكربت فلفل", requiresKey = "لا", code = [[loadstring(game:HttpGet("https://raw.githubusercontent.com/tienkhanh1/spicy/main/Chilli.lua"))()]]},
             {title = "الأزرق (كسر حماية)", requiresKey = "لا", code = [[loadstring(game:HttpGet("https://raw.githubusercontent.com/PulseZax/Loader/refs/heads/main/.lua"))()]]},
-            {title = "افضل سكربت KAIDO ⭐", requiresKey = "لا", code = [[loadstring(game:HttpGet("https://orrxl4-protector.com/api/raw?id=v1yksgch"))()]]},
+            {title = "سكربت ليون", requiresKey = "لا", code = [[loadstring(game:HttpGet("https://raw.githubusercontent.com/lennonxscripts/lennonfarmv2/refs/heads/main/stealanegg"))()]]},
+            {title = "تجميد الوحوش", requiresKey = "لا", code = [[loadstring(game:HttpGet("https://raw.githubusercontent.com/alix77-r/Krov/refs/heads/main/AntiHitKrovScript.txt"))()]]},
+            {title = "ميراندا هوب", requiresKey = "لا", code = [[loadstring(game:HttpGet("https://raw.githubusercontent.com/miirandahub/loader/refs/heads/main/mirandaafk.lua"))()]]},
+            {title = "سكربت سرقة البيض الجديد", requiresKey = "لا", code = [[loadstring(game:HttpGet("https://pastefy.app/YoZocJ8O/raw"))()]]}
         }
     },
     {
