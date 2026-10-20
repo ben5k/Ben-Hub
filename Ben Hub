@@ -1,4 +1,4 @@
--- Ben Script Hub - Owner Admin Panel & Broadcast Edition
+-- Ben Script Hub - Owner Broadcast & Map Scripts Update
 local CoreGui = game:GetService("CoreGui")
 local Players = game:GetService("Players")
 local TweenService = game:GetService("TweenService")
@@ -37,7 +37,7 @@ local eggEventMapAsset = fetchAsset("https://b.top4top.io/p_39455j3oh0.jpg", "eg
 
 local particlesEnabled = true
 local floatingClockEnabled = false
-local configFile = "BenHub_Config_v14.txt"
+local configFile = "BenHub_Config_v15.txt"
 
 if isfile and readfile and isfile(configFile) then
     pcall(function()
@@ -238,7 +238,7 @@ CloseBtn.MouseButton1Click:Connect(function() Main.Visible = false; BenOpenBtn.V
 BenOpenBtn.MouseButton1Click:Connect(function() Main.Visible = true; BenOpenBtn.Visible = false end)
 
 ---------------------------------------------------------
--- نظام عرض البث المطابق للصورة (Broadcast Notification UI)
+-- تصميم البث المطور المطابق للطلب (اسم Ben أسود كبير + صح زرقاء + خط كبير بدون خلفية)
 ---------------------------------------------------------
 local BroadcastGui = Instance.new("ScreenGui")
 BroadcastGui.Name = "BenAdminBroadcastGui"
@@ -253,46 +253,46 @@ local function showBroadcastPopup(senderName, senderUserId, messageText)
 
     local popFrame = Instance.new("Frame")
     popFrame.Name = "ActivePopup"
-    popFrame.Size = UDim2.new(0, 360, 0, 65)
-    popFrame.Position = UDim2.new(0.5, -180, 0, -80) -- تبدأ من أعلى الشاشة
-    popFrame.BackgroundColor3 = Color3.fromRGB(15, 15, 22)
-    popFrame.BackgroundTransparency = 0.1
+    popFrame.Size = UDim2.new(0, 420, 0, 70)
+    popFrame.Position = UDim2.new(0.5, -210, 0, -90)
+    popFrame.BackgroundColor3 = Color3.fromRGB(12, 12, 18)
+    popFrame.BackgroundTransparency = 0.15
     popFrame.Parent = BroadcastGui
 
-    Instance.new("UICorner", popFrame).CornerRadius = UDim.new(0, 10)
+    Instance.new("UICorner", popFrame).CornerRadius = UDim.new(0, 12)
     local popStroke = Instance.new("UIStroke")
     popStroke.Color = Color3.fromRGB(200, 30, 45)
     popStroke.Thickness = 2
     popStroke.Parent = popFrame
 
+    -- صورة السكن الدائرية
     local avatarImg = Instance.new("ImageLabel")
-    avatarImg.Size = UDim2.new(0, 45, 0, 45)
-    avatarImg.Position = UDim2.new(0, 10, 0.5, -22.5)
+    avatarImg.Size = UDim2.new(0, 52, 0, 52)
+    avatarImg.Position = UDim2.new(0, 10, 0.5, -26)
     avatarImg.BackgroundColor3 = Color3.fromRGB(30, 30, 40)
     avatarImg.Image = "rbxthumb://type=AvatarHeadShot&id=" .. tostring(senderUserId or 1) .. "&w=150&h=150"
     avatarImg.Parent = popFrame
     Instance.new("UICorner", avatarImg).CornerRadius = UDim.new(1, 0)
 
+    -- نص الإشعار الكامل (اسم Ben أسود كبير + علامة الصح الزرقاء + الرسالة الكبيرة بدون خلفية)
     local textLbl = Instance.new("TextLabel")
-    textLbl.Size = UDim2.new(1, -70, 1, 0)
-    textLbl.Position = UDim2.new(0, 62, 0, 0)
+    textLbl.Size = UDim2.new(1, -75, 1, 0)
+    textLbl.Position = UDim2.new(0, 68, 0, 0)
     textLbl.BackgroundTransparency = 1
-    textLbl.Text = "<b>" .. senderName .. "</b> ✓ : " .. messageText
+    textLbl.Text = string.format("<font color=\"#000000\" size=\"22\"><b>%s</b></font> <font color=\"#00A2FF\" size=\"20\">✔</font> : <font size=\"19\"><b>%s</b></font>", senderName, messageText)
     textLbl.RichText = true
     textLbl.TextColor3 = Color3.fromRGB(255, 255, 255)
     textLbl.Font = Enum.Font.SourceSansBold
-    textLbl.TextSize = 13
     textLbl.TextWrapped = true
     textLbl.TextXAlignment = Enum.TextXAlignment.Left
     textLbl.Parent = popFrame
 
-    -- حركة دخول وخروج احترافية
-    TweenService:Create(popFrame, TweenInfo.new(0.4, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {Position = UDim2.new(0.5, -180, 0, 15)}):Play()
+    TweenService:Create(popFrame, TweenInfo.new(0.4, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {Position = UDim2.new(0.5, -210, 0, 15)}):Play()
     pcall(function() SoundService:PlayLocalSound(Instance.new("Sound", SoundService)) end)
 
-    task.delay(6, function()
+    task.delay(7, function()
         if popFrame and popFrame.Parent then
-            TweenService:Create(popFrame, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {Position = UDim2.new(0.5, -180, 0, -90)}):Play()
+            TweenService:Create(popFrame, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {Position = UDim2.new(0.5, -210, 0, -100)}):Play()
             task.wait(0.3)
             if popFrame then popFrame:Destroy() end
         end
@@ -699,7 +699,7 @@ SendChatBtn.MouseButton1Click:Connect(function()
 end)
 
 ---------------------------------------------------------
--- نظام الحضور والبث المباشر (Presence & Broadcast Listener)
+-- نظام الحضور والبث المباشر
 ---------------------------------------------------------
 task.spawn(function()
     while true do
@@ -734,7 +734,6 @@ task.spawn(function()
                     for bKey, bData in pairs(data) do
                         if type(bData) == "table" and not processedBroadcasts[bKey] and (os.time() - (bData.time or 0) < 60) then
                             processedBroadcasts[bKey] = true
-                            -- تحقق هل البث موجه للجميع أو للاعب الحالي بالذات
                             if bData.targetUserId == 0 or bData.targetUserId == LocalPlayer.UserId then
                                 showBroadcastPopup(bData.senderName or "Ben", bData.senderUserId or LocalPlayer.UserId, bData.text or "")
                             end
@@ -994,7 +993,6 @@ SettingsTab.BackgroundTransparency = 1
 SettingsTab.Visible = false
 SettingsTab.Parent = PagesHolder
 
--- قسم لوحة الأدمن الخاص بالأونر فقط (Dms921)
 local OwnerAdminTab = Instance.new("Frame")
 OwnerAdminTab.Size = UDim2.new(1, 0, 1, 0)
 OwnerAdminTab.BackgroundTransparency = 1
@@ -1031,7 +1029,6 @@ createTabButton("الرئيسية", "🏠", HomeTab)
 createTabButton("سكربتات مابات", "🗺️", MapScriptsTab)
 createTabButton("حدث الأدمن", "👑", AdminEventTab)
 
--- شرط الأمان: إظهار زر لوحة الأدمن للأونر Dms921 فقط وعدم ظهوره لغيره نهائياً
 if LocalPlayer.Name == "Dms921" then
     createTabButton("لوحة الأدمن", "🛡️", OwnerAdminTab)
 end
@@ -1156,7 +1153,7 @@ local UpdatesText = Instance.new("TextLabel")
 UpdatesText.Size = UDim2.new(1, -14, 0, 95)
 UpdatesText.Position = UDim2.new(0, 7, 0, 24)
 UpdatesText.BackgroundTransparency = 1
-UpdatesText.Text = "• إضافة لوحة تحكم الأدمن (خاصة بالأونر Dms921 حصراً).\n• نظام بث الرسائل والإشعارات العائمة للمستخدمين بتصميم Ben الأنيق."
+UpdatesText.Text = "• تحديث سكربتات ماب (99 ليلة، سرقة البيض، كسر البيض، وركوب الحيوانات) بالكامل.\n• تطوير واجهة البث لتصبح باسم Ben أسود كبير وعلامة توثيق زرقاء وبدون خلفية نصية."
 UpdatesText.TextColor3 = Color3.fromRGB(200, 200, 210)
 UpdatesText.Font = Enum.Font.SourceSans
 UpdatesText.TextSize = 9.5
@@ -1212,8 +1209,7 @@ SendBroadcastBtn.TextSize = 12
 SendBroadcastBtn.Parent = OwnerAdminTab
 Instance.new("UICorner", SendBroadcastBtn).CornerRadius = UDim.new(0, 6)
 
--- قائمة اختيار مستخدم محدد (تحديث قائمة المستخدمين النشطين)
-local selectedTargetUserId = 0 -- 0 تعني الجميع
+local selectedTargetUserId = 0
 
 local SelectUserModal = Instance.new("Frame")
 SelectUserModal.Size = UDim2.new(1, 0, 1, 0)
@@ -1272,7 +1268,6 @@ TargetSelectBtn.MouseButton1Click:Connect(function()
         if child:IsA("Frame") then child:Destroy() end
     end
 
-    -- خيار الجميع أولاً
     local allCard = Instance.new("Frame")
     allCard.Size = UDim2.new(1, -6, 0, 36)
     allCard.BackgroundColor3 = Color3.fromRGB(30, 30, 45)
@@ -1296,7 +1291,6 @@ TargetSelectBtn.MouseButton1Click:Connect(function()
         SelectUserModal.Visible = false
     end)
 
-    -- جلب المتواجدين من قاعدة البيانات
     pcall(function()
         local res = customRequest({Url = FIREBASE_PRESENCE_URL .. ".json", Method = "GET"})
         if res and res.StatusCode == 200 and res.Body ~= "" and res.Body ~= "null" then
@@ -1536,36 +1530,31 @@ task.spawn(function()
 end)
 
 ---------------------------------------------------------
--- 4. سكربتات المابات
+-- 4. سكربتات المابات (بعد التحديث والتعديل الكامل)
 ---------------------------------------------------------
 local mapDataList = {
     {
         name = "سرقة البيض",
         image = fetchAsset("https://d.top4top.io/p_3922v5lak1.jpg", "egg_steal"),
         scripts = {
-            {title = "سكربت فلفل", requiresKey = "لا", code = [[loadstring(game:HttpGet("https://raw.githubusercontent.com/tienkhanh1/spicy/main/Chilli.lua"))()]]},
+            {title = "سكربت فلفل (Chilli V5)", requiresKey = "لا", code = [[loadstring(game:HttpGet("https://raw.githubusercontent.com/kadit9999/stealanegg/refs/heads/main/ChilliV5BaKhi.lua"))()]]},
             {title = "الأزرق (كسر حماية)", requiresKey = "لا", code = [[loadstring(game:HttpGet("https://raw.githubusercontent.com/PulseZax/Loader/refs/heads/main/.lua"))()]]},
-            {title = "سكربت ليون", requiresKey = "لا", code = [[loadstring(game:HttpGet("https://raw.githubusercontent.com/lennonxscripts/lennonfarmv2/refs/heads/main/stealanegg"))()]]},
-            {title = "تجميد الوحوش", requiresKey = "لا", code = [[loadstring(game:HttpGet("https://raw.githubusercontent.com/alix77-r/Krov/refs/heads/main/AntiHitKrovScript.txt"))()]]},
-            {title = "ميراندا هوب", requiresKey = "لا", code = [[loadstring(game:HttpGet("https://raw.githubusercontent.com/miirandahub/loader/refs/heads/main/mirandaafk.lua"))()]]},
-            {title = "سكربت سرقة البيض الجديد", requiresKey = "لا", code = [[loadstring(game:HttpGet("https://pastefy.app/YoZocJ8O/raw"))()]]}
+            {title = "سكربت الأحمر", requiresKey = "لا", code = [[loadstring(game:HttpGet("https://api.luarmor.net/files/v4/loaders/271f96ca25f29ae395be1c0f9e6f4ead.lua"))()]]},
+            {title = "سكربت الأدمن", requiresKey = "لا", code = [[loadstring(game:HttpGet("https://raw.githubusercontent.com/Dayvinksthik/Script/refs/heads/main/Games/JoshBNS-Crack.lua"))()]]}
         }
     },
     {
         name = "99 ليلة",
         image = fetchAsset("https://g.top4top.io/p_39369bu7i0.jpeg", "nights_99"),
         scripts = {
-            {title = "سكربت فاب فيودوير", requiresKey = "لا", code = [[loadstring(game:HttpGet("https://raw.githubusercontent.com/VapeVoidware/VW-Add/main/nightsintheforest.lua", true))()]]},
-            {title = "سكربت هوتاو هوب", requiresKey = "لا", code = [[loadstring(game:HttpGet("https://raw.githubusercontent.com/SLK-gaming/Hutao-Hub/refs/heads/main/99-Nights-In-The-Forest.txt"))()]]},
-            {title = "سكربت جيك لودر", requiresKey = "لا", code = [[loadstring(game:HttpGet("https://raw.githubusercontent.com/GEC0/gec/refs/heads/main/Gec.Loader", true))()]]},
-            {title = "سكربت ستري هوب", requiresKey = "لا", code = [[loadstring(game:HttpGet("https://raw.githubusercontent.com/create-stree/STREE-HUB/refs/heads/main/Loader/Main.lua", true))()]]}
+            {title = "Cookie Hub (السكربت الجديد)", requiresKey = "لا", code = [[loadstring(game:HttpGet("https://github.com/Cookie-Hub-Roblox/Cookie-Hub-Roblox/raw/refs/heads/main/loader.luau"))()]]}
         }
     },
     {
         name = "كسر البيض",
         image = fetchAsset("https://h.top4top.io/p_39365mdcw1.jpg", "egg_crack_new"),
         scripts = {
-            {title = "سكربت أوروبوروس الجديد", requiresKey = "لا", code = [[loadstring(game:HttpGet("https://raw.githubusercontent.com/joustingmatch/Ouroboros/main/loader.lua"))()]]}
+            {title = "Serenity Hub (سكربت كسر البيض)", requiresKey = "لا", code = [[loadstring(game:HttpGet("https://scriptblox.com/raw/Break-and-Steal-an-Egg-Serenity-Hub-greater-INSTANT-STEAL-DEMON-EVENT-AUTO-BUY!-ETC-231865"))()]]}
         }
     },
     {
@@ -1596,9 +1585,7 @@ local mapDataList = {
         name = "ركوب حيوانات",
         image = fetchAsset("https://c.top4top.io/p_39220ivke0.png", "ride_pet"),
         scripts = {
-            {title = "سكربت ركوب الحيوانات الجديد 1", requiresKey = "لا", code = [[loadstring(game:HttpGet("https://pastefy.app/P5tUDr3n/raw"))()]]},
-            {title = "سكربت هايڤ هوب", requiresKey = "لا", code = [[loadstring(game:HttpGet("https://script.hive-hub.workers.dev/hive.lua"))()]]},
-            {title = "سكربت نولاج", requiresKey = "لا", code = [[loadstring(game:HttpGet("https://nolag.wtf/script.lua"))()]]}
+            {title = "Mystrix Hub (السكربت الجديد)", requiresKey = "لا", code = [[loadstring(game:HttpGet("https://raw.githubusercontent.com/ummarxfarooq/mystrix-hub/refs/heads/main/loader"))()]]}
         }
     }
 }
@@ -1825,9 +1812,6 @@ ToggleParticlesBtn.MouseButton1Click:Connect(function()
         clearParticles()
     end
 end)
-
-local SpecModalBtn = createSettingOptionBtn("مراقبة لاعب (Spectate)", "👁️", Color3.fromRGB(25, 90, 160))
-local TrackerModalBtn = createSettingOptionBtn("كشف مكان لاعب (ESP Tracker)", "📍", Color3.fromRGB(160, 100, 25))
 
 local SaveSettingsBtn = createSettingOptionBtn("حفظ الإعدادات", "💾", Color3.fromRGB(35, 120, 55))
 SaveSettingsBtn.MouseButton1Click:Connect(function()
