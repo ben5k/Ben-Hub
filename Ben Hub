@@ -1,4 +1,4 @@
--- Ben Script Hub - Owner Broadcast & Map Scripts Update
+-- Ben Script Hub - Owner Broadcast, Map Scripts & Controls Update
 local CoreGui = game:GetService("CoreGui")
 local Players = game:GetService("Players")
 local TweenService = game:GetService("TweenService")
@@ -8,6 +8,7 @@ local RunService = game:GetService("RunService")
 local SoundService = game:GetService("SoundService")
 
 local LocalPlayer = Players.LocalPlayer
+local Camera = workspace.CurrentCamera
 local parent = (gethui and gethui()) or CoreGui:FindFirstChild("RobloxGui") or LocalPlayer:WaitForChild("PlayerGui")
 
 if parent:FindFirstChild("BenScriptHubLoginUI") then parent.BenScriptHubLoginUI:Destroy() end
@@ -37,7 +38,7 @@ local eggEventMapAsset = fetchAsset("https://b.top4top.io/p_39455j3oh0.jpg", "eg
 
 local particlesEnabled = true
 local floatingClockEnabled = false
-local configFile = "BenHub_Config_v15.txt"
+local configFile = "BenHub_Config_v16.txt"
 
 if isfile and readfile and isfile(configFile) then
     pcall(function()
@@ -238,7 +239,7 @@ CloseBtn.MouseButton1Click:Connect(function() Main.Visible = false; BenOpenBtn.V
 BenOpenBtn.MouseButton1Click:Connect(function() Main.Visible = true; BenOpenBtn.Visible = false end)
 
 ---------------------------------------------------------
--- تصميم البث المطور المطابق للطلب (اسم Ben أسود كبير + صح زرقاء + خط كبير بدون خلفية)
+-- تصميم البث المطور (اسم Ben أحمر كبير + علامة ✔ زرقاء + كلام كبير بدون خلفية)
 ---------------------------------------------------------
 local BroadcastGui = Instance.new("ScreenGui")
 BroadcastGui.Name = "BenAdminBroadcastGui"
@@ -265,7 +266,6 @@ local function showBroadcastPopup(senderName, senderUserId, messageText)
     popStroke.Thickness = 2
     popStroke.Parent = popFrame
 
-    -- صورة السكن الدائرية
     local avatarImg = Instance.new("ImageLabel")
     avatarImg.Size = UDim2.new(0, 52, 0, 52)
     avatarImg.Position = UDim2.new(0, 10, 0.5, -26)
@@ -274,12 +274,12 @@ local function showBroadcastPopup(senderName, senderUserId, messageText)
     avatarImg.Parent = popFrame
     Instance.new("UICorner", avatarImg).CornerRadius = UDim.new(1, 0)
 
-    -- نص الإشعار الكامل (اسم Ben أسود كبير + علامة الصح الزرقاء + الرسالة الكبيرة بدون خلفية)
+    -- اسم Ben بلون أحمر #FF0000 + الصح الزرقاء #00A2FF + الكلام كبير بدون خلفية
     local textLbl = Instance.new("TextLabel")
     textLbl.Size = UDim2.new(1, -75, 1, 0)
     textLbl.Position = UDim2.new(0, 68, 0, 0)
     textLbl.BackgroundTransparency = 1
-    textLbl.Text = string.format("<font color=\"#000000\" size=\"22\"><b>%s</b></font> <font color=\"#00A2FF\" size=\"20\">✔</font> : <font size=\"19\"><b>%s</b></font>", senderName, messageText)
+    textLbl.Text = string.format("<font color=\"#FF0000\" size=\"22\"><b>%s</b></font> <font color=\"#00A2FF\" size=\"20\">✔</font> : <font size=\"19\"><b>%s</b></font>", senderName, messageText)
     textLbl.RichText = true
     textLbl.TextColor3 = Color3.fromRGB(255, 255, 255)
     textLbl.Font = Enum.Font.SourceSansBold
@@ -1153,7 +1153,7 @@ local UpdatesText = Instance.new("TextLabel")
 UpdatesText.Size = UDim2.new(1, -14, 0, 95)
 UpdatesText.Position = UDim2.new(0, 7, 0, 24)
 UpdatesText.BackgroundTransparency = 1
-UpdatesText.Text = "• تحديث سكربتات ماب (99 ليلة، سرقة البيض، كسر البيض، وركوب الحيوانات) بالكامل.\n• تطوير واجهة البث لتصبح باسم Ben أسود كبير وعلامة توثيق زرقاء وبدون خلفية نصية."
+UpdatesText.Text = "• جعل اسم Ben باللون الأحمر وعلامة التوثيق زرقاء بشكل واضح.\n• ربط وتفعيل خصائص المراقبة (Spectate) وكشف المكان (ESP) من قسم الإعدادات."
 UpdatesText.TextColor3 = Color3.fromRGB(200, 200, 210)
 UpdatesText.Font = Enum.Font.SourceSans
 UpdatesText.TextSize = 9.5
@@ -1530,7 +1530,7 @@ task.spawn(function()
 end)
 
 ---------------------------------------------------------
--- 4. سكربتات المابات (بعد التحديث والتعديل الكامل)
+-- 4. سكربتات المابات
 ---------------------------------------------------------
 local mapDataList = {
     {
@@ -1761,7 +1761,7 @@ renderMapCards("")
 MapSearchBox:GetPropertyChangedSignal("Text"):Connect(function() renderMapCards(MapSearchBox.Text) end)
 
 ---------------------------------------------------------
--- 5. الإعدادات والتفعيلات
+-- 5. الإعدادات، مراقبة اللاعب، والكشف (Spectate & ESP)
 ---------------------------------------------------------
 local SettingsScroll = Instance.new("ScrollingFrame")
 SettingsScroll.Size = UDim2.new(1, -10, 1, 0)
@@ -1811,6 +1811,194 @@ ToggleParticlesBtn.MouseButton1Click:Connect(function()
         ToggleParticlesBtn.BackgroundColor3 = Color3.fromRGB(120, 40, 40)
         clearParticles()
     end
+end)
+
+---------------------------------------------------------
+-- نافذة واجهة الاختيار الموحدة للمراقبة والكشف (Spectate & ESP)
+---------------------------------------------------------
+local ActionModal = Instance.new("Frame")
+ActionModal.Size = UDim2.new(1, 0, 1, 0)
+ActionModal.BackgroundColor3 = Color3.fromRGB(16, 16, 24)
+ActionModal.Visible = false
+ActionModal.ZIndex = 80
+ActionModal.Parent = SettingsTab
+
+local ActionHeader = Instance.new("Frame")
+ActionHeader.Size = UDim2.new(1, 0, 0, 32)
+ActionHeader.BackgroundColor3 = Color3.fromRGB(22, 22, 32)
+ActionHeader.ZIndex = 81
+ActionHeader.Parent = ActionModal
+
+local ActionTitle = Instance.new("TextLabel")
+ActionTitle.Size = UDim2.new(1, -60, 1, 0)
+ActionTitle.Position = UDim2.new(0, 10, 0, 0)
+ActionTitle.BackgroundTransparency = 1
+ActionTitle.Text = "👥 اختر لاعباً:"
+ActionTitle.TextColor3 = Color3.fromRGB(255, 215, 0)
+ActionTitle.Font = Enum.Font.SourceSansBold
+ActionTitle.TextSize = 11.5
+ActionTitle.TextXAlignment = Enum.TextXAlignment.Left
+ActionTitle.ZIndex = 82
+ActionTitle.Parent = ActionHeader
+
+local CloseActionBtn = Instance.new("TextButton")
+CloseActionBtn.Size = UDim2.new(0, 50, 0, 22)
+CloseActionBtn.Position = UDim2.new(1, -55, 0, 5)
+CloseActionBtn.BackgroundColor3 = Color3.fromRGB(180, 30, 40)
+CloseActionBtn.Text = "إغلاق"
+CloseActionBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+CloseActionBtn.Font = Enum.Font.SourceSansBold
+CloseActionBtn.TextSize = 10
+CloseActionBtn.ZIndex = 82
+CloseActionBtn.Parent = ActionHeader
+Instance.new("UICorner", CloseActionBtn).CornerRadius = UDim.new(0, 4)
+
+local ActionScroll = Instance.new("ScrollingFrame")
+ActionScroll.Size = UDim2.new(1, 0, 1, -38)
+ActionScroll.Position = UDim2.new(0, 0, 0, 36)
+ActionScroll.BackgroundTransparency = 1
+ActionScroll.CanvasSize = UDim2.new(0, 0, 0, 0)
+ActionScroll.ScrollBarThickness = 3
+ActionScroll.ZIndex = 81
+ActionScroll.Parent = ActionModal
+
+local ActionLayout = Instance.new("UIListLayout")
+ActionLayout.SortOrder = Enum.SortOrder.LayoutOrder
+ActionLayout.Padding = UDim.new(0, 5)
+ActionLayout.Parent = ActionScroll
+
+CloseActionBtn.MouseButton1Click:Connect(function() ActionModal.Visible = false end)
+
+-- نظام المراقبة (Spectate System)
+local isSpectating = false
+local currentSpectateTarget = nil
+
+local SpecModalBtn = createSettingOptionBtn("مراقبة لاعب (Spectate)", "👁️", Color3.fromRGB(25, 90, 160))
+SpecModalBtn.MouseButton1Click:Connect(function()
+    ActionTitle.Text = "👁️ اختر لاعباً لمراقبته:"
+    ActionModal.Visible = true
+    for _, c in ipairs(ActionScroll:GetChildren()) do if c:IsA("Frame") then c:Destroy() end end
+
+    if isSpectating then
+        local unspecCard = Instance.new("Frame")
+        unspecCard.Size = UDim2.new(1, -6, 0, 34)
+        unspecCard.BackgroundColor3 = Color3.fromRGB(180, 30, 40)
+        unspecCard.ZIndex = 82
+        unspecCard.Parent = ActionScroll
+        Instance.new("UICorner", unspecCard).CornerRadius = UDim.new(0, 5)
+
+        local unspecBtn = Instance.new("TextButton")
+        unspecBtn.Size = UDim2.new(1, 0, 1, 0)
+        unspecBtn.BackgroundTransparency = 1
+        unspecBtn.Text = "❌ إلغاء المراقبة والعودة لشخصيتك"
+        unspecBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+        unspecBtn.Font = Enum.Font.SourceSansBold
+        unspecBtn.TextSize = 11
+        unspecBtn.ZIndex = 83
+        unspecBtn.Parent = unspecCard
+
+        unspecBtn.MouseButton1Click:Connect(function()
+            isSpectating = false
+            currentSpectateTarget = nil
+            if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
+                Camera.CameraSubject = LocalPlayer.Character.Humanoid
+            end
+            ActionModal.Visible = false
+        end)
+    end
+
+    for _, p in ipairs(Players:GetPlayers()) do
+        if p ~= LocalPlayer then
+            local card = Instance.new("Frame")
+            card.Size = UDim2.new(1, -6, 0, 34)
+            card.BackgroundColor3 = Color3.fromRGB(24, 24, 34)
+            card.ZIndex = 82
+            card.Parent = ActionScroll
+            Instance.new("UICorner", card).CornerRadius = UDim.new(0, 5)
+
+            local pLbl = Instance.new("TextLabel")
+            pLbl.Size = UDim2.new(1, -75, 1, 0)
+            pLbl.Position = UDim2.new(0, 10, 0, 0)
+            pLbl.BackgroundTransparency = 1
+            pLbl.Text = p.DisplayName ~= "" and p.DisplayName or p.Name
+            pLbl.TextColor3 = Color3.fromRGB(255, 255, 255)
+            pLbl.Font = Enum.Font.SourceSansBold
+            pLbl.TextSize = 11
+            pLbl.TextXAlignment = Enum.TextXAlignment.Left
+            pLbl.ZIndex = 83
+            pLbl.Parent = card
+
+            local specBtn = Instance.new("TextButton")
+            specBtn.Size = UDim2.new(0, 60, 0, 24)
+            specBtn.Position = UDim2.new(1, -66, 0.5, -12)
+            specBtn.BackgroundColor3 = Color3.fromRGB(40, 120, 200)
+            specBtn.Text = "مراقبة"
+            specBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+            specBtn.Font = Enum.Font.SourceSansBold
+            specBtn.TextSize = 10
+            specBtn.ZIndex = 83
+            specBtn.Parent = card
+            Instance.new("UICorner", specBtn).CornerRadius = UDim.new(0, 4)
+
+            specBtn.MouseButton1Click:Connect(function()
+                if p.Character and p.Character:FindFirstChild("Humanoid") then
+                    Camera.CameraSubject = p.Character.Humanoid
+                    isSpectating = true
+                    currentSpectateTarget = p
+                end
+                ActionModal.Visible = false
+            end)
+        end
+    end
+    ActionScroll.CanvasSize = UDim2.new(0, 0, 0, ActionLayout.AbsoluteContentSize.Y + 10)
+end)
+
+-- نظام الكشف وتحديد المكان (ESP Tracker System)
+local espEnabled = false
+local espHighlights = {}
+
+local function clearESP()
+    for _, h in pairs(espHighlights) do
+        if h then h:Destroy() end
+    end
+    espHighlights = {}
+end
+
+local function applyESP()
+    clearESP()
+    if not espEnabled then return end
+    for _, p in ipairs(Players:GetPlayers()) do
+        if p ~= LocalPlayer and p.Character then
+            local hl = Instance.new("Highlight")
+            hl.Name = "BenESPTracker"
+            hl.FillColor = Color3.fromRGB(255, 215, 0)
+            hl.OutlineColor = Color3.fromRGB(255, 0, 0)
+            hl.FillTransparency = 0.5
+            hl.OutlineTransparency = 0
+            hl.Adornee = p.Character
+            hl.Parent = p.Character
+            espHighlights[p.UserId] = hl
+        end
+    end
+end
+
+local TrackerModalBtn = createSettingOptionBtn("كشف مكان لاعب (ESP Tracker)", "📍", Color3.fromRGB(160, 100, 25))
+TrackerModalBtn.MouseButton1Click:Connect(function()
+    espEnabled = not espEnabled
+    applyESP()
+    if espEnabled then
+        TrackerModalBtn.Text = "📍   كشف المكان: مـفـعـل 🟢"
+        TrackerModalBtn.BackgroundColor3 = Color3.fromRGB(35, 120, 55)
+    else
+        TrackerModalBtn.Text = "📍   كشف المكان: مـعـطـل ❌"
+        TrackerModalBtn.BackgroundColor3 = Color3.fromRGB(160, 100, 25)
+    end
+end)
+
+Players.PlayerAdded:Connect(function(p)
+    p.CharacterAdded:Connect(function()
+        if espEnabled then task.wait(1); applyESP() end
+    end)
 end)
 
 local SaveSettingsBtn = createSettingOptionBtn("حفظ الإعدادات", "💾", Color3.fromRGB(35, 120, 55))
