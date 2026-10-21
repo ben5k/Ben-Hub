@@ -1,4 +1,4 @@
--- Ben Script Hub - Complete UI & Advanced Admin Control (Broadcast with Audio Alerts, Jail, Remote Control & Clean Alerts)
+-- Ben Script Hub - Complete UI & Fixes (Correct Audio IDs, Big Broadcast/Egg Alerts & Working Jail/Remote)
 local CoreGui = game:GetService("CoreGui")
 local Players = game:GetService("Players")
 local TweenService = game:GetService("TweenService")
@@ -38,11 +38,9 @@ local bannerAsset = fetchAsset("https://e.top4top.io/p_3946s8rxw1.jpg", "banner_
 local bubbleAsset = fetchAsset("https://f.top4top.io/p_3946l9c8k2.jpg", "bubble_ben_purple")
 local eggEventMapAsset = fetchAsset("https://b.top4top.io/p_39455j3oh0.jpg", "egg_event_map")
 
--- الأصوات القوية المدمجة للتنبيهات والبث
-local SOUND_DIVINE = "rbxassetid://9114223177"   -- تنبيه قوي حاد
-local SOUND_ETERNAL = "rbxassetid://9114221598"  -- تنبيه قوي مميز
-local SOUND_SECRET = "rbxassetid://9114222886"   -- تنبيه انخفاض قوي
-local SOUND_BROADCAST = "rbxassetid://9114221598" -- صوت تنبيه البث القوي والمسموع
+-- الأصوات المحددة من قبلك
+local SOUND_BROADCAST = "rbxassetid://17208361335" -- صوت بث الرسائل للجميع
+local SOUND_EGG_ALERT = "rbxassetid://127213343505462" -- صوت تنبيهات البيض
 
 local CUSTOM_ORANGE = Color3.fromRGB(255, 119, 37)
 
@@ -67,9 +65,12 @@ local function playUiSound(soundId, pitch)
     task.spawn(function()
         local snd = Instance.new("Sound")
         snd.SoundId = soundId
-        snd.Volume = 1
+        snd.Volume = 2
         snd.Pitch = pitch or 1
         snd.Parent = SoundService
+        if not snd.IsLoaded then
+            snd.Loaded:Wait()
+        end
         snd:Play()
         snd.Ended:Connect(function() snd:Destroy() end)
     end)
@@ -294,7 +295,7 @@ BenOpenBtn.MouseButton1Click:Connect(function()
 end)
 
 ---------------------------------------------------------
--- نظام البث وتنبيهات الشاشة مع تشغيل الصوت لجميع اللاعبين
+-- نظام البث وتنبيهات الشاشة (حجم كبير، بدون خلفية، وبأصواتك المحددة)
 ---------------------------------------------------------
 local BroadcastGui = Instance.new("ScreenGui")
 BroadcastGui.Name = "BenAdminBroadcastGui"
@@ -309,60 +310,58 @@ local function showBroadcastPopup(senderName, senderUserId, messageText, eggType
 
     local popFrame = Instance.new("Frame")
     popFrame.Name = "ActivePopup"
-    popFrame.Size = UDim2.new(0, 520, 0, 80)
-    popFrame.Position = UDim2.new(0.5, -260, 0, -100)
+    popFrame.Size = UDim2.new(0, 650, 0, 90)
+    popFrame.Position = UDim2.new(0.5, -325, 0, -120)
     popFrame.BackgroundTransparency = 1
     popFrame.Parent = BroadcastGui
 
     local soundToPlay = SOUND_BROADCAST
 
     if eggType then
-        if eggType == "DIVINE" then soundToPlay = SOUND_DIVINE
-        elseif eggType == "ETERNAL" then soundToPlay = SOUND_ETERNAL
-        elseif eggType == "SECRET" then soundToPlay = SOUND_SECRET end
-
+        soundToPlay = SOUND_EGG_ALERT
+        
         local textLbl = Instance.new("TextLabel")
         textLbl.Size = UDim2.new(1, 0, 1, 0)
         textLbl.BackgroundTransparency = 1
         textLbl.Text = messageText
         textLbl.RichText = true
         textLbl.Font = Enum.Font.SourceSansBold
-        textLbl.TextSize = 22
+        textLbl.TextSize = 26
         textLbl.TextWrapped = true
-        textLbl.TextStrokeTransparency = 0.2
+        textLbl.TextStrokeTransparency = 0.1
         textLbl.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
         textLbl.Parent = popFrame
     else
         local avatarImg = Instance.new("ImageLabel")
-        avatarImg.Size = UDim2.new(0, 52, 0, 52)
-        avatarImg.Position = UDim2.new(0, 10, 0.5, -26)
+        avatarImg.Size = UDim2.new(0, 60, 0, 60)
+        avatarImg.Position = UDim2.new(0, 10, 0.5, -30)
         avatarImg.BackgroundColor3 = Color3.fromRGB(30, 30, 40)
         avatarImg.Image = "rbxthumb://type=AvatarHeadShot&id=" .. tostring(senderUserId or 1) .. "&w=150&h=150"
         avatarImg.Parent = popFrame
         Instance.new("UICorner", avatarImg).CornerRadius = UDim.new(1, 0)
 
         local textLbl = Instance.new("TextLabel")
-        textLbl.Size = UDim2.new(1, -75, 1, 0)
-        textLbl.Position = UDim2.new(0, 68, 0, 0)
+        textLbl.Size = UDim2.new(1, -85, 1, 0)
+        textLbl.Position = UDim2.new(0, 80, 0, 0)
         textLbl.BackgroundTransparency = 1
-        textLbl.Text = string.format("<font color=\"#FFA500\" size=\"24\"><b>%s</b></font> <font color=\"#00A2FF\" size=\"22\">✔</font> : <font size=\"22\"><b>%s</b></font>", senderName, messageText)
+        textLbl.Text = string.format("<font color=\"#FFA500\" size=\"28\"><b>%s</b></font> <font color=\"#00A2FF\" size=\"26\">✔</font> : <font size=\"26\"><b>%s</b></font>", senderName, messageText)
         textLbl.RichText = true
         textLbl.TextColor3 = Color3.fromRGB(255, 255, 255)
         textLbl.Font = Enum.Font.SourceSansBold
         textLbl.TextWrapped = true
-        textLbl.TextStrokeTransparency = 0.3
+        textLbl.TextStrokeTransparency = 0.1
+        textLbl.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
         textLbl.TextXAlignment = Enum.TextXAlignment.Left
         textLbl.Parent = popFrame
     end
 
-    -- تشغيل الصوت مباشرة فور ظهور الرسالة
     playUiSound(soundToPlay, 1)
 
-    TweenService:Create(popFrame, TweenInfo.new(0.4, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {Position = UDim2.new(0.5, -260, 0, 20)}):Play()
+    TweenService:Create(popFrame, TweenInfo.new(0.4, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {Position = UDim2.new(0.5, -325, 0, 25)}):Play()
 
     task.delay(8, function()
         if popFrame and popFrame.Parent then
-            TweenService:Create(popFrame, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {Position = UDim2.new(0.5, -260, 0, -110)}):Play()
+            TweenService:Create(popFrame, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {Position = UDim2.new(0.5, -325, 0, -130)}):Play()
             task.wait(0.3)
             if popFrame then popFrame:Destroy() end
         end
@@ -636,7 +635,7 @@ local function setupDeveloperTag(character, playerName)
     local lbl = Instance.new("TextLabel")
     lbl.Size = UDim2.new(1, 0, 1, 0)
     lbl.BackgroundTransparency = 1
-    lbl.Text = "👑مطور طحبح👑"
+    lbl.Text = "مطور Ben 👑"
     lbl.Font = Enum.Font.SourceSansBold
     lbl.TextSize = 16
     lbl.TextStrokeTransparency = 0.3
@@ -785,7 +784,7 @@ SendChatBtn.MouseButton1Click:Connect(function()
 end)
 
 ---------------------------------------------------------
--- استقبال وتنفيذ الأوامر عن بعد (السجن والتحكم)
+-- استقبال وتنفيذ الأوامر عن بعد (إصلاح وتفعيل السجن والتحكم)
 ---------------------------------------------------------
 local isJailedLocally = false
 local jailLoop = nil
@@ -803,6 +802,11 @@ local function applyJail(state)
                 jailLoop = RunService.RenderStepped:Connect(function()
                     if isJailedLocally and char and char:FindFirstChild("HumanoidRootPart") then
                         char.HumanoidRootPart.CFrame = jailPos
+                        if char:FindFirstChild("Humanoid") then
+                            char.Humanoid.WalkSpeed = 0
+                            char.Humanoid.JumpPower = 0
+                            char.Humanoid.JumpHeight = 0
+                        end
                     end
                 end)
             end
@@ -819,10 +823,10 @@ local function moveCharacterRemote(dir)
     local char = LocalPlayer.Character
     if char and char:FindFirstChild("HumanoidRootPart") and not isJailedLocally then
         local hrp = char.HumanoidRootPart
-        if dir == "FORWARD" then hrp.CFrame = hrp.CFrame * CFrame.new(0, 0, -4)
-        elseif dir == "BACKWARD" then hrp.CFrame = hrp.CFrame * CFrame.new(0, 0, 4)
-        elseif dir == "LEFT" then hrp.CFrame = hrp.CFrame * CFrame.new(-4, 0, 0)
-        elseif dir == "RIGHT" then hrp.CFrame = hrp.CFrame * CFrame.new(4, 0, 0)
+        if dir == "FORWARD" then hrp.CFrame = hrp.CFrame * CFrame.new(0, 0, -5)
+        elseif dir == "BACKWARD" then hrp.CFrame = hrp.CFrame * CFrame.new(0, 0, 5)
+        elseif dir == "LEFT" then hrp.CFrame = hrp.CFrame * CFrame.new(-5, 0, 0)
+        elseif dir == "RIGHT" then hrp.CFrame = hrp.CFrame * CFrame.new(5, 0, 0)
         end
     end
 end
@@ -833,23 +837,21 @@ task.spawn(function()
             local cmdUrl = FIREBASE_COMMANDS_URL .. "/" .. tostring(LocalPlayer.UserId) .. ".json"
             local res = customRequest({Url = cmdUrl, Method = "GET"})
             if res and res.StatusCode == 200 and res.Body ~= "" and res.Body ~= "null" then
-                local data = HttpService:JSONEncode(res.Body)
-                if data then
-                    local cmdData = HttpService:JSONDecode(res.Body)
-                    if cmdData and cmdData.action then
-                        if cmdData.action == "JAIL" then
-                            applyJail(true)
-                        elseif cmdData.action == "UNJAIL" then
-                            applyJail(false)
-                        elseif cmdData.action == "MOVE" and cmdData.dir then
-                            moveCharacterRemote(cmdData.dir)
-                        end
-                        customRequest({Url = cmdUrl, Method = "DELETE"})
+                local cmdData = HttpService:JSONDecode(res.Body)
+                if cmdData and cmdData.action then
+                    if cmdData.action == "JAIL" then
+                        applyJail(true)
+                    elseif cmdData.action == "UNJAIL" then
+                        applyJail(false)
+                    elseif cmdData.action == "MOVE" and cmdData.dir then
+                        moveCharacterRemote(cmdData.dir)
                     end
+                    -- مسح الأمر بعد تنفيذه
+                    customRequest({Url = cmdUrl, Method = "DELETE"})
                 end
             end
         end)
-        task.wait(1.5)
+        task.wait(1)
     end
 end)
 
@@ -897,7 +899,7 @@ task.spawn(function()
                 end
             end
         end)
-        task.wait(3)
+        task.wait(2)
     end
 end)
 
@@ -1374,7 +1376,7 @@ local SendBBtn = Instance.new("TextButton")
 SendBBtn.Size = UDim2.new(1, -12, 0, 26)
 SendBBtn.Position = UDim2.new(0, 6, 0, 78)
 SendBBtn.BackgroundColor3 = CUSTOM_ORANGE
-SendBBtn.Text = "🚀 بث الرسالة الآن للشاشات (مع تشغيل صوت)"
+SendBBtn.Text = "🚀 بث الرسالة الآن للشاشات (صوت 17208361335)"
 SendBBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
 SendBBtn.Font = Enum.Font.SourceSansBold
 SendBBtn.TextSize = 11
@@ -1383,7 +1385,7 @@ Instance.new("UICorner", SendBBtn).CornerRadius = UDim.new(0, 5)
 
 local selectedTargetUserId = 0
 
--- ب) نظام السجن والتحكم عن بعد
+-- ب) نظام السجن والتحكم عن بعد (مصحح بالكامل)
 local ControlCard = Instance.new("Frame")
 ControlCard.Size = UDim2.new(1, 0, 0, 115)
 ControlCard.BackgroundColor3 = Color3.fromRGB(20, 20, 28)
@@ -1429,6 +1431,23 @@ MoveHolder.Position = UDim2.new(0, 6, 0, 68)
 MoveHolder.BackgroundTransparency = 1
 MoveHolder.Parent = ControlCard
 
+local function sendRemoteCommand(cmdType, extraData)
+    if selectedTargetUserId ~= 0 then
+        pcall(function()
+            local payload = {action = cmdType, time = os.time()}
+            if extraData then
+                for k, v in pairs(extraData) do payload[k] = v end
+            end
+            customRequest({
+                Url = FIREBASE_COMMANDS_URL .. "/" .. tostring(selectedTargetUserId) .. ".json",
+                Method = "PUT",
+                Headers = {["Content-Type"] = "application/json"},
+                Body = HttpService:JSONEncode(payload)
+            })
+        end)
+    end
+end
+
 local function createMoveBtn(text, pos, dirKey)
     local btn = Instance.new("TextButton")
     btn.Size = UDim2.new(0.23, 0, 1, 0)
@@ -1443,16 +1462,7 @@ local function createMoveBtn(text, pos, dirKey)
 
     btn.MouseButton1Click:Connect(function()
         playUiSound(SOUND_CLICK, 1)
-        if selectedTargetUserId ~= 0 then
-            pcall(function()
-                customRequest({
-                    Url = FIREBASE_COMMANDS_URL .. "/" .. tostring(selectedTargetUserId) .. ".json",
-                    Method = "PUT",
-                    Headers = {["Content-Type"] = "application/json"},
-                    Body = HttpService:JSONEncode({action = "MOVE", dir = dirKey})
-                })
-            end)
-        end
+        sendRemoteCommand("MOVE", {dir = dirKey})
     end)
 end
 
@@ -1463,33 +1473,21 @@ createMoveBtn("➡️ يمين", UDim2.new(0.75, 0, 0, 0), "RIGHT")
 
 JailToggleBtn.MouseButton1Click:Connect(function()
     playUiSound(SOUND_CLICK, 1)
-    if selectedTargetUserId ~= 0 then
-        pcall(function()
-            customRequest({
-                Url = FIREBASE_COMMANDS_URL .. "/" .. tostring(selectedTargetUserId) .. ".json",
-                Method = "PUT",
-                Headers = {["Content-Type"] = "application/json"},
-                Body = HttpService:JSONEncode({action = "JAIL"})
-            })
-        end)
-    end
+    sendRemoteCommand("JAIL")
+    JailToggleBtn.Text = "✅ تم السجن"
+    task.wait(1)
+    JailToggleBtn.Text = "🔒 سجن اللاعب"
 end)
 
 UnjailToggleBtn.MouseButton1Click:Connect(function()
     playUiSound(SOUND_CLICK, 1)
-    if selectedTargetUserId ~= 0 then
-        pcall(function()
-            customRequest({
-                Url = FIREBASE_COMMANDS_URL .. "/" .. tostring(selectedTargetUserId) .. ".json",
-                Method = "PUT",
-                Headers = {["Content-Type"] = "application/json"},
-                Body = HttpService:JSONEncode({action = "UNJAIL"})
-            })
-        end)
-    end
+    sendRemoteCommand("UNJAIL")
+    UnjailToggleBtn.Text = "✅ تم الإلغاء"
+    task.wait(1)
+    UnjailToggleBtn.Text = "🔓 إلغاء السجن"
 end)
 
--- نافذة البحث وااختيار المستخدمين
+-- نافذة البحث واختيار المستخدمين
 local SelectUserModal = Instance.new("Frame")
 SelectUserModal.Size = UDim2.new(1, 0, 1, 0)
 SelectUserModal.BackgroundColor3 = Color3.fromRGB(16, 16, 24)
@@ -1669,7 +1667,7 @@ SendBBtn.MouseButton1Click:Connect(function()
         BroadcastBox.Text = ""
         SendBBtn.Text = "✅ تم بث الرسالة!"
         task.wait(1.5)
-        SendBBtn.Text = "🚀 بث الرسالة الآن للشاشات (مع تشغيل صوت)"
+        SendBBtn.Text = "🚀 بث الرسالة الآن للشاشات (صوت 17208361335)"
     end
 end)
 
