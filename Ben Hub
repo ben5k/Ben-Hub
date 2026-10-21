@@ -1,4 +1,4 @@
--- Ben Script Hub - Owner Admin Search & Control Update
+-- Ben Script Hub - Orange Light Theme & Custom Assets Update
 local CoreGui = game:GetService("CoreGui")
 local Players = game:GetService("Players")
 local TweenService = game:GetService("TweenService")
@@ -32,13 +32,20 @@ local function fetchAsset(url, fileName)
     return url
 end
 
-local logoAsset = fetchAsset("https://j.top4top.io/p_39224zme21.png", "logo_ben")
-local bannerAsset = fetchAsset("https://c.top4top.io/p_3933a1ntu0.png", "banner_new")
+-- الروابط الجديدة للصور
+local logoAsset = fetchAsset("https://d.top4top.io/p_3946povqg0.png", "logo_ben_yellow")
+local bannerAsset = fetchAsset("https://e.top4top.io/p_3946s8rxw1.jpg", "banner_ben_green")
+local bubbleAsset = fetchAsset("https://f.top4top.io/p_3946l9c8k2.jpg", "bubble_ben_purple")
 local eggEventMapAsset = fetchAsset("https://b.top4top.io/p_39455j3oh0.jpg", "egg_event_map")
+
+-- الألوان المعتمدة (البرتقالي الفاتح)
+local ORANGE_PRIMARY = Color3.fromRGB(255, 140, 40)
+local ORANGE_DARK = Color3.fromRGB(210, 100, 20)
+local BG_DARK = Color3.fromRGB(18, 18, 24)
 
 local particlesEnabled = true
 local floatingClockEnabled = false
-local configFile = "BenHub_Config_v17.txt"
+local configFile = "BenHub_Config_v18.txt"
 
 if isfile and readfile and isfile(configFile) then
     pcall(function()
@@ -77,8 +84,8 @@ Main.Parent = ScreenGui
 
 Instance.new("UICorner", Main).CornerRadius = UDim.new(0, 10)
 local MainStroke = Instance.new("UIStroke")
-MainStroke.Color = Color3.fromRGB(200, 30, 45)
-MainStroke.Thickness = 1.5
+MainStroke.Color = ORANGE_PRIMARY
+MainStroke.Thickness = 1.8
 MainStroke.Parent = Main
 
 ---------------------------------------------------------
@@ -105,7 +112,7 @@ LoginCard.Parent = LoginBg
 
 Instance.new("UICorner", LoginCard).CornerRadius = UDim.new(0, 12)
 local LoginStroke = Instance.new("UIStroke")
-LoginStroke.Color = Color3.fromRGB(255, 215, 0)
+LoginStroke.Color = ORANGE_PRIMARY
 LoginStroke.Thickness = 1.8
 LoginStroke.Parent = LoginCard
 
@@ -138,7 +145,7 @@ Instance.new("UICorner", LoginAvatar).CornerRadius = UDim.new(1, 0)
 local LoginBtn = Instance.new("TextButton")
 LoginBtn.Size = UDim2.new(0, 200, 0, 38)
 LoginBtn.Position = UDim2.new(0.5, -100, 0, 155)
-LoginBtn.BackgroundColor3 = Color3.fromRGB(180, 25, 35)
+LoginBtn.BackgroundColor3 = ORANGE_PRIMARY
 LoginBtn.Text = "🔓 تسجيل الدخول"
 LoginBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
 LoginBtn.Font = Enum.Font.SourceSansBold
@@ -176,7 +183,7 @@ local function spawnParticles()
         local star = Instance.new("Frame")
         local sz = math.random(2, 4)
         star.Size = UDim2.new(0, sz, 0, sz)
-        star.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+        star.BackgroundColor3 = Color3.fromRGB(255, 200, 120)
         star.BackgroundTransparency = math.random(3, 7) / 10
         star.BorderSizePixel = 0
         star.ZIndex = 1
@@ -204,7 +211,7 @@ task.spawn(function()
 end)
 
 ---------------------------------------------------------
--- زر الإغلاق والأزرار العائمة
+-- زر الإغلاق والزر العائم المحدد باللون البنفسجي
 ---------------------------------------------------------
 local CloseBtn = Instance.new("TextButton")
 CloseBtn.Size = UDim2.new(0, 22, 0, 22)
@@ -218,12 +225,13 @@ CloseBtn.ZIndex = 10
 CloseBtn.Parent = Main
 Instance.new("UICorner", CloseBtn).CornerRadius = UDim.new(0, 5)
 
+-- الزر العائم لصورة الفقاعة بنفسجي المحدد
 local BenOpenBtn = Instance.new("ImageButton")
 BenOpenBtn.Name = "BenOpenBtn"
-BenOpenBtn.Size = UDim2.new(0, 52, 0, 52)
-BenOpenBtn.Position = UDim2.new(0, 15, 0.5, -26)
+BenOpenBtn.Size = UDim2.new(0, 54, 0, 54)
+BenOpenBtn.Position = UDim2.new(0, 15, 0.5, -27)
 BenOpenBtn.BackgroundColor3 = Color3.fromRGB(18, 18, 24)
-BenOpenBtn.Image = logoAsset
+BenOpenBtn.Image = bubbleAsset
 BenOpenBtn.Visible = false
 BenOpenBtn.Active = true
 BenOpenBtn.Draggable = true
@@ -231,7 +239,7 @@ BenOpenBtn.Parent = ScreenGui
 
 Instance.new("UICorner", BenOpenBtn).CornerRadius = UDim.new(1, 0)
 local openStroke = Instance.new("UIStroke")
-openStroke.Color = Color3.fromRGB(255, 215, 0)
+openStroke.Color = ORANGE_PRIMARY
 openStroke.Thickness = 2
 openStroke.Parent = BenOpenBtn
 
@@ -262,7 +270,7 @@ local function showBroadcastPopup(senderName, senderUserId, messageText)
 
     Instance.new("UICorner", popFrame).CornerRadius = UDim.new(0, 12)
     local popStroke = Instance.new("UIStroke")
-    popStroke.Color = Color3.fromRGB(200, 30, 45)
+    popStroke.Color = ORANGE_PRIMARY
     popStroke.Thickness = 2
     popStroke.Parent = popFrame
 
@@ -278,7 +286,7 @@ local function showBroadcastPopup(senderName, senderUserId, messageText)
     textLbl.Size = UDim2.new(1, -75, 1, 0)
     textLbl.Position = UDim2.new(0, 68, 0, 0)
     textLbl.BackgroundTransparency = 1
-    textLbl.Text = string.format("<font color=\"#FF0000\" size=\"22\"><b>%s</b></font> <font color=\"#00A2FF\" size=\"20\">✔</font> : <font size=\"19\"><b>%s</b></font>", senderName, messageText)
+    textLbl.Text = string.format("<font color=\"#FF8C28\" size=\"22\"><b>%s</b></font> <font color=\"#00A2FF\" size=\"20\">✔</font> : <font size=\"19\"><b>%s</b></font>", senderName, messageText)
     textLbl.RichText = true
     textLbl.TextColor3 = Color3.fromRGB(255, 255, 255)
     textLbl.Font = Enum.Font.SourceSansBold
@@ -299,7 +307,7 @@ local function showBroadcastPopup(senderName, senderUserId, messageText)
 end
 
 ---------------------------------------------------------
--- نظام الشات وتصميم مميزات
+-- نظام الشات
 ---------------------------------------------------------
 local TopChatToggleBtn = Instance.new("TextButton")
 TopChatToggleBtn.Name = "TopChatToggleBtn"
@@ -315,7 +323,7 @@ TopChatToggleBtn.Parent = ScreenGui
 
 Instance.new("UICorner", TopChatToggleBtn).CornerRadius = UDim.new(0, 12)
 local chatBtnStroke = Instance.new("UIStroke")
-chatBtnStroke.Color = Color3.fromRGB(255, 215, 0)
+chatBtnStroke.Color = ORANGE_PRIMARY
 chatBtnStroke.Thickness = 1.8
 chatBtnStroke.Parent = TopChatToggleBtn
 
@@ -332,7 +340,7 @@ ChatWindow.Parent = ScreenGui
 
 Instance.new("UICorner", ChatWindow).CornerRadius = UDim.new(0, 12)
 local chatWinStroke = Instance.new("UIStroke")
-chatWinStroke.Color = Color3.fromRGB(200, 30, 45)
+chatWinStroke.Color = ORANGE_PRIMARY
 chatWinStroke.Thickness = 1.8
 chatWinStroke.Parent = ChatWindow
 
@@ -348,7 +356,7 @@ ChatTitle.Size = UDim2.new(0.35, 0, 1, 0)
 ChatTitle.Position = UDim2.new(0, 10, 0, 0)
 ChatTitle.BackgroundTransparency = 1
 ChatTitle.Text = "💬 الشات العام"
-ChatTitle.TextColor3 = Color3.fromRGB(255, 215, 0)
+ChatTitle.TextColor3 = ORANGE_PRIMARY
 ChatTitle.Font = Enum.Font.SourceSansBold
 ChatTitle.TextSize = 12
 ChatTitle.TextXAlignment = Enum.TextXAlignment.Left
@@ -358,7 +366,7 @@ ChatTitle.Parent = ChatHeader
 local FeaturesBtn = Instance.new("TextButton")
 FeaturesBtn.Size = UDim2.new(0, 75, 0, 24)
 FeaturesBtn.Position = UDim2.new(0.36, 0, 0.5, -12)
-FeaturesBtn.BackgroundColor3 = Color3.fromRGB(180, 25, 35)
+FeaturesBtn.BackgroundColor3 = ORANGE_PRIMARY
 FeaturesBtn.Text = "⭐ مميزات"
 FeaturesBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
 FeaturesBtn.Font = Enum.Font.SourceSansBold
@@ -389,7 +397,7 @@ FeaturesModal.Parent = ChatWindow
 
 Instance.new("UICorner", FeaturesModal).CornerRadius = UDim.new(0, 10)
 local modalStroke = Instance.new("UIStroke")
-modalStroke.Color = Color3.fromRGB(255, 215, 0)
+modalStroke.Color = ORANGE_PRIMARY
 modalStroke.Thickness = 1.5
 modalStroke.Parent = FeaturesModal
 
@@ -405,7 +413,7 @@ ModalTitle.Size = UDim2.new(1, -40, 1, 0)
 ModalTitle.Position = UDim2.new(0, 10, 0, 0)
 ModalTitle.BackgroundTransparency = 1
 ModalTitle.Text = "⭐ قائمة مميزات - مستخدمو السكربت"
-ModalTitle.TextColor3 = Color3.fromRGB(255, 215, 0)
+ModalTitle.TextColor3 = ORANGE_PRIMARY
 ModalTitle.Font = Enum.Font.SourceSansBold
 ModalTitle.TextSize = 12.5
 ModalTitle.TextXAlignment = Enum.TextXAlignment.Left
@@ -483,7 +491,7 @@ Instance.new("UICorner", ChatInputBox).CornerRadius = UDim.new(0, 6)
 local SendChatBtn = Instance.new("TextButton")
 SendChatBtn.Size = UDim2.new(0, 70, 0, 32)
 SendChatBtn.Position = UDim2.new(1, -78, 1, -38)
-SendChatBtn.BackgroundColor3 = Color3.fromRGB(180, 25, 35)
+SendChatBtn.BackgroundColor3 = ORANGE_PRIMARY
 SendChatBtn.Text = "إرسال 🚀"
 SendChatBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
 SendChatBtn.Font = Enum.Font.SourceSansBold
@@ -523,7 +531,7 @@ local function showFloatingBubble(character, msgText)
     Instance.new("UICorner", frame).CornerRadius = UDim.new(0, 8)
     
     local stroke = Instance.new("UIStroke")
-    stroke.Color = Color3.fromRGB(255, 215, 0)
+    stroke.Color = ORANGE_PRIMARY
     stroke.Thickness = 1.5
     stroke.Parent = frame
 
@@ -788,7 +796,7 @@ local function updateActiveUsersList()
                         uLbl.Position = UDim2.new(0, 42, 0, 0)
                         uLbl.BackgroundTransparency = 1
                         uLbl.Text = usr.displayName or usr.name or "مستخدم"
-                        uLbl.TextColor3 = Color3.fromRGB(255, 215, 0)
+                        uLbl.TextColor3 = ORANGE_PRIMARY
                         uLbl.Font = Enum.Font.SourceSansBold
                         uLbl.TextSize = 12
                         uLbl.TextXAlignment = Enum.TextXAlignment.Left
@@ -886,7 +894,7 @@ task.spawn(function()
 end)
 
 ---------------------------------------------------------
--- القائمة الجانبية (Sidebar)
+-- القائمة الجانبية (Sidebar) + اللوجو المحدد بالأصفر
 ---------------------------------------------------------
 local Sidebar = Instance.new("Frame")
 Sidebar.Size = UDim2.new(0, 140, 1, 0)
@@ -895,9 +903,10 @@ Sidebar.ZIndex = 3
 Sidebar.Parent = Main
 Instance.new("UICorner", Sidebar).CornerRadius = UDim.new(0, 10)
 
+-- اللوجو المحدث (المحدد بالدائرة الأصفر)
 local LogoImage = Instance.new("ImageLabel")
-LogoImage.Size = UDim2.new(0, 95, 0, 45)
-LogoImage.Position = UDim2.new(0.5, -47, 0, 6)
+LogoImage.Size = UDim2.new(0, 105, 0, 46)
+LogoImage.Position = UDim2.new(0.5, -52, 0, 5)
 LogoImage.BackgroundTransparency = 1
 LogoImage.Image = logoAsset
 LogoImage.ScaleType = Enum.ScaleType.Fit
@@ -925,7 +934,7 @@ PlayerCard.Parent = Sidebar
 Instance.new("UICorner", PlayerCard).CornerRadius = UDim.new(0, 8)
 
 local CardStroke = Instance.new("UIStroke")
-CardStroke.Color = Color3.fromRGB(255, 215, 0)
+CardStroke.Color = ORANGE_PRIMARY
 CardStroke.Thickness = 1
 CardStroke.Transparency = 0.5
 CardStroke.Parent = PlayerCard
@@ -944,7 +953,7 @@ PlayerNameLbl.Size = UDim2.new(1, -54, 1, 0)
 PlayerNameLbl.Position = UDim2.new(0, 52, 0, 0)
 PlayerNameLbl.BackgroundTransparency = 1
 PlayerNameLbl.Text = LocalPlayer.DisplayName ~= "" and LocalPlayer.DisplayName or LocalPlayer.Name
-PlayerNameLbl.TextColor3 = Color3.fromRGB(255, 215, 0)
+PlayerNameLbl.TextColor3 = ORANGE_PRIMARY
 PlayerNameLbl.Font = Enum.Font.SourceSansBold
 PlayerNameLbl.TextSize = 13
 PlayerNameLbl.TextTruncate = Enum.TextTruncate.AtEnd
@@ -1002,7 +1011,7 @@ local tabButtons = {}
 local function createTabButton(text, iconId, targetTab)
     local btn = Instance.new("TextButton")
     btn.Size = UDim2.new(1, 0, 0, 27)
-    btn.BackgroundColor3 = (targetTab == HomeTab) and Color3.fromRGB(180, 25, 35) or Color3.fromRGB(22, 22, 28)
+    btn.BackgroundColor3 = (targetTab == HomeTab) and ORANGE_PRIMARY or Color3.fromRGB(22, 22, 28)
     btn.Text = iconId .. "  " .. text
     btn.TextColor3 = Color3.fromRGB(255, 255, 255)
     btn.Font = Enum.Font.SourceSansBold
@@ -1018,7 +1027,7 @@ local function createTabButton(text, iconId, targetTab)
             t.button.BackgroundColor3 = Color3.fromRGB(22, 22, 28)
             if t.tab then t.tab.Visible = false end
         end
-        btn.BackgroundColor3 = Color3.fromRGB(180, 25, 35)
+        btn.BackgroundColor3 = ORANGE_PRIMARY
         if targetTab then targetTab.Visible = true end
     end)
     return btn
@@ -1036,7 +1045,7 @@ createTabButton("اقتراحات", "💡", SuggestTab)
 createTabButton("الإعدادات", "⚙️", SettingsTab)
 
 ---------------------------------------------------------
--- 1. الرئيسية
+-- 1. الواجهة الرئيسية + البنر الجديد المحدد بالأخضر (بشكل كامل)
 ---------------------------------------------------------
 local ServerStatus = Instance.new("TextLabel")
 ServerStatus.Size = UDim2.new(1, -10, 0, 18)
@@ -1048,23 +1057,31 @@ ServerStatus.TextSize = 10.5
 ServerStatus.TextXAlignment = Enum.TextXAlignment.Right
 ServerStatus.Parent = HomeTab
 
+-- إطار البنر الرئيسي للواجهة باللون البرتقالي
 local BannerFrame = Instance.new("Frame")
-BannerFrame.Size = UDim2.new(1, -10, 0, 80)
+BannerFrame.Size = UDim2.new(1, -10, 0, 85)
 BannerFrame.Position = UDim2.new(0, 0, 0, 20)
-BannerFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 30)
+BannerFrame.BackgroundColor3 = Color3.fromRGB(24, 24, 32)
+BannerFrame.ClipsDescendants = true
 BannerFrame.Parent = HomeTab
 Instance.new("UICorner", BannerFrame).CornerRadius = UDim.new(0, 8)
 
+local BannerFrameStroke = Instance.new("UIStroke")
+BannerFrameStroke.Color = ORANGE_PRIMARY
+BannerFrameStroke.Thickness = 1
+BannerFrameStroke.Parent = BannerFrame
+
+-- الصورة المحدثة للبنر الكبير بالكامل (المحدد بالأخضر)
 local BannerImage = Instance.new("ImageLabel")
 BannerImage.Size = UDim2.new(1, 0, 1, 0)
+BannerImage.BackgroundTransparency = 1
 BannerImage.Image = bannerAsset
-BannerImage.ScaleType = Enum.ScaleType.Crop
+BannerImage.ScaleType = Enum.ScaleType.Fit -- يضمن إظهار كامل تفاصيل البنر دون اقتصاص
 BannerImage.Parent = BannerFrame
-Instance.new("UICorner", BannerImage).CornerRadius = UDim.new(0, 8)
 
 local CardsRow = Instance.new("Frame")
 CardsRow.Size = UDim2.new(1, -10, 0, 34)
-CardsRow.Position = UDim2.new(0, 0, 0, 106)
+CardsRow.Position = UDim2.new(0, 0, 0, 109)
 CardsRow.BackgroundTransparency = 1
 CardsRow.Parent = HomeTab
 
@@ -1078,7 +1095,7 @@ local UsersLbl = Instance.new("TextLabel")
 UsersLbl.Size = UDim2.new(1, 0, 1, 0)
 UsersLbl.BackgroundTransparency = 1
 UsersLbl.Text = "⚡ 67 مستخدم\nنشط الآن"
-UsersLbl.TextColor3 = Color3.fromRGB(255, 215, 0)
+UsersLbl.TextColor3 = ORANGE_PRIMARY
 UsersLbl.Font = Enum.Font.SourceSansBold
 UsersLbl.TextSize = 9
 UsersLbl.Parent = UsersCard
@@ -1131,8 +1148,8 @@ task.spawn(function()
 end)
 
 local UpdatesBox = Instance.new("Frame")
-UpdatesBox.Size = UDim2.new(1, -10, 0, 125)
-UpdatesBox.Position = UDim2.new(0, 0, 0, 146)
+UpdatesBox.Size = UDim2.new(1, -10, 0, 122)
+UpdatesBox.Position = UDim2.new(0, 0, 0, 148)
 UpdatesBox.BackgroundColor3 = Color3.fromRGB(20, 20, 26)
 UpdatesBox.Parent = HomeTab
 Instance.new("UICorner", UpdatesBox).CornerRadius = UDim.new(0, 8)
@@ -1142,18 +1159,18 @@ UpdatesTitle.Size = UDim2.new(1, -10, 0, 20)
 UpdatesTitle.Position = UDim2.new(0, 5, 0, 3)
 UpdatesTitle.BackgroundTransparency = 1
 UpdatesTitle.Text = "📢 آخر التحديثات:"
-UpdatesTitle.TextColor3 = Color3.fromRGB(255, 215, 0)
+UpdatesTitle.TextColor3 = ORANGE_PRIMARY
 UpdatesTitle.Font = Enum.Font.SourceSansBold
 UpdatesTitle.TextSize = 10.5
 UpdatesTitle.TextXAlignment = Enum.TextXAlignment.Right
 UpdatesTitle.Parent = UpdatesBox
 
 local UpdatesText = Instance.new("TextLabel")
-UpdatesText.Size = UDim2.new(1, -14, 0, 95)
+UpdatesText.Size = UDim2.new(1, -14, 0, 92)
 UpdatesText.Position = UDim2.new(0, 7, 0, 24)
 UpdatesText.BackgroundTransparency = 1
-UpdatesText.Text = "• إضافة ميزة البحث المباشر عن اسم أي لاعب داخل لوحة تحكم الأدمن.\n• تسهيل اختيار الشخص المراد بث إشعار أو رسالة خاصة له بسرعة."
-UpdatesText.TextColor3 = Color3.fromRGB(200, 200, 210)
+UpdatesText.Text = "• ثيم برتقالي فاتح جديد بالكامل يغطي كافة الواجهات والأزرار.\n• تحديث اللوجو الأصفر الرئيسي والبنر الأخضر بشكل كامل دون اقتصاص.\n• إضافة وتحديث زر الفقاعة العائم بالصورة البنفسجية المخصصة."
+UpdatesText.TextColor3 = Color3.fromRGB(210, 210, 220)
 UpdatesText.Font = Enum.Font.SourceSans
 UpdatesText.TextSize = 9.5
 UpdatesText.TextXAlignment = Enum.TextXAlignment.Right
@@ -1161,13 +1178,13 @@ UpdatesText.TextYAlignment = Enum.TextYAlignment.Top
 UpdatesText.Parent = UpdatesBox
 
 ---------------------------------------------------------
--- 2. قسم لوحة الأدمن الخاصة بالأونر + البحث عن لاعب (Dms921)
+-- 2. قسم لوحة الأدمن الخاصة بالأونر (Dms921)
 ---------------------------------------------------------
 local AdminTitleLbl = Instance.new("TextLabel")
 AdminTitleLbl.Size = UDim2.new(1, -10, 0, 24)
 AdminTitleLbl.BackgroundTransparency = 1
 AdminTitleLbl.Text = "👑 لوحة تحكم المطور (بث الرسائل للإشعارات)"
-AdminTitleLbl.TextColor3 = Color3.fromRGB(255, 215, 0)
+AdminTitleLbl.TextColor3 = ORANGE_PRIMARY
 AdminTitleLbl.Font = Enum.Font.SourceSansBold
 AdminTitleLbl.TextSize = 11.5
 AdminTitleLbl.TextXAlignment = Enum.TextXAlignment.Right
@@ -1200,7 +1217,7 @@ Instance.new("UICorner", AdminMsgBox).CornerRadius = UDim.new(0, 6)
 local SendBroadcastBtn = Instance.new("TextButton")
 SendBroadcastBtn.Size = UDim2.new(1, -10, 0, 36)
 SendBroadcastBtn.Position = UDim2.new(0, 0, 0, 178)
-SendBroadcastBtn.BackgroundColor3 = Color3.fromRGB(180, 25, 35)
+SendBroadcastBtn.BackgroundColor3 = ORANGE_PRIMARY
 SendBroadcastBtn.Text = "🚀 بث الرسالة الآن لجميع الشاشات"
 SendBroadcastBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
 SendBroadcastBtn.Font = Enum.Font.SourceSansBold
@@ -1228,7 +1245,7 @@ SelectTitle.Size = UDim2.new(1, -60, 1, 0)
 SelectTitle.Position = UDim2.new(0, 10, 0, 0)
 SelectTitle.BackgroundTransparency = 1
 SelectTitle.Text = "👥 اختر مستخدماً محدداً أو الجميع:"
-SelectTitle.TextColor3 = Color3.fromRGB(255, 215, 0)
+SelectTitle.TextColor3 = ORANGE_PRIMARY
 SelectTitle.Font = Enum.Font.SourceSansBold
 SelectTitle.TextSize = 11
 SelectTitle.TextXAlignment = Enum.TextXAlignment.Left
@@ -1247,7 +1264,6 @@ CloseSelectBtn.ZIndex = 62
 CloseSelectBtn.Parent = SelectHeader
 Instance.new("UICorner", CloseSelectBtn).CornerRadius = UDim.new(0, 4)
 
--- مربع البحث عن اللاعبين
 local UserSearchBox = Instance.new("TextBox")
 UserSearchBox.Size = UDim2.new(1, -10, 0, 28)
 UserSearchBox.Position = UDim2.new(0, 5, 0, 36)
@@ -1282,7 +1298,6 @@ local function renderUsersList(filterText)
 
     filterText = string.lower(filterText or "")
 
-    -- خيار "الجميع" يظهر دائماً في بداية القائمة
     if filterText == "" or string.find("الجميع all users", filterText) then
         local allCard = Instance.new("Frame")
         allCard.Size = UDim2.new(1, -6, 0, 36)
@@ -1295,7 +1310,7 @@ local function renderUsersList(filterText)
         allBtn.Size = UDim2.new(1, 0, 1, 0)
         allBtn.BackgroundTransparency = 1
         allBtn.Text = "🌐 بث لجميع المستخدمين (All Users)"
-        allBtn.TextColor3 = Color3.fromRGB(255, 215, 0)
+        allBtn.TextColor3 = ORANGE_PRIMARY
         allBtn.Font = Enum.Font.SourceSansBold
         allBtn.TextSize = 11.5
         allBtn.ZIndex = 63
@@ -1423,7 +1438,7 @@ AdminInfoLbl.Size = UDim2.new(1, -12, 1, 0)
 AdminInfoLbl.Position = UDim2.new(0, 6, 0, 0)
 AdminInfoLbl.BackgroundTransparency = 1
 AdminInfoLbl.Text = "🗺️ ماب الحدث: سرقة البيض\n📅 الموعد: كل يوم سبت فقط\n⏰ الوقت: 6:00 مساءً (بتوقيت العراق، السعودية والخليج)"
-AdminInfoLbl.TextColor3 = Color3.fromRGB(255, 215, 0)
+AdminInfoLbl.TextColor3 = ORANGE_PRIMARY
 AdminInfoLbl.Font = Enum.Font.SourceSansBold
 AdminInfoLbl.TextSize = 11
 AdminInfoLbl.TextXAlignment = Enum.TextXAlignment.Right
@@ -1473,7 +1488,7 @@ FloatingFrame.Parent = FloatingClockGui
 
 Instance.new("UICorner", FloatingFrame).CornerRadius = UDim.new(0, 8)
 local floatStroke = Instance.new("UIStroke")
-floatStroke.Color = Color3.fromRGB(255, 215, 0)
+floatStroke.Color = ORANGE_PRIMARY
 floatStroke.Thickness = 1.5
 floatStroke.Parent = FloatingFrame
 
@@ -1696,7 +1711,7 @@ local function openMapScripts(mapInfo)
         title.Position = UDim2.new(0, 8, 0, 4)
         title.BackgroundTransparency = 1
         title.Text = "⚡ " .. sc.title
-        title.TextColor3 = Color3.fromRGB(255, 215, 0)
+        title.TextColor3 = ORANGE_PRIMARY
         title.Font = Enum.Font.SourceSansBold
         title.TextSize = 11
         title.TextXAlignment = Enum.TextXAlignment.Left
@@ -1716,7 +1731,7 @@ local function openMapScripts(mapInfo)
         local runBtn = Instance.new("TextButton")
         runBtn.Size = UDim2.new(0.28, 0, 0, 30)
         runBtn.Position = UDim2.new(0.7, 0, 0.5, -15)
-        runBtn.BackgroundColor3 = Color3.fromRGB(180, 25, 35)
+        runBtn.BackgroundColor3 = ORANGE_PRIMARY
         runBtn.Text = "▶️ تشغيل"
         runBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
         runBtn.Font = Enum.Font.SourceSansBold
@@ -1773,7 +1788,7 @@ local function renderMapCards(filterText)
             local viewBtn = Instance.new("TextButton")
             viewBtn.Size = UDim2.new(1, -8, 0, 22)
             viewBtn.Position = UDim2.new(0, 4, 0, 82)
-            viewBtn.BackgroundColor3 = Color3.fromRGB(180, 25, 35)
+            viewBtn.BackgroundColor3 = ORANGE_PRIMARY
             viewBtn.Text = "عرض السكربتات ▶"
             viewBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
             viewBtn.Font = Enum.Font.SourceSansBold
@@ -1864,7 +1879,7 @@ ActionTitle.Size = UDim2.new(1, -60, 1, 0)
 ActionTitle.Position = UDim2.new(0, 10, 0, 0)
 ActionTitle.BackgroundTransparency = 1
 ActionTitle.Text = "👥 اختر لاعباً:"
-ActionTitle.TextColor3 = Color3.fromRGB(255, 215, 0)
+ActionTitle.TextColor3 = ORANGE_PRIMARY
 ActionTitle.Font = Enum.Font.SourceSansBold
 ActionTitle.TextSize = 11.5
 ActionTitle.TextXAlignment = Enum.TextXAlignment.Left
@@ -1999,7 +2014,7 @@ local function applyESP()
         if p ~= LocalPlayer and p.Character then
             local hl = Instance.new("Highlight")
             hl.Name = "BenESPTracker"
-            hl.FillColor = Color3.fromRGB(255, 215, 0)
+            hl.FillColor = ORANGE_PRIMARY
             hl.OutlineColor = Color3.fromRGB(255, 0, 0)
             hl.FillTransparency = 0.5
             hl.OutlineTransparency = 0
