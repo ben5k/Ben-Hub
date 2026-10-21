@@ -1,4 +1,4 @@
--- Ben Script Hub - Updated Color (#FF7725), Expanded Banner & Advanced Chat Anti-Abuse Protection
+-- Ben Script Hub - Complete Dynamic UI, Sound Effects, Refined Settings & Advanced Chat Anti-Abuse
 local CoreGui = game:GetService("CoreGui")
 local Players = game:GetService("Players")
 local TweenService = game:GetService("TweenService")
@@ -38,12 +38,13 @@ local bannerAsset = fetchAsset("https://e.top4top.io/p_3946s8rxw1.jpg", "banner_
 local bubbleAsset = fetchAsset("https://f.top4top.io/p_3946l9c8k2.jpg", "bubble_ben_purple")
 local eggEventMapAsset = fetchAsset("https://b.top4top.io/p_39455j3oh0.jpg", "egg_event_map")
 
--- درجة اللون الجديدة بالضبط (RGB: 255, 119, 37)
+-- اللون الأساسي (RGB: 255, 119, 37)
 local CUSTOM_ORANGE = Color3.fromRGB(255, 119, 37)
 
 local particlesEnabled = true
 local floatingClockEnabled = false
-local configFile = "BenHub_Config_v19.txt"
+local soundEffectsEnabled = true
+local configFile = "BenHub_Config_v20.txt"
 
 if isfile and readfile and isfile(configFile) then
     pcall(function()
@@ -51,9 +52,28 @@ if isfile and readfile and isfile(configFile) then
         if data then
             particlesEnabled = (data.particles == nil) and true or data.particles
             floatingClockEnabled = data.floatingClock or false
+            soundEffectsEnabled = (data.sounds == nil) and true or data.sounds
         end
     end)
 end
+
+-- تشغيل الأصوات
+local function playUiSound(soundId, pitch)
+    if not soundEffectsEnabled then return end
+    task.spawn(function()
+        local snd = Instance.new("Sound")
+        snd.SoundId = soundId
+        snd.Volume = 0.5
+        snd.Pitch = pitch or 1
+        snd.Parent = SoundService
+        snd:Play()
+        snd.Ended:Connect(function() snd:Destroy() end)
+    end)
+end
+
+local SOUND_CLICK = "rbxassetid://6895079853"
+local SOUND_OPEN = "rbxassetid://6895052928"
+local SOUND_CLOSE = "rbxassetid://6895052219"
 
 local FIREBASE_SUGGEST_URL = "https://benhubchat-24010-default-rtdb.firebaseio.com/suggestions.json"
 local FIREBASE_CHAT_URL = "https://benhubchat-24010-default-rtdb.firebaseio.com/global_chat.json"
@@ -81,10 +101,19 @@ Main.Visible = false
 Main.Parent = ScreenGui
 
 Instance.new("UICorner", Main).CornerRadius = UDim.new(0, 10)
+
+-- إطار ملون متدرج ديناميكي (RGB Glow Stroke)
 local MainStroke = Instance.new("UIStroke")
-MainStroke.Color = CUSTOM_ORANGE
-MainStroke.Thickness = 1.8
+MainStroke.Thickness = 2
 MainStroke.Parent = Main
+
+task.spawn(function()
+    while Main and Main.Parent do
+        local t = tick() * 0.8
+        MainStroke.Color = Color3.fromHSV((t % 3) / 3, 0.8, 1)
+        task.wait(0.03)
+    end
+end)
 
 ---------------------------------------------------------
 -- شاشة تسجيل الدخول
@@ -152,6 +181,7 @@ LoginBtn.Parent = LoginCard
 Instance.new("UICorner", LoginBtn).CornerRadius = UDim.new(0, 8)
 
 LoginBtn.MouseButton1Click:Connect(function()
+    playUiSound(SOUND_OPEN, 1.2)
     TweenService:Create(LoginCard, TweenInfo.new(0.4, Enum.EasingStyle.Back, Enum.EasingDirection.In), {Size = UDim2.new(0, 0, 0, 0), Position = UDim2.new(0.5, 0, 0.5, 0)}):Play()
     TweenService:Create(LoginBg, TweenInfo.new(0.4), {BackgroundTransparency = 1}):Play()
     task.wait(0.4)
@@ -209,7 +239,7 @@ task.spawn(function()
 end)
 
 ---------------------------------------------------------
--- زر الإغلاق والزر العائم
+-- أزرار الفتح والإغلاق
 ---------------------------------------------------------
 local CloseBtn = Instance.new("TextButton")
 CloseBtn.Size = UDim2.new(0, 22, 0, 22)
@@ -236,12 +266,28 @@ BenOpenBtn.Parent = ScreenGui
 
 Instance.new("UICorner", BenOpenBtn).CornerRadius = UDim.new(1, 0)
 local openStroke = Instance.new("UIStroke")
-openStroke.Color = CUSTOM_ORANGE
 openStroke.Thickness = 2
 openStroke.Parent = BenOpenBtn
 
-CloseBtn.MouseButton1Click:Connect(function() Main.Visible = false; BenOpenBtn.Visible = true end)
-BenOpenBtn.MouseButton1Click:Connect(function() Main.Visible = true; BenOpenBtn.Visible = false end)
+task.spawn(function()
+    while BenOpenBtn and BenOpenBtn.Parent do
+        local t = tick() * 0.8
+        openStroke.Color = Color3.fromHSV((t % 3) / 3, 0.8, 1)
+        task.wait(0.03)
+    end
+end)
+
+CloseBtn.MouseButton1Click:Connect(function()
+    playUiSound(SOUND_CLOSE, 1)
+    Main.Visible = false
+    BenOpenBtn.Visible = true
+end)
+
+BenOpenBtn.MouseButton1Click:Connect(function()
+    playUiSound(SOUND_OPEN, 1)
+    Main.Visible = true
+    BenOpenBtn.Visible = false
+end)
 
 ---------------------------------------------------------
 -- تصميم البث المطور
@@ -292,7 +338,7 @@ local function showBroadcastPopup(senderName, senderUserId, messageText)
     textLbl.Parent = popFrame
 
     TweenService:Create(popFrame, TweenInfo.new(0.4, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {Position = UDim2.new(0.5, -210, 0, 15)}):Play()
-    pcall(function() SoundService:PlayLocalSound(Instance.new("Sound", SoundService)) end)
+    playUiSound("rbxassetid://6895079853", 1.5)
 
     task.delay(7, function()
         if popFrame and popFrame.Parent then
@@ -455,8 +501,8 @@ UsersLayout.SortOrder = Enum.SortOrder.LayoutOrder
 UsersLayout.Padding = UDim.new(0, 6)
 UsersLayout.Parent = UsersScroll
 
-CloseModalBtn.MouseButton1Click:Connect(function() FeaturesModal.Visible = false end)
-FeaturesBtn.MouseButton1Click:Connect(function() FeaturesModal.Visible = not FeaturesModal.Visible end)
+CloseModalBtn.MouseButton1Click:Connect(function() playUiSound(SOUND_CLICK, 1); FeaturesModal.Visible = false end)
+FeaturesBtn.MouseButton1Click:Connect(function() playUiSound(SOUND_CLICK, 1); FeaturesModal.Visible = not FeaturesModal.Visible end)
 
 local ChatScroll = Instance.new("ScrollingFrame")
 ChatScroll.Size = UDim2.new(1, -16, 0, 200)
@@ -498,6 +544,7 @@ SendChatBtn.Parent = ChatWindow
 Instance.new("UICorner", SendChatBtn).CornerRadius = UDim.new(0, 6)
 
 TopChatToggleBtn.MouseButton1Click:Connect(function()
+    playUiSound(SOUND_CLICK, 1)
     ChatWindow.Visible = not ChatWindow.Visible
 end)
 
@@ -597,15 +644,15 @@ Players.PlayerAdded:Connect(function(p)
 end)
 
 ---------------------------------------------------------
--- الحماية وفلترة الشات المتقدمة (توسيع الحظر والتعرض للأهل)
+-- الحماية المتقدمة المحدثة (حظر الشتائم الأهل والأهات)
 ---------------------------------------------------------
 local badWords = {
-    -- الألفاظ المباشرة والسب الشائع
-    "كفر", "سب", "شتم", "قذف", "كس", "قحبة", "خرا", "حمار", "كلب", "زبي", "منيوك", "خول", "شرموط", "ديوس", "ديوث", "عرص", "نغل", "زب", "طيز", "عير", "مكسور", "قحبة", "منيوكه", "شرموطه",
-    -- التعرض للأهل والوالدين
-    "امك", "أمك", "ابوك", "أبوك", "اختك", "أختك", "اخوك", "أخوك", "اهلك", "أهلك", "عائلتك", "حرمتك", "زوجتك", "والدتك", "والدك",
-    -- شتائم مركبة
-    "يلعن", "لعن", "يلعنك", "يلعنكم", "يلعن امك", "يلعن ابوك", "يلعن اهلك", "ابن الكلب", "ابن القحبة", "ابن الشرموطة", "يا كفر", "يا منيوك"
+    -- الألفاظ المباشرة والسب
+    "كفر", "سب", "شتم", "قذف", "كس", "قحبة", "خرا", "حمار", "كلب", "زبي", "منيوك", "خول", "شرموط", "ديوس", "ديوث", "عرص", "نغل", "زب", "طيز", "عير", "مكسور", "قحبة", "منيوكه", "شرموطه", "سكس", "طيزك", "كسك", "نيق", "تناك",
+    -- التعرض للأهل والأقارب
+    "امك", "أمك", "ابوك", "أبوك", "اختك", "أختك", "اخوك", "أخوك", "اهلك", "أهلك", "عائلتك", "حرمتك", "زوجتك", "والدتك", "والدك", "يلعن امك", "يلعن ابوك", "يلعن اهلك", "ابن الكلب", "ابن القحبة", "ابن الشرموطة", "يا كفر",
+    -- حظر الأهات المباشرة والتأوهات المكتوبة بجميع مشتقاتها
+    "اه", "أه", "آه", "آآه", "اهخ", "أهخ", "آهخ", "احح", "أحح", "اححح", "اوووف", "اوفف", "اممم", "آإه", "اهـ", "اآهخ"
 }
 
 local lastSendTime = 0
@@ -613,19 +660,26 @@ local lastMessageContent = ""
 
 local function checkBadContent(text)
     local lowerText = string.lower(text)
-    -- تنظيف النص من المسافات والرموز المكررة لمنع الالتفاف
-    local cleanText = string.gsub(lowerText, "[%s%_%-%*%#%@%!%.%,%d]", "")
+    -- تنظيف المسافات والرموز المكررة للتحقق المتقدم
+    local cleanText = string.gsub(lowerText, "[%s%_%-%*%#%@%!%.%,%d%~]", "")
     
     if string.find(lowerText, "http") or string.find(lowerText, "www.") or string.find(lowerText, "%.com") or string.find(lowerText, "%.gg") or string.find(lowerText, "%.net") or string.find(lowerText, "%.org") or string.find(lowerText, "%.me") then
         return true, "⚠️ ممنوع إرسال الروابط في الشات العام!"
     end
 
+    -- فحص الكلمات والعبارات المحظورة والأهات
     for _, word in ipairs(badWords) do
         local cleanWord = string.gsub(string.lower(word), "%s+", "")
         if string.find(lowerText, word) or string.find(cleanText, cleanWord) then
-            return true, "⚠️ تم حظر الرسالة لتواجد سب أو تعرض للأهل والوالدين!"
+            return true, "⚠️ تم حظر الرسالة لتواجد سب، تعرض للأهل، أو كتابة إيحاءات وأهات غير لائقة!"
         end
     end
+    
+    -- فحص أنماط الأهات المكررة بنفس الحرف (مثل: اهههههه)
+    if string.find(cleanText, "^ا+ه+$") or string.find(cleanText, "^أ+ه+$") or string.find(cleanText, "^آ+ه+$") or string.find(cleanText, "^ا+ح+$") then
+        return true, "⚠️ تم حظر الرسالة لتواجد إيحاءات وأهات محظورة!"
+    end
+
     return false, ""
 end
 
@@ -676,6 +730,7 @@ local function addChatMessage(msgId, userId, sender, msg)
 end
 
 SendChatBtn.MouseButton1Click:Connect(function()
+    playUiSound(SOUND_CLICK, 1)
     local text = ChatInputBox.Text
     if text ~= "" and text ~= " " then
         if tick() - lastSendTime < 2.5 then
@@ -826,6 +881,7 @@ local function updateActiveUsersList()
                         Instance.new("UICorner", joinBtn).CornerRadius = UDim.new(0, 5)
 
                         joinBtn.MouseButton1Click:Connect(function()
+                            playUiSound(SOUND_CLICK, 1)
                             if usr.jobId == game.JobId then
                                 joinBtn.Text = "أنت هنا!"
                                 task.wait(1.5)
@@ -861,7 +917,7 @@ task.spawn(function()
     end
 end)
 
--- دورة الشات والريست كل 30 دقيقة
+-- دورة الشات كل 30 دقيقة
 task.spawn(function()
     local INTERVAL = 1800
     local lastCycle = math.floor(os.time() / INTERVAL)
@@ -1032,6 +1088,7 @@ local function createTabButton(text, iconId, targetTab)
     table.insert(tabButtons, {button = btn, tab = targetTab})
 
     btn.MouseButton1Click:Connect(function()
+        playUiSound(SOUND_CLICK, 1)
         for _, t in ipairs(tabButtons) do
             t.button.BackgroundColor3 = Color3.fromRGB(22, 22, 28)
             if t.tab then t.tab.Visible = false end
@@ -1054,7 +1111,7 @@ createTabButton("اقتراحات", "💡", SuggestTab)
 createTabButton("الإعدادات", "⚙️", SettingsTab)
 
 ---------------------------------------------------------
--- 1. الواجهة الرئيسية + البنر العريض الممتد بالكامل
+-- 1. الواجهة الرئيسية
 ---------------------------------------------------------
 local ServerStatus = Instance.new("TextLabel")
 ServerStatus.Size = UDim2.new(1, -10, 0, 18)
@@ -1066,7 +1123,6 @@ ServerStatus.TextSize = 10.5
 ServerStatus.TextXAlignment = Enum.TextXAlignment.Right
 ServerStatus.Parent = HomeTab
 
--- إطار البنر المحدث مع زيادة الطول والعرض ليظهر بالكامل دون قص
 local BannerFrame = Instance.new("Frame")
 BannerFrame.Size = UDim2.new(1, -10, 0, 110)
 BannerFrame.Position = UDim2.new(0, 0, 0, 20)
@@ -1120,6 +1176,7 @@ DiscordBtn.Parent = CardsRow
 Instance.new("UICorner", DiscordBtn).CornerRadius = UDim.new(0, 6)
 
 DiscordBtn.MouseButton1Click:Connect(function()
+    playUiSound(SOUND_CLICK, 1)
     if setclipboard then
         setclipboard("https://discord.gg/benhub")
         DiscordBtn.Text = "✅ تم النسخ!"
@@ -1177,7 +1234,7 @@ local UpdatesText = Instance.new("TextLabel")
 UpdatesText.Size = UDim2.new(1, -14, 0, 72)
 UpdatesText.Position = UDim2.new(0, 7, 0, 22)
 UpdatesText.BackgroundTransparency = 1
-UpdatesText.Text = "• توحيد درجة اللون باللون البرتقالي المخصص (#FF7725).\n• توسيع إطار البنر ليظهر كاملاً على كافة مقاسات الشاشات.\n• تطوير حماية الشات وتوسيع قائمة حظر السب والتعرض للأهل والوالدين."
+UpdatesText.Text = "• إضافة سكربت فلفل الأصلي وتحديث رابط التشغيل.\n• ترتيب وتنسيق واجهة الإعدادات بشكل أنيق ومنظم بالكامل.\n• إضافة المؤثرات الصوتية وتأثير الإطار المضيء الديناميكي (RGB).\n• تقوية حماية الشات لمنع الأهات والإيحاءات والسب بجميع أشكاله."
 UpdatesText.TextColor3 = Color3.fromRGB(210, 210, 220)
 UpdatesText.Font = Enum.Font.SourceSans
 UpdatesText.TextSize = 9.5
@@ -1325,6 +1382,7 @@ local function renderUsersList(filterText)
         allBtn.Parent = allCard
 
         allBtn.MouseButton1Click:Connect(function()
+            playUiSound(SOUND_CLICK, 1)
             selectedTargetUserId = 0
             TargetSelectBtn.Text = "🎯 المستهدف: الجميع (All Users)"
             SelectUserModal.Visible = false
@@ -1374,6 +1432,7 @@ local function renderUsersList(filterText)
                             local capturedUserId = usr.userId
                             local capturedName = usr.displayName or usr.name
                             pickBtn.MouseButton1Click:Connect(function()
+                                playUiSound(SOUND_CLICK, 1)
                                 selectedTargetUserId = capturedUserId
                                 TargetSelectBtn.Text = "🎯 المستهدف: " .. tostring(capturedName)
                                 SelectUserModal.Visible = false
@@ -1388,6 +1447,7 @@ local function renderUsersList(filterText)
 end
 
 TargetSelectBtn.MouseButton1Click:Connect(function()
+    playUiSound(SOUND_CLICK, 1)
     SelectUserModal.Visible = true
     UserSearchBox.Text = ""
     renderUsersList("")
@@ -1397,9 +1457,10 @@ UserSearchBox:GetPropertyChangedSignal("Text"):Connect(function()
     renderUsersList(UserSearchBox.Text)
 end)
 
-CloseSelectBtn.MouseButton1Click:Connect(function() SelectUserModal.Visible = false end)
+CloseSelectBtn.MouseButton1Click:Connect(function() playUiSound(SOUND_CLICK, 1); SelectUserModal.Visible = false end)
 
 SendBroadcastBtn.MouseButton1Click:Connect(function()
+    playUiSound(SOUND_CLICK, 1)
     local msgText = AdminMsgBox.Text
     if msgText ~= "" then
         pcall(function()
@@ -1510,6 +1571,7 @@ FloatingLbl.TextSize = 10.5
 FloatingLbl.Parent = FloatingFrame
 
 ToggleClockBtn.MouseButton1Click:Connect(function()
+    playUiSound(SOUND_CLICK, 1)
     floatingClockEnabled = not floatingClockEnabled
     FloatingFrame.Visible = floatingClockEnabled
     ToggleClockBtn.Text = floatingClockEnabled and "👁️ إخفاء عداد الوقت العائم فوق الشاشة" or "👁️ إظهار عداد الوقت العائم فوق الشاشة"
@@ -1517,7 +1579,7 @@ ToggleClockBtn.MouseButton1Click:Connect(function()
 
     if writefile then
         pcall(function()
-            writefile(configFile, HttpService:JSONEncode({particles = particlesEnabled, floatingClock = floatingClockEnabled}))
+            writefile(configFile, HttpService:JSONEncode({particles = particlesEnabled, floatingClock = floatingClockEnabled, sounds = soundEffectsEnabled}))
         end)
     end
 end)
@@ -1574,7 +1636,7 @@ task.spawn(function()
             if secondsRemaining <= 5 and (tick() - lastPlayedAlertTick > 10) then
                 lastPlayedAlertTick = tick()
                 pcall(function()
-                    SoundService:PlayLocalSound(Instance.new("Sound", SoundService))
+                    playUiSound("rbxassetid://6895079853", 1.8)
                 end)
             end
         end)
@@ -1583,13 +1645,14 @@ task.spawn(function()
 end)
 
 ---------------------------------------------------------
--- 4. سكربتات المابات
+-- 4. سكربتات المابات (تحديث سكربت فلفل الأصلي)
 ---------------------------------------------------------
 local mapDataList = {
     {
         name = "سرقة البيض",
         image = fetchAsset("https://d.top4top.io/p_3922v5lak1.jpg", "egg_steal"),
         scripts = {
+            {title = "🌶️ سكربت فلفل الأصلي", requiresKey = "لا", code = [[loadstring(game:HttpGet("https://raw.githubusercontent.com/tienkhanh1/spicy/main/Chilli.lua"))()]]},
             {title = "سكربت فلفل (Chilli V5)", requiresKey = "لا", code = [[loadstring(game:HttpGet("https://raw.githubusercontent.com/kadit9999/stealanegg/refs/heads/main/ChilliV5BaKhi.lua"))()]]},
             {title = "الأزرق (كسر حماية)", requiresKey = "لا", code = [[loadstring(game:HttpGet("https://raw.githubusercontent.com/PulseZax/Loader/refs/heads/main/.lua"))()]]},
             {title = "سكربت الأحمر", requiresKey = "لا", code = [[loadstring(game:HttpGet("https://api.luarmor.net/files/v4/loaders/271f96ca25f29ae395be1c0f9e6f4ead.lua"))()]]},
@@ -1698,6 +1761,7 @@ ScriptsLayout.Padding = UDim.new(0, 6)
 ScriptsLayout.Parent = ScriptsScroll
 
 BackToMapsBtn.MouseButton1Click:Connect(function()
+    playUiSound(SOUND_CLICK, 1)
     ScriptDetailFrame.Visible = false
     MapsScroll.Visible = true
 end)
@@ -1748,6 +1812,7 @@ local function openMapScripts(mapInfo)
         Instance.new("UICorner", runBtn).CornerRadius = UDim.new(0, 5)
 
         runBtn.MouseButton1Click:Connect(function()
+            playUiSound(SOUND_CLICK, 1)
             local success, err = pcall(function()
                 local func, loadErr = loadstring(sc.code)
                 if func then func() else error(loadErr) end
@@ -1804,7 +1869,7 @@ local function renderMapCards(filterText)
             viewBtn.Parent = card
             Instance.new("UICorner", viewBtn).CornerRadius = UDim.new(0, 4)
 
-            viewBtn.MouseButton1Click:Connect(function() openMapScripts(map) end)
+            viewBtn.MouseButton1Click:Connect(function() playUiSound(SOUND_CLICK, 1); openMapScripts(map) end)
         end
     end
     MapsScroll.CanvasSize = UDim2.new(0, 0, 0, MapsGrid.AbsoluteContentSize.Y + 10)
@@ -1814,7 +1879,7 @@ renderMapCards("")
 MapSearchBox:GetPropertyChangedSignal("Text"):Connect(function() renderMapCards(MapSearchBox.Text) end)
 
 ---------------------------------------------------------
--- 5. الإعدادات، مراقبة اللاعب، والكشف (Spectate & ESP)
+-- 5. الإعدادات (ترتيب وتنظيم احترافي مع التحكم بالأصوات)
 ---------------------------------------------------------
 local SettingsScroll = Instance.new("ScrollingFrame")
 SettingsScroll.Size = UDim2.new(1, -10, 1, 0)
@@ -1825,35 +1890,42 @@ SettingsScroll.Parent = SettingsTab
 
 local SettingsLayout = Instance.new("UIListLayout")
 SettingsLayout.SortOrder = Enum.SortOrder.LayoutOrder
-SettingsLayout.Padding = UDim.new(0, 8)
+SettingsLayout.Padding = UDim.new(0, 6)
 SettingsLayout.Parent = SettingsScroll
 
 local function createSettingOptionBtn(text, icon, mainColor)
+    local card = Instance.new("Frame")
+    card.Size = UDim2.new(1, -6, 0, 40)
+    card.BackgroundColor3 = Color3.fromRGB(22, 22, 30)
+    card.Parent = SettingsScroll
+    Instance.new("UICorner", card).CornerRadius = UDim.new(0, 8)
+
+    local cardStroke = Instance.new("UIStroke")
+    cardStroke.Color = Color3.fromRGB(45, 45, 60)
+    cardStroke.Thickness = 1
+    cardStroke.Parent = card
+
     local btn = Instance.new("TextButton")
-    btn.Size = UDim2.new(1, -6, 0, 38)
+    btn.Size = UDim2.new(1, -12, 1, -8)
+    btn.Position = UDim2.new(0, 6, 0, 4)
     btn.BackgroundColor3 = mainColor
     btn.Text = icon .. "   " .. text
     btn.TextColor3 = Color3.fromRGB(255, 255, 255)
     btn.Font = Enum.Font.SourceSansBold
     btn.TextSize = 11.5
     btn.ZIndex = 4
-    btn.Parent = SettingsScroll
+    btn.Parent = card
 
-    Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 8)
-    local btnStroke = Instance.new("UIStroke")
-    btnStroke.Color = Color3.fromRGB(255, 255, 255)
-    btnStroke.Transparency = 0.85
-    btnStroke.Thickness = 1
-    btnStroke.Parent = btn
-
+    Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 6)
     return btn
 end
 
 local ChangeServerBtn = createSettingOptionBtn("تغيير السيرفر (Rejoin)", "🔄", Color3.fromRGB(160, 35, 45))
-ChangeServerBtn.MouseButton1Click:Connect(function() TeleportService:Teleport(game.PlaceId, LocalPlayer) end)
+ChangeServerBtn.MouseButton1Click:Connect(function() playUiSound(SOUND_CLICK, 1); TeleportService:Teleport(game.PlaceId, LocalPlayer) end)
 
 local ToggleParticlesBtn = createSettingOptionBtn(particlesEnabled and "تأثيرات البارتكلز: مفعلة" or "تأثيرات البارتكلز: معطلة", particlesEnabled and "✨" or "❌", particlesEnabled and Color3.fromRGB(35, 120, 55) or Color3.fromRGB(120, 40, 40))
 ToggleParticlesBtn.MouseButton1Click:Connect(function()
+    playUiSound(SOUND_CLICK, 1)
     particlesEnabled = not particlesEnabled
     if particlesEnabled then
         ToggleParticlesBtn.Text = "✨   تأثيرات البارتكلز: مفعلة"
@@ -1863,6 +1935,20 @@ ToggleParticlesBtn.MouseButton1Click:Connect(function()
         ToggleParticlesBtn.Text = "❌   تأثيرات البارتكلز: معطلة"
         ToggleParticlesBtn.BackgroundColor3 = Color3.fromRGB(120, 40, 40)
         clearParticles()
+    end
+end)
+
+-- خيار التحكم بالأصوات المضاف حديثاً
+local ToggleSoundsBtn = createSettingOptionBtn(soundEffectsEnabled and "أصوات الواجهة: مفعلة" or "أصوات الواجهة: معطلة", soundEffectsEnabled and "🔊" or "🔇", soundEffectsEnabled and Color3.fromRGB(35, 120, 55) or Color3.fromRGB(120, 40, 40))
+ToggleSoundsBtn.MouseButton1Click:Connect(function()
+    soundEffectsEnabled = not soundEffectsEnabled
+    playUiSound(SOUND_CLICK, 1)
+    if soundEffectsEnabled then
+        ToggleSoundsBtn.Text = "🔊   أصوات الواجهة: مفعلة"
+        ToggleSoundsBtn.BackgroundColor3 = Color3.fromRGB(35, 120, 55)
+    else
+        ToggleSoundsBtn.Text = "🔇   أصوات الواجهة: معطلة"
+        ToggleSoundsBtn.BackgroundColor3 = Color3.fromRGB(120, 40, 40)
     end
 end)
 
@@ -1920,13 +2006,14 @@ ActionLayout.SortOrder = Enum.SortOrder.LayoutOrder
 ActionLayout.Padding = UDim.new(0, 5)
 ActionLayout.Parent = ActionScroll
 
-CloseActionBtn.MouseButton1Click:Connect(function() ActionModal.Visible = false end)
+CloseActionBtn.MouseButton1Click:Connect(function() playUiSound(SOUND_CLICK, 1); ActionModal.Visible = false end)
 
 local isSpectating = false
 local currentSpectateTarget = nil
 
 local SpecModalBtn = createSettingOptionBtn("مراقبة لاعب (Spectate)", "👁️", Color3.fromRGB(25, 90, 160))
 SpecModalBtn.MouseButton1Click:Connect(function()
+    playUiSound(SOUND_CLICK, 1)
     ActionTitle.Text = "👁️ اختر لاعباً لمراقبته:"
     ActionModal.Visible = true
     for _, c in ipairs(ActionScroll:GetChildren()) do if c:IsA("Frame") then c:Destroy() end end
@@ -1950,6 +2037,7 @@ SpecModalBtn.MouseButton1Click:Connect(function()
         unspecBtn.Parent = unspecCard
 
         unspecBtn.MouseButton1Click:Connect(function()
+            playUiSound(SOUND_CLICK, 1)
             isSpectating = false
             currentSpectateTarget = nil
             if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
@@ -1993,6 +2081,7 @@ SpecModalBtn.MouseButton1Click:Connect(function()
             Instance.new("UICorner", specBtn).CornerRadius = UDim.new(0, 4)
 
             specBtn.MouseButton1Click:Connect(function()
+                playUiSound(SOUND_CLICK, 1)
                 if p.Character and p.Character:FindFirstChild("Humanoid") then
                     Camera.CameraSubject = p.Character.Humanoid
                     isSpectating = true
@@ -2035,6 +2124,7 @@ end
 
 local TrackerModalBtn = createSettingOptionBtn("كشف مكان لاعب (ESP Tracker)", "📍", Color3.fromRGB(160, 100, 25))
 TrackerModalBtn.MouseButton1Click:Connect(function()
+    playUiSound(SOUND_CLICK, 1)
     espEnabled = not espEnabled
     applyESP()
     if espEnabled then
@@ -2054,7 +2144,8 @@ end)
 
 local SaveSettingsBtn = createSettingOptionBtn("حفظ الإعدادات", "💾", Color3.fromRGB(35, 120, 55))
 SaveSettingsBtn.MouseButton1Click:Connect(function()
-    if writefile then writefile(configFile, HttpService:JSONEncode({particles = particlesEnabled, floatingClock = floatingClockEnabled})) end
+    playUiSound(SOUND_CLICK, 1)
+    if writefile then writefile(configFile, HttpService:JSONEncode({particles = particlesEnabled, floatingClock = floatingClockEnabled, sounds = soundEffectsEnabled})) end
     SaveSettingsBtn.Text = "✅   تم الحفظ بنجاح!"
     task.wait(1.5)
     SaveSettingsBtn.Text = "💾   حفظ الإعدادات"
@@ -2096,6 +2187,7 @@ SendSuggestBtn.Parent = SuggestTab
 Instance.new("UICorner", SendSuggestBtn).CornerRadius = UDim.new(0, 6)
 
 SendSuggestBtn.MouseButton1Click:Connect(function()
+    playUiSound(SOUND_CLICK, 1)
     if SuggestTextBox.Text ~= "" then
         local data = {
             sender = LocalPlayer.DisplayName ~= "" and LocalPlayer.DisplayName or LocalPlayer.Name,
