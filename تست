@@ -1,232 +1,564 @@
+-- DFX Hub - 100% Exact Chilli Hub UI Replica (Developer: Tahbah)
+-- Version: v2.0.02
 
--- Chilli Hub Arabic - Static UI Only
--- واجهة شكلية فقط بدون أزرار أو وظائف
-
+local CoreGui = game:GetService("CoreGui")
 local Players = game:GetService("Players")
-local player = Players.LocalPlayer
-local guiParent = player:WaitForChild("PlayerGui")
+local TweenService = game:GetService("TweenService")
+local TeleportService = game:GetService("TeleportService")
+local HttpService = game:GetService("HttpService")
+local RunService = game:GetService("RunService")
+local SoundService = game:GetService("SoundService")
 
-local old = guiParent:FindFirstChild("ChilliArabicStatic")
-if old then old:Destroy() end
+local LocalPlayer = Players.LocalPlayer
+local parent = (gethui and gethui()) or CoreGui:FindFirstChild("RobloxGui") or LocalPlayer:WaitForChild("PlayerGui")
 
-local gui = Instance.new("ScreenGui")
-gui.Name = "ChilliArabicStatic"
-gui.ResetOnSpawn = false
-gui.IgnoreGuiInset = true
-gui.DisplayOrder = 999
-gui.Parent = guiParent
+if parent:FindFirstChild("DFXExactChilliUI_v2") then parent.DFXExactChilliUI_v2:Destroy() end
+if parent:FindFirstChild("DFXAdminBroadcastGui") then parent.DFXAdminBroadcastGui:Destroy() end
 
-local function create(class, props, parent)
-    local obj = Instance.new(class)
-    for k, v in pairs(props) do
-        obj[k] = v
+local function customRequest(options)
+    local req = request or http_request or (syn and syn.request) or (http and http.request) or (fluxus and fluxus.request)
+    if req then
+        local success, response = pcall(function() return req(options) end)
+        if success and response then return response end
     end
-    obj.Parent = parent
-    return obj
+    if options.Method == "GET" then
+        local success, body = pcall(function() return game:HttpGet(options.Url) end)
+        if success then return {StatusCode = 200, Body = body} end
+    end
+    return {StatusCode = 400, Body = "null"}
 end
 
-local function outline(obj, color, thickness)
-    create("UIStroke", {
-        Color = color,
-        Thickness = thickness or 1
-    }, obj)
+local function safeDecode(jsonStr)
+    if not jsonStr or jsonStr == "" or jsonStr == "null" then return nil end
+    local success, result = pcall(function() return HttpService:JSONDecode(jsonStr) end)
+    if success then return result end
+    return nil
 end
 
-local function label(parent, text, size, pos, fontSize, align)
-    return create("TextLabel", {
-        BackgroundTransparency = 1,
-        Size = size,
-        Position = pos,
-        Text = text,
-        TextColor3 = Color3.fromRGB(245,245,245),
-        Font = Enum.Font.GothamBold,
-        TextSize = fontSize or 16,
-        TextXAlignment = align or Enum.TextXAlignment.Right,
-        TextYAlignment = Enum.TextYAlignment.Center,
-        TextWrapped = true
-    }, parent)
+local SOUND_CLICK = "rbxassetid://6895079853"
+local SOUND_BROADCAST = "rbxassetid://17208361335"
+local SOUND_EGG_ALERT = "rbxassetid://127213343505462"
+
+local function playUiSound(soundId, pitch)
+    task.spawn(function()
+        pcall(function()
+            local snd = Instance.new("Sound")
+            snd.SoundId = soundId
+            snd.Volume = 8
+            snd.Pitch = pitch or 1
+            snd.Parent = SoundService
+            if not snd.IsLoaded then snd.Loaded:Wait() end
+            snd:Play()
+            snd.Ended:Connect(function() snd:Destroy() end)
+        end)
+    end)
 end
 
-local red = Color3.fromRGB(239, 64, 48)
-local dark = Color3.fromRGB(25, 27, 25)
+-- قاعدة البيانات t7b7
+local FIREBASE_BASE_URL = "https://t7b7-54245-default-rtdb.firebaseio.com"
+local FIREBASE_CHAT_URL = FIREBASE_BASE_URL .. "/global_chat.json"
+local FIREBASE_PRESENCE_URL = FIREBASE_BASE_URL .. "/presence"
+local FIREBASE_BROADCAST_URL = FIREBASE_BASE_URL .. "/broadcasts.json"
 
--- النافذة الرئيسية
-local main = create("Frame", {
-    AnchorPoint = Vector2.new(0.5, 0.5),
-    Position = UDim2.fromScale(0.5, 0.49),
-    Size = UDim2.new(0.58, 0, 0.57, 0),
-    BackgroundColor3 = Color3.fromRGB(30, 29, 27),
-    BackgroundTransparency = 0.12,
-    BorderSizePixel = 0
-}, gui)
+---------------------------------------------------------
+-- الهيكل الرئيسي الملتصق بالكامل (v2.0.02)
+---------------------------------------------------------
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "DFXExactChilliUI_v2"
+ScreenGui.ResetOnSpawn = false
+ScreenGui.Parent = parent
 
-create("UISizeConstraint", {
-    MinSize = Vector2.new(310, 330),
-    MaxSize = Vector2.new(760, 620)
-}, main)
+local MainFrame = Instance.new("Frame")
+MainFrame.Name = "MainFrame"
+MainFrame.Size = UDim2.new(0, 520, 0, 310)
+MainFrame.Position = UDim2.new(0.5, -260, 0.5, -155)
+MainFrame.BackgroundTransparency = 1
+MainFrame.Active = true
+MainFrame.Draggable = true
+MainFrame.Parent = ScreenGui
 
-outline(main, Color3.fromRGB(25,25,25), 2)
+-- 1. الصندوق الأوسط الرئيسي
+local CenterBox = Instance.new("Frame")
+CenterBox.Name = "CenterBox"
+CenterBox.Size = UDim2.new(0, 320, 1, 0)
+CenterBox.Position = UDim2.new(0.5, -160, 0, 0)
+CenterBox.BackgroundColor3 = Color3.fromRGB(18, 24, 20)
+CenterBox.BorderSizePixel = 0
+CenterBox.Parent = MainFrame
 
--- الشريط الأحمر العلوي
-local header = create("Frame", {
-    Size = UDim2.new(1, 0, 0, 53),
-    BackgroundColor3 = red,
-    BorderSizePixel = 0
-}, main)
+local centerStroke = Instance.new("UIStroke")
+centerStroke.Color = Color3.fromRGB(0, 0, 0)
+centerStroke.Thickness = 2
+centerStroke.Parent = CenterBox
 
-create("UIGradient", {
-    Color = ColorSequence.new(
-        Color3.fromRGB(255, 94, 76),
-        Color3.fromRGB(184, 38, 29)
-    ),
-    Rotation = 90
-}, header)
+-- الهيدر الأحمر
+local Header = Instance.new("Frame")
+Header.Size = UDim2.new(1, 0, 0, 36)
+Header.BackgroundColor3 = Color3.fromRGB(235, 65, 55)
+Header.BorderSizePixel = 0
+Header.Parent = CenterBox
 
-outline(header, Color3.fromRGB(45, 25, 22), 2)
+local Title = Instance.new("TextLabel")
+Title.Size = UDim2.new(1, -45, 1, 0)
+Title.Position = UDim2.new(0, 10, 0, 0)
+Title.BackgroundTransparency = 1
+Title.Text = "DFX Hub"
+Title.TextColor3 = Color3.fromRGB(255, 255, 255)
+Title.Font = Enum.Font.SourceSansItalic
+Title.TextSize = 24
+Title.TextXAlignment = Enum.TextXAlignment.Center
+Title.Parent = Header
 
-label(
-    header,
-    "Chilli Hub",
-    UDim2.new(1, -20, 1, 0),
-    UDim2.new(0, 15, 0, 0),
-    25,
-    Enum.TextXAlignment.Left
-)
+local CloseBtn = Instance.new("TextButton")
+CloseBtn.Size = UDim2.new(0, 24, 0, 24)
+CloseBtn.Position = UDim2.new(1, -28, 0, 6)
+CloseBtn.BackgroundColor3 = Color3.fromRGB(210, 45, 45)
+CloseBtn.Text = "X"
+CloseBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+CloseBtn.Font = Enum.Font.SourceSansBold
+CloseBtn.TextSize = 15
+CloseBtn.Parent = Header
+Instance.new("UICorner", CloseBtn).CornerRadius = UDim.new(0, 4)
 
--- مساحة القائمة
-local body = create("ScrollingFrame", {
-    Position = UDim2.new(0, 9, 0, 60),
-    Size = UDim2.new(1, -18, 1, -105),
-    BackgroundTransparency = 1,
-    BorderSizePixel = 0,
-    ScrollBarThickness = 4,
-    ScrollBarImageColor3 = red,
-    CanvasSize = UDim2.new(0,0,0,0),
-    AutomaticCanvasSize = Enum.AutomaticSize.Y
-}, main)
+local closeStroke = Instance.new("UIStroke")
+closeStroke.Color = Color3.fromRGB(120, 20, 20)
+closeStroke.Thickness = 1.2
+closeStroke.Parent = CloseBtn
 
-create("UIListLayout", {
-    Padding = UDim.new(0, 4),
-    SortOrder = Enum.SortOrder.LayoutOrder
-}, body)
+-- 2. الجناح الأيسر الملتصق
+local LeftWing = Instance.new("Frame")
+LeftWing.Size = UDim2.new(0, 95, 1, -38)
+LeftWing.Position = UDim2.new(0.5, -255, 0, 38)
+LeftWing.BackgroundTransparency = 1
+LeftWing.Parent = MainFrame
 
-local function addSection(title, items)
-    local heading = create("Frame", {
-        Size = UDim2.new(1, -4, 0, 40),
-        BackgroundColor3 = Color3.fromRGB(62, 43, 38),
-        BackgroundTransparency = 0.08,
-        BorderSizePixel = 0
-    }, body)
+local LeftLayout = Instance.new("UIListLayout")
+LeftLayout.Padding = UDim.new(0, 4)
+LeftLayout.Parent = LeftWing
 
-    label(
-        heading,
-        "‹  " .. title,
-        UDim2.new(1, -12, 1, 0),
-        UDim2.new(0, 5, 0, 0),
-        16
-    )
+-- 3. الجناح الأيمن الملتصق
+local RightWing = Instance.new("Frame")
+RightWing.Size = UDim2.new(0, 95, 1, -38)
+RightWing.Position = UDim2.new(0.5, 160, 0, 38)
+RightWing.BackgroundTransparency = 1
+RightWing.Parent = MainFrame
 
-    for _, item in ipairs(items) do
-        local row = create("Frame", {
-            Size = UDim2.new(1, -4, 0, 40),
-            BackgroundColor3 = dark,
-            BackgroundTransparency = 0.12,
-            BorderSizePixel = 0
-        }, body)
+local RightLayout = Instance.new("UIListLayout")
+RightLayout.Padding = UDim.new(0, 4)
+RightLayout.Parent = RightWing
 
-        outline(row, Color3.fromRGB(18, 20, 18), 1)
+-- 4. محتوى التمرير الأوسط
+local CenterScroll = Instance.new("ScrollingFrame")
+CenterScroll.Size = UDim2.new(1, -10, 1, -68)
+CenterScroll.Position = UDim2.new(0, 5, 0, 40)
+CenterScroll.BackgroundTransparency = 1
+CenterScroll.CanvasSize = UDim2.new(0, 0, 0, 0)
+CenterScroll.ScrollBarThickness = 3
+CenterScroll.Parent = CenterBox
 
-        label(
-            row,
-            item,
-            UDim2.new(1, -20, 1, 0),
-            UDim2.new(0, 10, 0, 0),
-            14
-        )
+local CenterLayout = Instance.new("UIListLayout")
+CenterLayout.SortOrder = Enum.SortOrder.LayoutOrder
+CenterLayout.Padding = UDim.new(0, 4)
+CenterLayout.Parent = CenterScroll
 
-        -- مربع ثابت للزينة فقط، ليس زرًا
-        local square = create("Frame", {
-            AnchorPoint = Vector2.new(0.5, 0.5),
-            Position = UDim2.new(0, 23, 0.5, 0),
-            Size = UDim2.new(0, 20, 0, 20),
-            BackgroundColor3 = Color3.fromRGB(232, 235, 232),
-            BorderSizePixel = 0
-        }, row)
+-- 5. شريط البحث السفلي
+local SearchFrame = Instance.new("Frame")
+SearchFrame.Size = UDim2.new(1, -10, 0, 22)
+SearchFrame.Position = UDim2.new(0, 5, 1, -25)
+SearchFrame.BackgroundColor3 = Color3.fromRGB(12, 18, 14)
+SearchFrame.BorderSizePixel = 0
+SearchFrame.Parent = CenterBox
 
-        outline(square, Color3.fromRGB(75,75,75), 1)
+local SearchLabel = Instance.new("TextLabel")
+SearchLabel.Size = UDim2.new(0, 50, 1, 0)
+SearchLabel.BackgroundTransparency = 1
+SearchLabel.Text = "Search"
+SearchLabel.TextColor3 = Color3.fromRGB(180, 180, 180)
+SearchLabel.Font = Enum.Font.SourceSansBold
+SearchLabel.TextSize = 12
+SearchLabel.Parent = SearchFrame
+
+local SearchBox = Instance.new("TextBox")
+SearchBox.Size = UDim2.new(1, -55, 1, -2)
+SearchBox.Position = UDim2.new(0, 52, 0, 1)
+SearchBox.BackgroundColor3 = Color3.fromRGB(8, 12, 10)
+SearchBox.PlaceholderText = "Filter features..."
+SearchBox.Text = ""
+SearchBox.TextColor3 = Color3.fromRGB(255, 255, 255)
+SearchBox.Font = Enum.Font.SourceSans
+SearchBox.TextSize = 12
+SearchBox.TextXAlignment = Enum.TextXAlignment.Left
+SearchBox.Parent = SearchFrame
+
+---------------------------------------------------------
+-- دالة تصاميم الأزرار الملتصقة والأكورديون الحيوي
+---------------------------------------------------------
+local function createWingBtn(text, side)
+    local btn = Instance.new("TextButton")
+    btn.Size = UDim2.new(1, 0, 0, 26)
+    btn.BackgroundColor3 = Color3.fromRGB(240, 75, 65)
+    btn.Text = text
+    btn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    btn.Font = Enum.Font.SourceSansBold
+    btn.TextSize = 14
+    btn.Parent = (side == "left") and LeftWing or RightWing
+    Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 5)
+
+    local stroke = Instance.new("UIStroke")
+    stroke.Color = Color3.fromRGB(160, 30, 25)
+    stroke.Thickness = 1.5
+    stroke.Parent = btn
+
+    return btn
+end
+
+-- إضافة الأكورديون بالألوان الحيوية للصفوف
+local function addAccordionSection(titleText, builderFunc)
+    local sectionFrame = Instance.new("Frame")
+    sectionFrame.Size = UDim2.new(1, 0, 0, 24)
+    sectionFrame.BackgroundTransparency = 1
+    sectionFrame.Parent = CenterScroll
+
+    local headBtn = Instance.new("TextButton")
+    headBtn.Size = UDim2.new(1, 0, 0, 24)
+    headBtn.BackgroundTransparency = 1
+    headBtn.Text = "  >  " .. titleText
+    headBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    headBtn.Font = Enum.Font.SourceSansBold
+    headBtn.TextSize = 15
+    headBtn.TextXAlignment = Enum.TextXAlignment.Left
+    headBtn.Parent = sectionFrame
+
+    local contentHolder = Instance.new("Frame")
+    contentHolder.Size = UDim2.new(1, 0, 0, 0)
+    contentHolder.Position = UDim2.new(0, 0, 0, 24)
+    contentHolder.BackgroundTransparency = 1
+    contentHolder.Visible = false
+    contentHolder.Parent = sectionFrame
+
+    local contentLayout = Instance.new("UIListLayout")
+    contentLayout.Padding = UDim.new(0, 3)
+    contentLayout.Parent = contentHolder
+
+    local isOpen = false
+
+    local function addToggleRow(nameText, descText, defaultState, onToggle)
+        local rowFrame = Instance.new("Frame")
+        rowFrame.Size = UDim2.new(1, 0, 0, descText ~= "" and 38 or 26)
+        rowFrame.BackgroundColor3 = Color3.fromRGB(24, 32, 26)
+        rowFrame.BorderSizePixel = 0
+        rowFrame.Parent = contentHolder
+        Instance.new("UICorner", rowFrame).CornerRadius = UDim.new(0, 4)
+
+        local nameLbl = Instance.new("TextLabel")
+        nameLbl.Size = UDim2.new(1, -45, 0, 16)
+        nameLbl.Position = UDim2.new(0, 8, 0, 2)
+        nameLbl.BackgroundTransparency = 1
+        nameLbl.Text = nameText
+        nameLbl.TextColor3 = Color3.fromRGB(255, 255, 255)
+        nameLbl.Font = Enum.Font.SourceSansBold
+        nameLbl.TextSize = 14
+        nameLbl.TextXAlignment = Enum.TextXAlignment.Left
+        nameLbl.Parent = rowFrame
+
+        if descText ~= "" then
+            local descLbl = Instance.new("TextLabel")
+            descLbl.Size = UDim2.new(1, -45, 0, 14)
+            descLbl.Position = UDim2.new(0, 8, 0, 18)
+            descLbl.BackgroundTransparency = 1
+            descLbl.Text = descText
+            descLbl.TextColor3 = Color3.fromRGB(140, 180, 160)
+            descLbl.Font = Enum.Font.SourceSans
+            descLbl.TextSize = 10
+            descLbl.TextXAlignment = Enum.TextXAlignment.Left
+            descLbl.Parent = rowFrame
+        end
+
+        local toggleBtn = Instance.new("TextButton")
+        toggleBtn.Size = UDim2.new(0, 32, 0, 18)
+        toggleBtn.Position = UDim2.new(1, -36, 0.5, -9)
+        toggleBtn.BackgroundColor3 = defaultState and Color3.fromRGB(0, 180, 60) or Color3.fromRGB(50, 60, 55)
+        toggleBtn.Text = ""
+        toggleBtn.Parent = rowFrame
+        Instance.new("UICorner", toggleBtn).CornerRadius = UDim.new(0, 3)
+
+        local innerBox = Instance.new("Frame")
+        innerBox.Size = UDim2.new(0, 12, 0, 14)
+        innerBox.Position = defaultState and UDim2.new(1, -14, 0.5, -7) or UDim2.new(0, 2, 0.5, -7)
+        innerBox.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+        innerBox.Parent = toggleBtn
+        Instance.new("UICorner", innerBox).CornerRadius = UDim.new(0, 2)
+
+        local state = defaultState
+        toggleBtn.MouseButton1Click:Connect(function()
+            playUiSound(SOUND_CLICK, 1)
+            state = not state
+            toggleBtn.BackgroundColor3 = state and Color3.fromRGB(0, 180, 60) or Color3.fromRGB(50, 60, 55)
+            innerBox.Position = state and UDim2.new(1, -14, 0.5, -7) or UDim2.new(0, 2, 0.5, -7)
+            if onToggle then onToggle(state) end
+        end)
+    end
+
+    local function addActionRow(nameText, onClick)
+        local rowFrame = Instance.new("Frame")
+        rowFrame.Size = UDim2.new(1, 0, 0, 24)
+        rowFrame.BackgroundColor3 = Color3.fromRGB(24, 32, 26)
+        rowFrame.BorderSizePixel = 0
+        rowFrame.Parent = contentHolder
+        Instance.new("UICorner", rowFrame).CornerRadius = UDim.new(0, 4)
+
+        local btn = Instance.new("TextButton")
+        btn.Size = UDim2.new(1, 0, 1, 0)
+        btn.BackgroundTransparency = 1
+        btn.Text = "  ▶  " .. nameText
+        btn.TextColor3 = Color3.fromRGB(255, 255, 255)
+        btn.Font = Enum.Font.SourceSansBold
+        btn.TextSize = 13.5
+        btn.TextXAlignment = Enum.TextXAlignment.Left
+        btn.Parent = rowFrame
+
+        btn.MouseButton1Click:Connect(function()
+            playUiSound(SOUND_CLICK, 1)
+            if onClick then onClick() end
+        end)
+    end
+
+    builderFunc(addToggleRow, addActionRow)
+
+    headBtn.MouseButton1Click:Connect(function()
+        playUiSound(SOUND_CLICK, 1)
+        isOpen = not isOpen
+        headBtn.Text = (isOpen and "  ˅  " or "  >  ") .. titleText
+        contentHolder.Visible = isOpen
+        
+        if isOpen then
+            local totalHeight = contentLayout.AbsoluteContentSize.Y
+            contentHolder.Size = UDim2.new(1, 0, 0, totalHeight)
+            sectionFrame.Size = UDim2.new(1, 0, 0, totalHeight + 26)
+        else
+            sectionFrame.Size = UDim2.new(1, 0, 0, 24)
+        end
+        
+        task.wait(0.05)
+        CenterScroll.CanvasSize = UDim2.new(0, 0, 0, CenterLayout.AbsoluteContentSize.Y + 15)
+    end)
+end
+
+local function clearCenter()
+    for _, child in ipairs(CenterScroll:GetChildren()) do
+        if not child:IsA("UIListLayout") then
+            child:Destroy()
+        end
     end
 end
 
-addSection("أبعاد الهالووين", {
-    "انتظار: لا توجد مهام",
-    "سرقة بيض الهالووين تلقائياً",
-    "سرقة بيض الهالووين فوراً",
-    "أخذ البيض من الحاملين",
-    "سرقة العناصر الناقصة",
-    "وضع البيض الناقص وفقسه",
-    "اختيار البيض للسرقة"
-})
+---------------------------------------------------------
+-- التبويبات والميزات
+---------------------------------------------------------
 
-addSection("وحوش الهالووين", {
-    "عرض وحوش الهالووين",
-    "خيارات الوحوش"
-})
+-- 1. Farm
+local BtnFarm = createWingBtn("Farm", "left")
+BtnFarm.MouseButton1Click:Connect(function()
+    playUiSound(SOUND_CLICK, 1)
+    clearCenter()
 
-addSection("الكلب الشبح والصيد", {
-    "خيارات الكلب الشبح",
-    "خيارات الصيد"
-})
+    addAccordionSection("Halloween Dimension", function(addToggle, addAction)
+        addToggle("Auto Steal Halloween Eggs", "Steals all halloween eggs automatically", false, function(st)
+            if st then loadstring(game:HttpGet("https://raw.githubusercontent.com/tienkhanh1/spicy/main/Chilli.lua"))() end
+        end)
+        addToggle("Instant Steal Halloween Eggs", "Delivers the egg to the safe zone in a few seconds, needs enough Speed", false, function(st) end)
+        addToggle("Take Halloween Eggs From Holders", "Takes eggs directly from holders", false, function(st) end)
+    end)
 
-addSection("فانتوم إكسبريس", {
-    "عرض الخيارات"
-})
+    addAccordionSection("Halloween Monsters", function(addToggle, addAction)
+        addToggle("Auto Defeat Monsters", "Farms all event monsters", false, function(st) end)
+    end)
 
-addSection("النجم المتساقط", {
-    "خيارات الحدث"
-})
+    addAccordionSection("Ghost Dog & Fishing", function(addToggle, addAction)
+        addToggle("Auto Fishing", "Catches fish automatically", false, function(st) end)
+    end)
 
-addSection("زهرة الفراشة", {
-    "خيارات الزهرة"
-})
+    CenterScroll.CanvasSize = UDim2.new(0, 0, 0, CenterLayout.AbsoluteContentSize.Y + 10)
+end)
 
-addSection("الخيارات التلقائية", {
-    "البيع التلقائي",
-    "التحوير التلقائي",
-    "وضع البيض تلقائياً",
-    "استخدام جهاز المشي",
-    "فقس البيض وتجهيزه"
-})
+-- 2. Player
+local BtnPlayer = createWingBtn("Player", "left")
+BtnPlayer.MouseButton1Click:Connect(function()
+    playUiSound(SOUND_CLICK, 1)
+    clearCenter()
 
--- شريط البحث الثابت في الأسفل
-local searchBar = create("Frame", {
-    Position = UDim2.new(0, 0, 1, -38),
-    Size = UDim2.new(1, 0, 0, 31),
-    BackgroundColor3 = Color3.fromRGB(29, 35, 29),
-    BorderSizePixel = 0
-}, main)
+    addAccordionSection("مابات عامة", function(addToggle, addAction)
+        addAction("بلوكس فروت - سكربت موز", function()
+            loadstring(game:HttpGet("https://raw.githubusercontent.com/bloxfruitsnokey/Banana/refs/heads/main/DB/script.luau"))()
+        end)
+        addAction("بلوكس فروت - ريدز V2", function()
+            loadstring(game:HttpGet("https://raw.githubusercontent.com/UCT-hub/main/refs/heads/main/redz-v2"))()
+        end)
+        addAction("ماب كيبورد - هوشي هوب", function()
+            loadstring(game:HttpGet("https://hoshihub.site/loader.lua"))()
+        end)
+    end)
 
-label(
-    searchBar,
-    "بحث",
-    UDim2.new(0, 45, 1, 0),
-    UDim2.new(0, 7, 0, 0),
-    13,
-    Enum.TextXAlignment.Left
-)
+    CenterScroll.CanvasSize = UDim2.new(0, 0, 0, CenterLayout.AbsoluteContentSize.Y + 10)
+end)
 
-local searchVisual = create("Frame", {
-    Position = UDim2.new(0, 54, 0, 4),
-    Size = UDim2.new(1, -62, 1, -8),
-    BackgroundColor3 = Color3.fromRGB(17, 21, 18),
-    BorderSizePixel = 0
-}, searchBar)
+local BtnPredictor = createWingBtn("Predictor", "left")
+local BtnProgress = createWingBtn("Progress", "left")
 
-label(
-    searchVisual,
-    "تصفية الخيارات...",
-    UDim2.new(1, -12, 1, 0),
-    UDim2.new(0, 7, 0, 0),
-    12
-)
+-- Server
+local BtnServer = createWingBtn("Server", "left")
+BtnServer.MouseButton1Click:Connect(function()
+    playUiSound(SOUND_CLICK, 1)
+    clearCenter()
 
-print("Chilli Hub Arabic static design loaded")
+    addAccordionSection("المتواجدون بالماب", function(addToggle, addAction)
+        pcall(function()
+            local res = customRequest({Url = FIREBASE_PRESENCE_URL .. ".json", Method = "GET"})
+            if res and res.StatusCode == 200 then
+                local data = safeDecode(res.Body)
+                if data then
+                    for _, usr in pairs(data) do
+                        if type(usr) == "table" and usr.displayName then
+                            addAction("🟢 " .. tostring(usr.displayName), function()
+                                if usr.jobId then
+                                    TeleportService:TeleportToPlaceInstance(usr.placeId or game.PlaceId, usr.jobId, LocalPlayer)
+                                end
+                            end)
+                        end
+                    end
+                end
+            end
+        end)
+    end)
+end)
+
+local BtnMisc = createWingBtn("Misc", "left")
+local BtnAutoHop = createWingBtn("Auto Hop", "left")
+
+---------------------------------------------------------
+-- الجناح الأيمن
+---------------------------------------------------------
+local BtnAdmin = createWingBtn("Admin Abuse", "right")
+BtnAdmin.MouseButton1Click:Connect(function()
+    playUiSound(SOUND_CLICK, 1)
+    clearCenter()
+
+    if LocalPlayer.Name == "Dms921" or LocalPlayer.Name == "طحبح" then
+        addAccordionSection("لوحة الأدمن - طحبح", function(addToggle, addAction)
+            addAction("📢 بث مباشر للشاشات", function()
+                pcall(function()
+                    customRequest({
+                        Url = FIREBASE_BROADCAST_URL,
+                        Method = "POST",
+                        Headers = {["Content-Type"] = "application/json"},
+                        Body = HttpService:JSONEncode({
+                            senderName = "DFX | " .. LocalPlayer.Name,
+                            senderUserId = LocalPlayer.UserId,
+                            targetUserId = 0,
+                            text = "تنبيه مهم من طحبح!",
+                            time = os.time()
+                        })
+                    })
+                end)
+            end)
+        end)
+    end
+end)
+
+local BtnDiscord = createWingBtn("Discord", "right")
+BtnDiscord.MouseButton1Click:Connect(function()
+    playUiSound(SOUND_CLICK, 1)
+    if setclipboard then setclipboard("https://discord.gg/benhub") end
+end)
+
+local BtnVenyx = createWingBtn("Venyx", "right")
+local BtnKeys = createWingBtn("Quick & Keys", "right")
+local BtnSettings = createWingBtn("Settings", "right")
+local BtnConfig = createWingBtn("Config", "right")
+
+---------------------------------------------------------
+-- نظام البث وتحديث الحضور
+---------------------------------------------------------
+local BroadcastGui = Instance.new("ScreenGui")
+BroadcastGui.Name = "DFXAdminBroadcastGui"
+BroadcastGui.ResetOnSpawn = false
+BroadcastGui.DisplayOrder = 999999
+BroadcastGui.Parent = parent
+
+local processedBroadcasts = {}
+task.spawn(function()
+    while true do
+        pcall(function()
+            local res = customRequest({Url = FIREBASE_BROADCAST_URL, Method = "GET"})
+            if res and res.StatusCode == 200 then
+                local data = safeDecode(res.Body)
+                if data then
+                    for bKey, bData in pairs(data) do
+                        if type(bData) == "table" and not processedBroadcasts[bKey] then
+                            processedBroadcasts[bKey] = true
+                            
+                            local popFrame = Instance.new("Frame")
+                            popFrame.Size = UDim2.new(0, 500, 0, 70)
+                            popFrame.Position = UDim2.new(0.5, -250, 0, 20)
+                            popFrame.BackgroundColor3 = Color3.fromRGB(18, 18, 18)
+                            popFrame.Parent = BroadcastGui
+                            Instance.new("UICorner", popFrame).CornerRadius = UDim.new(0, 8)
+
+                            local pStroke = Instance.new("UIStroke")
+                            pStroke.Color = Color3.fromRGB(235, 60, 55)
+                            pStroke.Thickness = 2
+                            pStroke.Parent = popFrame
+
+                            local pLbl = Instance.new("TextLabel")
+                            pLbl.Size = UDim2.new(1, -20, 1, 0)
+                            pLbl.Position = UDim2.new(0, 10, 0, 0)
+                            pLbl.BackgroundTransparency = 1
+                            pLbl.Text = "📢 " .. tostring(bData.senderName or "DFX") .. ": " .. tostring(bData.text or "")
+                            pLbl.TextColor3 = Color3.fromRGB(255, 255, 255)
+                            pLbl.Font = Enum.Font.SourceSansBold
+                            pLbl.TextSize = 18
+                            pLbl.TextWrapped = true
+                            pLbl.Parent = popFrame
+
+                            playUiSound(bData.eggType and SOUND_EGG_ALERT or SOUND_BROADCAST, 1)
+
+                            task.delay(7, function()
+                                if popFrame then popFrame:Destroy() end
+                            end)
+                        end
+                    end
+                end
+            end
+        end)
+        task.wait(2)
+    end
+end)
+
+-- تحديث الحضور
+task.spawn(function()
+    while true do
+        pcall(function()
+            customRequest({
+                Url = FIREBASE_PRESENCE_URL .. "/" .. tostring(LocalPlayer.UserId) .. ".json",
+                Method = "PUT",
+                Headers = {["Content-Type"] = "application/json"},
+                Body = HttpService:JSONEncode({
+                    userId = LocalPlayer.UserId,
+                    name = LocalPlayer.Name,
+                    displayName = LocalPlayer.DisplayName ~= "" and LocalPlayer.DisplayName or LocalPlayer.Name,
+                    jobId = game.JobId,
+                    placeId = game.PlaceId,
+                    time = os.time()
+                })
+            })
+        end)
+        task.wait(10)
+    end
+end)
+
+CloseBtn.MouseButton1Click:Connect(function()
+    playUiSound(SOUND_CLICK, 1)
+    MainFrame.Visible = false
+end)
+
+BtnFarm.MouseButton1Click:Fire()
