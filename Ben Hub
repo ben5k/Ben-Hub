@@ -635,7 +635,7 @@ local function setupDeveloperTag(character, playerName)
     local lbl = Instance.new("TextLabel")
     lbl.Size = UDim2.new(1, 0, 1, 0)
     lbl.BackgroundTransparency = 1
-    lbl.Text = "👑مطور طحبح 👑"
+    lbl.Text = "مطور Ben 👑"
     lbl.Font = Enum.Font.SourceSansBold
     lbl.TextSize = 16
     lbl.TextStrokeTransparency = 0.3
