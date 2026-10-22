@@ -1,564 +1,617 @@
--- DFX Hub - 100% Exact Chilli Hub UI Replica (Developer: Tahbah)
--- Version: v2.0.02
+--[[
+    Dfx Hub - واجهة سكربت عربية (تصميم أصلي)
+    اللون: أحمر | اللغة: عربي
+]]
 
-local CoreGui = game:GetService("CoreGui")
 local Players = game:GetService("Players")
-local TweenService = game:GetService("TweenService")
 local TeleportService = game:GetService("TeleportService")
 local HttpService = game:GetService("HttpService")
-local RunService = game:GetService("RunService")
-local SoundService = game:GetService("SoundService")
+local UserInputService = game:GetService("UserInputService")
+local TweenService = game:GetService("TweenService")
+local CoreGui = game:GetService("CoreGui")
 
 local LocalPlayer = Players.LocalPlayer
-local parent = (gethui and gethui()) or CoreGui:FindFirstChild("RobloxGui") or LocalPlayer:WaitForChild("PlayerGui")
 
-if parent:FindFirstChild("DFXExactChilliUI_v2") then parent.DFXExactChilliUI_v2:Destroy() end
-if parent:FindFirstChild("DFXAdminBroadcastGui") then parent.DFXAdminBroadcastGui:Destroy() end
+-- ====== الألوان ======
+local C = {
+    Red      = Color3.fromRGB(220, 38, 38),
+    DarkRed  = Color3.fromRGB(153, 27, 27),
+    BG       = Color3.fromRGB(20, 20, 24),
+    Panel    = Color3.fromRGB(30, 30, 36),
+    Row      = Color3.fromRGB(40, 40, 48),
+    Text     = Color3.fromRGB(245, 245, 245),
+    SubText  = Color3.fromRGB(170, 170, 180),
+    Green    = Color3.fromRGB(34, 197, 94),
+}
 
-local function customRequest(options)
-    local req = request or http_request or (syn and syn.request) or (http and http.request) or (fluxus and fluxus.request)
-    if req then
-        local success, response = pcall(function() return req(options) end)
-        if success and response then return response end
-    end
-    if options.Method == "GET" then
-        local success, body = pcall(function() return game:HttpGet(options.Url) end)
-        if success then return {StatusCode = 200, Body = body} end
-    end
-    return {StatusCode = 400, Body = "null"}
+-- ====== حذف النسخة القديمة ======
+local parentGui = (gethui and gethui()) or CoreGui
+pcall(function()
+    local old = parentGui:FindFirstChild("DfxHub")
+    if old then old:Destroy() end
+end)
+
+-- ====== أدوات مساعدة ======
+local function corner(obj, r)
+    local c = Instance.new("UICorner")
+    c.CornerRadius = UDim.new(0, r or 8)
+    c.Parent = obj
+    return c
 end
 
-local function safeDecode(jsonStr)
-    if not jsonStr or jsonStr == "" or jsonStr == "null" then return nil end
-    local success, result = pcall(function() return HttpService:JSONDecode(jsonStr) end)
-    if success then return result end
+local function stroke(obj, color, th)
+    local s = Instance.new("UIStroke")
+    s.Color = color or C.Red
+    s.Thickness = th or 1.5
+    s.Parent = obj
+    return s
+end
+
+local function notify(msg)
+    pcall(function()
+        game:GetService("StarterGui"):SetCore("SendNotification", {
+            Title = "Dfx",
+            Text = msg,
+            Duration = 4,
+        })
+    end)
+end
+
+-- ====== الواجهة الرئيسية ======
+local gui = Instance.new("ScreenGui")
+gui.Name = "DfxHub"
+gui.ResetOnSpawn = false
+gui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+gui.Parent = parentGui
+
+local main = Instance.new("Frame")
+main.Name = "Main"
+main.Size = UDim2.new(0, 540, 0, 350)
+main.Position = UDim2.new(0.5, -270, 0.5, -175)
+main.BackgroundColor3 = C.BG
+main.BorderSizePixel = 0
+main.Active = true
+main.Parent = gui
+corner(main, 12)
+stroke(main, C.Red, 2)
+
+-- الهيدر
+local header = Instance.new("Frame")
+header.Size = UDim2.new(1, 0, 0, 42)
+header.BackgroundColor3 = C.Red
+header.BorderSizePixel = 0
+header.Parent = main
+corner(header, 12)
+
+local headerFix = Instance.new("Frame")
+headerFix.Size = UDim2.new(1, 0, 0, 12)
+headerFix.Position = UDim2.new(0, 0, 1, -12)
+headerFix.BackgroundColor3 = C.Red
+headerFix.BorderSizePixel = 0
+headerFix.Parent = header
+
+local title = Instance.new("TextLabel")
+title.Size = UDim2.new(0, 160, 1, 0)
+title.Position = UDim2.new(0, 14, 0, 0)
+title.BackgroundTransparency = 1
+title.Text = "Dfx"
+title.Font = Enum.Font.GothamBlack
+title.TextSize = 24
+title.TextColor3 = C.Text
+title.TextXAlignment = Enum.TextXAlignment.Left
+title.Parent = header
+
+local subtitle = Instance.new("TextLabel")
+subtitle.Size = UDim2.new(0, 160, 1, 0)
+subtitle.Position = UDim2.new(0, 62, 0, 0)
+subtitle.BackgroundTransparency = 1
+subtitle.Text = "هَب"
+subtitle.Font = Enum.Font.GothamBold
+subtitle.TextSize = 16
+subtitle.TextColor3 = Color3.fromRGB(255, 220, 220)
+subtitle.TextXAlignment = Enum.TextXAlignment.Left
+subtitle.Parent = header
+
+local closeBtn = Instance.new("TextButton")
+closeBtn.Size = UDim2.new(0, 30, 0, 30)
+closeBtn.Position = UDim2.new(1, -38, 0, 6)
+closeBtn.BackgroundColor3 = C.DarkRed
+closeBtn.Text = "X"
+closeBtn.Font = Enum.Font.GothamBlack
+closeBtn.TextSize = 16
+closeBtn.TextColor3 = C.Text
+closeBtn.AutoButtonColor = true
+closeBtn.Parent = header
+corner(closeBtn, 8)
+
+local minBtn = Instance.new("TextButton")
+minBtn.Size = UDim2.new(0, 30, 0, 30)
+minBtn.Position = UDim2.new(1, -74, 0, 6)
+minBtn.BackgroundColor3 = C.DarkRed
+minBtn.Text = "-"
+minBtn.Font = Enum.Font.GothamBlack
+minBtn.TextSize = 18
+minBtn.TextColor3 = C.Text
+minBtn.Parent = header
+corner(minBtn, 8)
+
+-- ====== السحب ======
+do
+    local dragging, dragStart, startPos
+    header.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1
+            or input.UserInputType == Enum.UserInputType.Touch then
+            dragging = true
+            dragStart = input.Position
+            startPos = main.Position
+        end
+    end)
+    UserInputService.InputChanged:Connect(function(input)
+        if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement
+            or input.UserInputType == Enum.UserInputType.Touch) then
+            local d = input.Position - dragStart
+            main.Position = UDim2.new(
+                startPos.X.Scale, startPos.X.Offset + d.X,
+                startPos.Y.Scale, startPos.Y.Offset + d.Y
+            )
+        end
+    end)
+    UserInputService.InputEnded:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1
+            or input.UserInputType == Enum.UserInputType.Touch then
+            dragging = false
+        end
+    end)
+end
+
+-- ====== الشريط الجانبي (التبويبات) ======
+local sidebar = Instance.new("Frame")
+sidebar.Size = UDim2.new(0, 120, 1, -92)
+sidebar.Position = UDim2.new(0, 8, 0, 50)
+sidebar.BackgroundColor3 = C.Panel
+sidebar.BorderSizePixel = 0
+sidebar.Parent = main
+corner(sidebar, 10)
+
+local sideLayout = Instance.new("UIListLayout")
+sideLayout.Padding = UDim.new(0, 6)
+sideLayout.Parent = sidebar
+local sidePad = Instance.new("UIPadding")
+sidePad.PaddingTop = UDim.new(0, 6)
+sidePad.PaddingLeft = UDim.new(0, 6)
+sidePad.PaddingRight = UDim.new(0, 6)
+sidePad.Parent = sidebar
+
+-- منطقة المحتوى
+local content = Instance.new("Frame")
+content.Size = UDim2.new(1, -144, 1, -92)
+content.Position = UDim2.new(0, 136, 0, 50)
+content.BackgroundColor3 = C.Panel
+content.BorderSizePixel = 0
+content.Parent = main
+corner(content, 10)
+
+-- ====== البحث ======
+local searchBar = Instance.new("Frame")
+searchBar.Size = UDim2.new(1, -16, 0, 30)
+searchBar.Position = UDim2.new(0, 8, 1, -38)
+searchBar.BackgroundColor3 = C.Panel
+searchBar.BorderSizePixel = 0
+searchBar.Parent = main
+corner(searchBar, 8)
+
+local searchLbl = Instance.new("TextLabel")
+searchLbl.Size = UDim2.new(0, 60, 1, 0)
+searchLbl.Position = UDim2.new(1, -66, 0, 0)
+searchLbl.BackgroundTransparency = 1
+searchLbl.Text = "بحث"
+searchLbl.Font = Enum.Font.GothamBold
+searchLbl.TextSize = 14
+searchLbl.TextColor3 = C.Red
+searchLbl.Parent = searchBar
+
+local searchBox = Instance.new("TextBox")
+searchBox.Size = UDim2.new(1, -80, 1, -8)
+searchBox.Position = UDim2.new(0, 8, 0, 4)
+searchBox.BackgroundColor3 = C.Row
+searchBox.Text = ""
+searchBox.PlaceholderText = "ابحث عن ميزة..."
+searchBox.PlaceholderColor3 = C.SubText
+searchBox.TextColor3 = C.Text
+searchBox.Font = Enum.Font.Gotham
+searchBox.TextSize = 13
+searchBox.ClearTextOnFocus = false
+searchBox.TextXAlignment = Enum.TextXAlignment.Right
+searchBox.Parent = searchBar
+corner(searchBox, 6)
+
+-- ====== نظام التبويبات والصفوف ======
+local tabs = {}
+local allRows = {}
+local currentTab
+
+local function selectTab(name)
+    currentTab = name
+    for n, t in pairs(tabs) do
+        local active = (n == name)
+        t.page.Visible = active
+        TweenService:Create(t.button, TweenInfo.new(0.15), {
+            BackgroundColor3 = active and C.Red or C.Row,
+        }):Play()
+    end
+end
+
+local function createTab(name)
+    local btn = Instance.new("TextButton")
+    btn.Size = UDim2.new(1, 0, 0, 34)
+    btn.BackgroundColor3 = C.Row
+    btn.Text = name
+    btn.Font = Enum.Font.GothamBold
+    btn.TextSize = 14
+    btn.TextColor3 = C.Text
+    btn.AutoButtonColor = false
+    btn.Parent = sidebar
+    corner(btn, 8)
+
+    local page = Instance.new("ScrollingFrame")
+    page.Size = UDim2.new(1, -12, 1, -12)
+    page.Position = UDim2.new(0, 6, 0, 6)
+    page.BackgroundTransparency = 1
+    page.BorderSizePixel = 0
+    page.ScrollBarThickness = 4
+    page.ScrollBarImageColor3 = C.Red
+    page.CanvasSize = UDim2.new(0, 0, 0, 0)
+    page.AutomaticCanvasSize = Enum.AutomaticSize.Y
+    page.Visible = false
+    page.Parent = content
+
+    local layout = Instance.new("UIListLayout")
+    layout.Padding = UDim.new(0, 6)
+    layout.Parent = page
+
+    tabs[name] = { page = page, button = btn }
+    btn.MouseButton1Click:Connect(function()
+        searchBox.Text = ""
+        selectTab(name)
+    end)
+    return page
+end
+
+local function createRow(page, labelText)
+    local row = Instance.new("Frame")
+    row.Size = UDim2.new(1, -4, 0, 40)
+    row.BackgroundColor3 = C.Row
+    row.BorderSizePixel = 0
+    row.Parent = page
+    corner(row, 8)
+
+    local lbl = Instance.new("TextLabel")
+    lbl.Size = UDim2.new(1, -130, 1, 0)
+    lbl.Position = UDim2.new(0, 120, 0, 0)
+    lbl.BackgroundTransparency = 1
+    lbl.Text = labelText
+    lbl.Font = Enum.Font.GothamBold
+    lbl.TextSize = 14
+    lbl.TextColor3 = C.Text
+    lbl.TextXAlignment = Enum.TextXAlignment.Right
+    lbl.Parent = row
+
+    table.insert(allRows, { row = row, text = labelText, page = page })
+    return row
+end
+
+local function addButton(page, labelText, btnText, callback)
+    local row = createRow(page, labelText)
+    local b = Instance.new("TextButton")
+    b.Size = UDim2.new(0, 100, 0, 28)
+    b.Position = UDim2.new(0, 8, 0.5, -14)
+    b.BackgroundColor3 = C.Red
+    b.Text = btnText
+    b.Font = Enum.Font.GothamBold
+    b.TextSize = 13
+    b.TextColor3 = C.Text
+    b.Parent = row
+    corner(b, 6)
+    b.MouseButton1Click:Connect(function()
+        task.spawn(callback)
+    end)
+    return b
+end
+
+local function addToggle(page, labelText, default, callback)
+    local row = createRow(page, labelText)
+    local state = default or false
+
+    local bg = Instance.new("TextButton")
+    bg.Size = UDim2.new(0, 52, 0, 26)
+    bg.Position = UDim2.new(0, 8, 0.5, -13)
+    bg.Text = ""
+    bg.AutoButtonColor = false
+    bg.BackgroundColor3 = state and C.Green or C.DarkRed
+    bg.Parent = row
+    corner(bg, 13)
+
+    local knob = Instance.new("Frame")
+    knob.Size = UDim2.new(0, 20, 0, 20)
+    knob.Position = state and UDim2.new(1, -23, 0.5, -10) or UDim2.new(0, 3, 0.5, -10)
+    knob.BackgroundColor3 = C.Text
+    knob.Parent = bg
+    corner(knob, 10)
+
+    local function render()
+        TweenService:Create(bg, TweenInfo.new(0.15), {
+            BackgroundColor3 = state and C.Green or C.DarkRed,
+        }):Play()
+        TweenService:Create(knob, TweenInfo.new(0.15), {
+            Position = state and UDim2.new(1, -23, 0.5, -10) or UDim2.new(0, 3, 0.5, -10),
+        }):Play()
+    end
+
+    bg.MouseButton1Click:Connect(function()
+        state = not state
+        render()
+        task.spawn(callback, state)
+    end)
+
+    if state then task.spawn(callback, state) end
+end
+
+local function addTextBox(page, labelText, placeholder)
+    local row = createRow(page, labelText)
+    local box = Instance.new("TextBox")
+    box.Size = UDim2.new(0, 150, 0, 28)
+    box.Position = UDim2.new(0, 8, 0.5, -14)
+    box.BackgroundColor3 = C.BG
+    box.Text = ""
+    box.PlaceholderText = placeholder
+    box.PlaceholderColor3 = C.SubText
+    box.TextColor3 = C.Text
+    box.Font = Enum.Font.Gotham
+    box.TextSize = 12
+    box.ClearTextOnFocus = false
+    box.Parent = row
+    corner(box, 6)
+    stroke(box, C.DarkRed, 1)
+    local lbl = row:FindFirstChildOfClass("TextLabel")
+    lbl.Size = UDim2.new(1, -175, 1, 0)
+    lbl.Position = UDim2.new(0, 165, 0, 0)
+    return box
+end
+
+local function addDropdown(page, labelText, options, default, callback)
+    local row = createRow(page, labelText)
+    local idx = table.find(options, default) or 1
+    local b = Instance.new("TextButton")
+    b.Size = UDim2.new(0, 130, 0, 28)
+    b.Position = UDim2.new(0, 8, 0.5, -14)
+    b.BackgroundColor3 = C.BG
+    b.Text = options[idx] .. "  ✔"
+    b.Font = Enum.Font.GothamBold
+    b.TextSize = 12
+    b.TextColor3 = C.Text
+    b.Parent = row
+    corner(b, 6)
+    stroke(b, C.Red, 1)
+    local lbl = row:FindFirstChildOfClass("TextLabel")
+    lbl.Size = UDim2.new(1, -155, 1, 0)
+    lbl.Position = UDim2.new(0, 145, 0, 0)
+    b.MouseButton1Click:Connect(function()
+        idx = idx % #options + 1
+        b.Text = options[idx] .. "  ✔"
+        callback(options[idx])
+    end)
+    callback(options[idx])
+end
+
+-- ====== البحث ======
+searchBox:GetPropertyChangedSignal("Text"):Connect(function()
+    local q = searchBox.Text
+    if q == "" then
+        for _, r in ipairs(allRows) do r.row.Visible = true end
+        if currentTab then selectTab(currentTab) end
+        return
+    end
+    for _, t in pairs(tabs) do t.page.Visible = true end
+    for _, r in ipairs(allRows) do
+        r.row.Visible = r.text:find(q, 1, true) ~= nil
+    end
+end)
+
+-- ====================================================
+--                      التبويبات
+-- ====================================================
+
+-- ====== تبويب: السيرفر ======
+local serverPage = createTab("السيرفر")
+
+local hopMode = "أقل لاعبين"
+addDropdown(serverPage, "وضع تبديل السيرفر", { "أقل لاعبين", "أكثر لاعبين", "عشوائي" }, "أقل لاعبين", function(v)
+    hopMode = v
+end)
+
+local function getServers()
+    local url = ("https://games.roblox.com/v1/games/%d/servers/Public?sortOrder=Asc&limit=100"):format(game.PlaceId)
+    local ok, res = pcall(function()
+        return HttpService:JSONDecode(game:HttpGet(url))
+    end)
+    if ok and res and res.data then
+        return res.data
+    end
     return nil
 end
 
-local SOUND_CLICK = "rbxassetid://6895079853"
-local SOUND_BROADCAST = "rbxassetid://17208361335"
-local SOUND_EGG_ALERT = "rbxassetid://127213343505462"
-
-local function playUiSound(soundId, pitch)
-    task.spawn(function()
-        pcall(function()
-            local snd = Instance.new("Sound")
-            snd.SoundId = soundId
-            snd.Volume = 8
-            snd.Pitch = pitch or 1
-            snd.Parent = SoundService
-            if not snd.IsLoaded then snd.Loaded:Wait() end
-            snd:Play()
-            snd.Ended:Connect(function() snd:Destroy() end)
-        end)
-    end)
-end
-
--- قاعدة البيانات t7b7
-local FIREBASE_BASE_URL = "https://t7b7-54245-default-rtdb.firebaseio.com"
-local FIREBASE_CHAT_URL = FIREBASE_BASE_URL .. "/global_chat.json"
-local FIREBASE_PRESENCE_URL = FIREBASE_BASE_URL .. "/presence"
-local FIREBASE_BROADCAST_URL = FIREBASE_BASE_URL .. "/broadcasts.json"
-
----------------------------------------------------------
--- الهيكل الرئيسي الملتصق بالكامل (v2.0.02)
----------------------------------------------------------
-local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "DFXExactChilliUI_v2"
-ScreenGui.ResetOnSpawn = false
-ScreenGui.Parent = parent
-
-local MainFrame = Instance.new("Frame")
-MainFrame.Name = "MainFrame"
-MainFrame.Size = UDim2.new(0, 520, 0, 310)
-MainFrame.Position = UDim2.new(0.5, -260, 0.5, -155)
-MainFrame.BackgroundTransparency = 1
-MainFrame.Active = true
-MainFrame.Draggable = true
-MainFrame.Parent = ScreenGui
-
--- 1. الصندوق الأوسط الرئيسي
-local CenterBox = Instance.new("Frame")
-CenterBox.Name = "CenterBox"
-CenterBox.Size = UDim2.new(0, 320, 1, 0)
-CenterBox.Position = UDim2.new(0.5, -160, 0, 0)
-CenterBox.BackgroundColor3 = Color3.fromRGB(18, 24, 20)
-CenterBox.BorderSizePixel = 0
-CenterBox.Parent = MainFrame
-
-local centerStroke = Instance.new("UIStroke")
-centerStroke.Color = Color3.fromRGB(0, 0, 0)
-centerStroke.Thickness = 2
-centerStroke.Parent = CenterBox
-
--- الهيدر الأحمر
-local Header = Instance.new("Frame")
-Header.Size = UDim2.new(1, 0, 0, 36)
-Header.BackgroundColor3 = Color3.fromRGB(235, 65, 55)
-Header.BorderSizePixel = 0
-Header.Parent = CenterBox
-
-local Title = Instance.new("TextLabel")
-Title.Size = UDim2.new(1, -45, 1, 0)
-Title.Position = UDim2.new(0, 10, 0, 0)
-Title.BackgroundTransparency = 1
-Title.Text = "DFX Hub"
-Title.TextColor3 = Color3.fromRGB(255, 255, 255)
-Title.Font = Enum.Font.SourceSansItalic
-Title.TextSize = 24
-Title.TextXAlignment = Enum.TextXAlignment.Center
-Title.Parent = Header
-
-local CloseBtn = Instance.new("TextButton")
-CloseBtn.Size = UDim2.new(0, 24, 0, 24)
-CloseBtn.Position = UDim2.new(1, -28, 0, 6)
-CloseBtn.BackgroundColor3 = Color3.fromRGB(210, 45, 45)
-CloseBtn.Text = "X"
-CloseBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-CloseBtn.Font = Enum.Font.SourceSansBold
-CloseBtn.TextSize = 15
-CloseBtn.Parent = Header
-Instance.new("UICorner", CloseBtn).CornerRadius = UDim.new(0, 4)
-
-local closeStroke = Instance.new("UIStroke")
-closeStroke.Color = Color3.fromRGB(120, 20, 20)
-closeStroke.Thickness = 1.2
-closeStroke.Parent = CloseBtn
-
--- 2. الجناح الأيسر الملتصق
-local LeftWing = Instance.new("Frame")
-LeftWing.Size = UDim2.new(0, 95, 1, -38)
-LeftWing.Position = UDim2.new(0.5, -255, 0, 38)
-LeftWing.BackgroundTransparency = 1
-LeftWing.Parent = MainFrame
-
-local LeftLayout = Instance.new("UIListLayout")
-LeftLayout.Padding = UDim.new(0, 4)
-LeftLayout.Parent = LeftWing
-
--- 3. الجناح الأيمن الملتصق
-local RightWing = Instance.new("Frame")
-RightWing.Size = UDim2.new(0, 95, 1, -38)
-RightWing.Position = UDim2.new(0.5, 160, 0, 38)
-RightWing.BackgroundTransparency = 1
-RightWing.Parent = MainFrame
-
-local RightLayout = Instance.new("UIListLayout")
-RightLayout.Padding = UDim.new(0, 4)
-RightLayout.Parent = RightWing
-
--- 4. محتوى التمرير الأوسط
-local CenterScroll = Instance.new("ScrollingFrame")
-CenterScroll.Size = UDim2.new(1, -10, 1, -68)
-CenterScroll.Position = UDim2.new(0, 5, 0, 40)
-CenterScroll.BackgroundTransparency = 1
-CenterScroll.CanvasSize = UDim2.new(0, 0, 0, 0)
-CenterScroll.ScrollBarThickness = 3
-CenterScroll.Parent = CenterBox
-
-local CenterLayout = Instance.new("UIListLayout")
-CenterLayout.SortOrder = Enum.SortOrder.LayoutOrder
-CenterLayout.Padding = UDim.new(0, 4)
-CenterLayout.Parent = CenterScroll
-
--- 5. شريط البحث السفلي
-local SearchFrame = Instance.new("Frame")
-SearchFrame.Size = UDim2.new(1, -10, 0, 22)
-SearchFrame.Position = UDim2.new(0, 5, 1, -25)
-SearchFrame.BackgroundColor3 = Color3.fromRGB(12, 18, 14)
-SearchFrame.BorderSizePixel = 0
-SearchFrame.Parent = CenterBox
-
-local SearchLabel = Instance.new("TextLabel")
-SearchLabel.Size = UDim2.new(0, 50, 1, 0)
-SearchLabel.BackgroundTransparency = 1
-SearchLabel.Text = "Search"
-SearchLabel.TextColor3 = Color3.fromRGB(180, 180, 180)
-SearchLabel.Font = Enum.Font.SourceSansBold
-SearchLabel.TextSize = 12
-SearchLabel.Parent = SearchFrame
-
-local SearchBox = Instance.new("TextBox")
-SearchBox.Size = UDim2.new(1, -55, 1, -2)
-SearchBox.Position = UDim2.new(0, 52, 0, 1)
-SearchBox.BackgroundColor3 = Color3.fromRGB(8, 12, 10)
-SearchBox.PlaceholderText = "Filter features..."
-SearchBox.Text = ""
-SearchBox.TextColor3 = Color3.fromRGB(255, 255, 255)
-SearchBox.Font = Enum.Font.SourceSans
-SearchBox.TextSize = 12
-SearchBox.TextXAlignment = Enum.TextXAlignment.Left
-SearchBox.Parent = SearchFrame
-
----------------------------------------------------------
--- دالة تصاميم الأزرار الملتصقة والأكورديون الحيوي
----------------------------------------------------------
-local function createWingBtn(text, side)
-    local btn = Instance.new("TextButton")
-    btn.Size = UDim2.new(1, 0, 0, 26)
-    btn.BackgroundColor3 = Color3.fromRGB(240, 75, 65)
-    btn.Text = text
-    btn.TextColor3 = Color3.fromRGB(255, 255, 255)
-    btn.Font = Enum.Font.SourceSansBold
-    btn.TextSize = 14
-    btn.Parent = (side == "left") and LeftWing or RightWing
-    Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 5)
-
-    local stroke = Instance.new("UIStroke")
-    stroke.Color = Color3.fromRGB(160, 30, 25)
-    stroke.Thickness = 1.5
-    stroke.Parent = btn
-
-    return btn
-end
-
--- إضافة الأكورديون بالألوان الحيوية للصفوف
-local function addAccordionSection(titleText, builderFunc)
-    local sectionFrame = Instance.new("Frame")
-    sectionFrame.Size = UDim2.new(1, 0, 0, 24)
-    sectionFrame.BackgroundTransparency = 1
-    sectionFrame.Parent = CenterScroll
-
-    local headBtn = Instance.new("TextButton")
-    headBtn.Size = UDim2.new(1, 0, 0, 24)
-    headBtn.BackgroundTransparency = 1
-    headBtn.Text = "  >  " .. titleText
-    headBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-    headBtn.Font = Enum.Font.SourceSansBold
-    headBtn.TextSize = 15
-    headBtn.TextXAlignment = Enum.TextXAlignment.Left
-    headBtn.Parent = sectionFrame
-
-    local contentHolder = Instance.new("Frame")
-    contentHolder.Size = UDim2.new(1, 0, 0, 0)
-    contentHolder.Position = UDim2.new(0, 0, 0, 24)
-    contentHolder.BackgroundTransparency = 1
-    contentHolder.Visible = false
-    contentHolder.Parent = sectionFrame
-
-    local contentLayout = Instance.new("UIListLayout")
-    contentLayout.Padding = UDim.new(0, 3)
-    contentLayout.Parent = contentHolder
-
-    local isOpen = false
-
-    local function addToggleRow(nameText, descText, defaultState, onToggle)
-        local rowFrame = Instance.new("Frame")
-        rowFrame.Size = UDim2.new(1, 0, 0, descText ~= "" and 38 or 26)
-        rowFrame.BackgroundColor3 = Color3.fromRGB(24, 32, 26)
-        rowFrame.BorderSizePixel = 0
-        rowFrame.Parent = contentHolder
-        Instance.new("UICorner", rowFrame).CornerRadius = UDim.new(0, 4)
-
-        local nameLbl = Instance.new("TextLabel")
-        nameLbl.Size = UDim2.new(1, -45, 0, 16)
-        nameLbl.Position = UDim2.new(0, 8, 0, 2)
-        nameLbl.BackgroundTransparency = 1
-        nameLbl.Text = nameText
-        nameLbl.TextColor3 = Color3.fromRGB(255, 255, 255)
-        nameLbl.Font = Enum.Font.SourceSansBold
-        nameLbl.TextSize = 14
-        nameLbl.TextXAlignment = Enum.TextXAlignment.Left
-        nameLbl.Parent = rowFrame
-
-        if descText ~= "" then
-            local descLbl = Instance.new("TextLabel")
-            descLbl.Size = UDim2.new(1, -45, 0, 14)
-            descLbl.Position = UDim2.new(0, 8, 0, 18)
-            descLbl.BackgroundTransparency = 1
-            descLbl.Text = descText
-            descLbl.TextColor3 = Color3.fromRGB(140, 180, 160)
-            descLbl.Font = Enum.Font.SourceSans
-            descLbl.TextSize = 10
-            descLbl.TextXAlignment = Enum.TextXAlignment.Left
-            descLbl.Parent = rowFrame
-        end
-
-        local toggleBtn = Instance.new("TextButton")
-        toggleBtn.Size = UDim2.new(0, 32, 0, 18)
-        toggleBtn.Position = UDim2.new(1, -36, 0.5, -9)
-        toggleBtn.BackgroundColor3 = defaultState and Color3.fromRGB(0, 180, 60) or Color3.fromRGB(50, 60, 55)
-        toggleBtn.Text = ""
-        toggleBtn.Parent = rowFrame
-        Instance.new("UICorner", toggleBtn).CornerRadius = UDim.new(0, 3)
-
-        local innerBox = Instance.new("Frame")
-        innerBox.Size = UDim2.new(0, 12, 0, 14)
-        innerBox.Position = defaultState and UDim2.new(1, -14, 0.5, -7) or UDim2.new(0, 2, 0.5, -7)
-        innerBox.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-        innerBox.Parent = toggleBtn
-        Instance.new("UICorner", innerBox).CornerRadius = UDim.new(0, 2)
-
-        local state = defaultState
-        toggleBtn.MouseButton1Click:Connect(function()
-            playUiSound(SOUND_CLICK, 1)
-            state = not state
-            toggleBtn.BackgroundColor3 = state and Color3.fromRGB(0, 180, 60) or Color3.fromRGB(50, 60, 55)
-            innerBox.Position = state and UDim2.new(1, -14, 0.5, -7) or UDim2.new(0, 2, 0.5, -7)
-            if onToggle then onToggle(state) end
-        end)
+addButton(serverPage, "تبديل السيرفر", "تبديل", function()
+    notify("جاري البحث عن سيرفر...")
+    local servers = getServers()
+    if not servers then
+        notify("فشل جلب السيرفرات")
+        return
     end
 
-    local function addActionRow(nameText, onClick)
-        local rowFrame = Instance.new("Frame")
-        rowFrame.Size = UDim2.new(1, 0, 0, 24)
-        rowFrame.BackgroundColor3 = Color3.fromRGB(24, 32, 26)
-        rowFrame.BorderSizePixel = 0
-        rowFrame.Parent = contentHolder
-        Instance.new("UICorner", rowFrame).CornerRadius = UDim.new(0, 4)
-
-        local btn = Instance.new("TextButton")
-        btn.Size = UDim2.new(1, 0, 1, 0)
-        btn.BackgroundTransparency = 1
-        btn.Text = "  ▶  " .. nameText
-        btn.TextColor3 = Color3.fromRGB(255, 255, 255)
-        btn.Font = Enum.Font.SourceSansBold
-        btn.TextSize = 13.5
-        btn.TextXAlignment = Enum.TextXAlignment.Left
-        btn.Parent = rowFrame
-
-        btn.MouseButton1Click:Connect(function()
-            playUiSound(SOUND_CLICK, 1)
-            if onClick then onClick() end
-        end)
-    end
-
-    builderFunc(addToggleRow, addActionRow)
-
-    headBtn.MouseButton1Click:Connect(function()
-        playUiSound(SOUND_CLICK, 1)
-        isOpen = not isOpen
-        headBtn.Text = (isOpen and "  ˅  " or "  >  ") .. titleText
-        contentHolder.Visible = isOpen
-        
-        if isOpen then
-            local totalHeight = contentLayout.AbsoluteContentSize.Y
-            contentHolder.Size = UDim2.new(1, 0, 0, totalHeight)
-            sectionFrame.Size = UDim2.new(1, 0, 0, totalHeight + 26)
-        else
-            sectionFrame.Size = UDim2.new(1, 0, 0, 24)
-        end
-        
-        task.wait(0.05)
-        CenterScroll.CanvasSize = UDim2.new(0, 0, 0, CenterLayout.AbsoluteContentSize.Y + 15)
-    end)
-end
-
-local function clearCenter()
-    for _, child in ipairs(CenterScroll:GetChildren()) do
-        if not child:IsA("UIListLayout") then
-            child:Destroy()
+    local list = {}
+    for _, s in ipairs(servers) do
+        if s.id ~= game.JobId and s.playing < s.maxPlayers then
+            table.insert(list, s)
         end
     end
-end
+    if #list == 0 then
+        notify("ما لقيت سيرفر مناسب")
+        return
+    end
 
----------------------------------------------------------
--- التبويبات والميزات
----------------------------------------------------------
+    table.sort(list, function(a, b) return a.playing < b.playing end)
+    local pick
+    if hopMode == "أقل لاعبين" then
+        pick = list[1]
+    elseif hopMode == "أكثر لاعبين" then
+        pick = list[#list]
+    else
+        pick = list[math.random(1, #list)]
+    end
 
--- 1. Farm
-local BtnFarm = createWingBtn("Farm", "left")
-BtnFarm.MouseButton1Click:Connect(function()
-    playUiSound(SOUND_CLICK, 1)
-    clearCenter()
-
-    addAccordionSection("Halloween Dimension", function(addToggle, addAction)
-        addToggle("Auto Steal Halloween Eggs", "Steals all halloween eggs automatically", false, function(st)
-            if st then loadstring(game:HttpGet("https://raw.githubusercontent.com/tienkhanh1/spicy/main/Chilli.lua"))() end
-        end)
-        addToggle("Instant Steal Halloween Eggs", "Delivers the egg to the safe zone in a few seconds, needs enough Speed", false, function(st) end)
-        addToggle("Take Halloween Eggs From Holders", "Takes eggs directly from holders", false, function(st) end)
-    end)
-
-    addAccordionSection("Halloween Monsters", function(addToggle, addAction)
-        addToggle("Auto Defeat Monsters", "Farms all event monsters", false, function(st) end)
-    end)
-
-    addAccordionSection("Ghost Dog & Fishing", function(addToggle, addAction)
-        addToggle("Auto Fishing", "Catches fish automatically", false, function(st) end)
-    end)
-
-    CenterScroll.CanvasSize = UDim2.new(0, 0, 0, CenterLayout.AbsoluteContentSize.Y + 10)
+    TeleportService:TeleportToPlaceInstance(game.PlaceId, pick.id, LocalPlayer)
 end)
 
--- 2. Player
-local BtnPlayer = createWingBtn("Player", "left")
-BtnPlayer.MouseButton1Click:Connect(function()
-    playUiSound(SOUND_CLICK, 1)
-    clearCenter()
+local jobBox = addTextBox(serverPage, "معرف السيرفر", "الصق معرف السيرفر...")
 
-    addAccordionSection("مابات عامة", function(addToggle, addAction)
-        addAction("بلوكس فروت - سكربت موز", function()
-            loadstring(game:HttpGet("https://raw.githubusercontent.com/bloxfruitsnokey/Banana/refs/heads/main/DB/script.luau"))()
-        end)
-        addAction("بلوكس فروت - ريدز V2", function()
-            loadstring(game:HttpGet("https://raw.githubusercontent.com/UCT-hub/main/refs/heads/main/redz-v2"))()
-        end)
-        addAction("ماب كيبورد - هوشي هوب", function()
-            loadstring(game:HttpGet("https://hoshihub.site/loader.lua"))()
-        end)
-    end)
-
-    CenterScroll.CanvasSize = UDim2.new(0, 0, 0, CenterLayout.AbsoluteContentSize.Y + 10)
+addButton(serverPage, "انضمام بالمعرف", "انضمام", function()
+    local id = jobBox.Text:gsub("%s+", "")
+    if id == "" then
+        notify("اكتب معرف السيرفر أولاً")
+        return
+    end
+    TeleportService:TeleportToPlaceInstance(game.PlaceId, id, LocalPlayer)
 end)
 
-local BtnPredictor = createWingBtn("Predictor", "left")
-local BtnProgress = createWingBtn("Progress", "left")
+addButton(serverPage, "نسخ معرف السيرفر الحالي", "نسخ", function()
+    if setclipboard then
+        setclipboard(game.JobId)
+        notify("تم نسخ المعرف")
+    else
+        notify("المنفذ ما يدعم النسخ")
+    end
+end)
 
--- Server
-local BtnServer = createWingBtn("Server", "left")
-BtnServer.MouseButton1Click:Connect(function()
-    playUiSound(SOUND_CLICK, 1)
-    clearCenter()
+addButton(serverPage, "إعادة الدخول للسيرفر", "إعادة", function()
+    if #Players:GetPlayers() <= 1 then
+        LocalPlayer:Kick("\nجاري إعادة الدخول...")
+        task.wait()
+        TeleportService:Teleport(game.PlaceId, LocalPlayer)
+    else
+        TeleportService:TeleportToPlaceInstance(game.PlaceId, game.JobId, LocalPlayer)
+    end
+end)
 
-    addAccordionSection("المتواجدون بالماب", function(addToggle, addAction)
-        pcall(function()
-            local res = customRequest({Url = FIREBASE_PRESENCE_URL .. ".json", Method = "GET"})
-            if res and res.StatusCode == 200 then
-                local data = safeDecode(res.Body)
-                if data then
-                    for _, usr in pairs(data) do
-                        if type(usr) == "table" and usr.displayName then
-                            addAction("🟢 " .. tostring(usr.displayName), function()
-                                if usr.jobId then
-                                    TeleportService:TeleportToPlaceInstance(usr.placeId or game.PlaceId, usr.jobId, LocalPlayer)
-                                end
-                            end)
-                        end
-                    end
-                end
+addToggle(serverPage, "إعادة دخول تلقائي عند الفصل", false, function(on)
+    if not on then
+        if getgenv then getgenv().DfxAutoRejoin = false end
+        return
+    end
+    if getgenv then getgenv().DfxAutoRejoin = true end
+    pcall(function()
+        local overlay = CoreGui:WaitForChild("RobloxPromptGui"):WaitForChild("promptOverlay")
+        overlay.ChildAdded:Connect(function(child)
+            if child.Name == "ErrorPrompt" and (not getgenv or getgenv().DfxAutoRejoin) then
+                task.wait(1)
+                TeleportService:Teleport(game.PlaceId, LocalPlayer)
             end
         end)
     end)
 end)
 
-local BtnMisc = createWingBtn("Misc", "left")
-local BtnAutoHop = createWingBtn("Auto Hop", "left")
+-- ====== تبويب: اللاعب ======
+local playerPage = createTab("اللاعب")
 
----------------------------------------------------------
--- الجناح الأيمن
----------------------------------------------------------
-local BtnAdmin = createWingBtn("Admin Abuse", "right")
-BtnAdmin.MouseButton1Click:Connect(function()
-    playUiSound(SOUND_CLICK, 1)
-    clearCenter()
+local function humanoid()
+    local ch = LocalPlayer.Character
+    return ch and ch:FindFirstChildOfClass("Humanoid")
+end
 
-    if LocalPlayer.Name == "Dms921" or LocalPlayer.Name == "طحبح" then
-        addAccordionSection("لوحة الأدمن - طحبح", function(addToggle, addAction)
-            addAction("📢 بث مباشر للشاشات", function()
-                pcall(function()
-                    customRequest({
-                        Url = FIREBASE_BROADCAST_URL,
-                        Method = "POST",
-                        Headers = {["Content-Type"] = "application/json"},
-                        Body = HttpService:JSONEncode({
-                            senderName = "DFX | " .. LocalPlayer.Name,
-                            senderUserId = LocalPlayer.UserId,
-                            targetUserId = 0,
-                            text = "تنبيه مهم من طحبح!",
-                            time = os.time()
-                        })
-                    })
-                end)
-            end)
-        end)
+local speedBox = addTextBox(playerPage, "سرعة المشي", "16")
+speedBox.FocusLost:Connect(function()
+    local v = tonumber(speedBox.Text)
+    local h = humanoid()
+    if v and h then h.WalkSpeed = math.clamp(v, 0, 200) end
+end)
+
+local jumpBox = addTextBox(playerPage, "قوة القفز", "50")
+jumpBox.FocusLost:Connect(function()
+    local v = tonumber(jumpBox.Text)
+    local h = humanoid()
+    if v and h then
+        h.UseJumpPower = true
+        h.JumpPower = math.clamp(v, 0, 300)
     end
 end)
 
-local BtnDiscord = createWingBtn("Discord", "right")
-BtnDiscord.MouseButton1Click:Connect(function()
-    playUiSound(SOUND_CLICK, 1)
-    if setclipboard then setclipboard("https://discord.gg/benhub") end
+addToggle(playerPage, "قفز لا نهائي", false, function(on)
+    if getgenv then getgenv().DfxInfJump = on end
 end)
-
-local BtnVenyx = createWingBtn("Venyx", "right")
-local BtnKeys = createWingBtn("Quick & Keys", "right")
-local BtnSettings = createWingBtn("Settings", "right")
-local BtnConfig = createWingBtn("Config", "right")
-
----------------------------------------------------------
--- نظام البث وتحديث الحضور
----------------------------------------------------------
-local BroadcastGui = Instance.new("ScreenGui")
-BroadcastGui.Name = "DFXAdminBroadcastGui"
-BroadcastGui.ResetOnSpawn = false
-BroadcastGui.DisplayOrder = 999999
-BroadcastGui.Parent = parent
-
-local processedBroadcasts = {}
-task.spawn(function()
-    while true do
-        pcall(function()
-            local res = customRequest({Url = FIREBASE_BROADCAST_URL, Method = "GET"})
-            if res and res.StatusCode == 200 then
-                local data = safeDecode(res.Body)
-                if data then
-                    for bKey, bData in pairs(data) do
-                        if type(bData) == "table" and not processedBroadcasts[bKey] then
-                            processedBroadcasts[bKey] = true
-                            
-                            local popFrame = Instance.new("Frame")
-                            popFrame.Size = UDim2.new(0, 500, 0, 70)
-                            popFrame.Position = UDim2.new(0.5, -250, 0, 20)
-                            popFrame.BackgroundColor3 = Color3.fromRGB(18, 18, 18)
-                            popFrame.Parent = BroadcastGui
-                            Instance.new("UICorner", popFrame).CornerRadius = UDim.new(0, 8)
-
-                            local pStroke = Instance.new("UIStroke")
-                            pStroke.Color = Color3.fromRGB(235, 60, 55)
-                            pStroke.Thickness = 2
-                            pStroke.Parent = popFrame
-
-                            local pLbl = Instance.new("TextLabel")
-                            pLbl.Size = UDim2.new(1, -20, 1, 0)
-                            pLbl.Position = UDim2.new(0, 10, 0, 0)
-                            pLbl.BackgroundTransparency = 1
-                            pLbl.Text = "📢 " .. tostring(bData.senderName or "DFX") .. ": " .. tostring(bData.text or "")
-                            pLbl.TextColor3 = Color3.fromRGB(255, 255, 255)
-                            pLbl.Font = Enum.Font.SourceSansBold
-                            pLbl.TextSize = 18
-                            pLbl.TextWrapped = true
-                            pLbl.Parent = popFrame
-
-                            playUiSound(bData.eggType and SOUND_EGG_ALERT or SOUND_BROADCAST, 1)
-
-                            task.delay(7, function()
-                                if popFrame then popFrame:Destroy() end
-                            end)
-                        end
-                    end
-                end
-            end
-        end)
-        task.wait(2)
+UserInputService.JumpRequest:Connect(function()
+    if getgenv and getgenv().DfxInfJump then
+        local h = humanoid()
+        if h then h:ChangeState(Enum.HumanoidStateType.Jumping) end
     end
 end)
 
--- تحديث الحضور
-task.spawn(function()
-    while true do
-        pcall(function()
-            customRequest({
-                Url = FIREBASE_PRESENCE_URL .. "/" .. tostring(LocalPlayer.UserId) .. ".json",
-                Method = "PUT",
-                Headers = {["Content-Type"] = "application/json"},
-                Body = HttpService:JSONEncode({
-                    userId = LocalPlayer.UserId,
-                    name = LocalPlayer.Name,
-                    displayName = LocalPlayer.DisplayName ~= "" and LocalPlayer.DisplayName or LocalPlayer.Name,
-                    jobId = game.JobId,
-                    placeId = game.PlaceId,
-                    time = os.time()
-                })
-            })
-        end)
-        task.wait(10)
+addButton(playerPage, "إعادة الشخصية", "إعادة", function()
+    local h = humanoid()
+    if h then h.Health = 0 end
+end)
+
+-- ====== تبويب: متفرقات ======
+local miscPage = createTab("متفرقات")
+
+addToggle(miscPage, "منع الخمول (Anti AFK)", true, function(on)
+    if getgenv then getgenv().DfxAntiAfk = on end
+end)
+LocalPlayer.Idled:Connect(function()
+    if getgenv and getgenv().DfxAntiAfk then
+        local vu = game:GetService("VirtualUser")
+        vu:CaptureController()
+        vu:ClickButton2(Vector2.new())
     end
 end)
 
-CloseBtn.MouseButton1Click:Connect(function()
-    playUiSound(SOUND_CLICK, 1)
-    MainFrame.Visible = false
+addButton(miscPage, "عدد اللاعبين في السيرفر", "عرض", function()
+    notify("اللاعبين: " .. #Players:GetPlayers() .. " / " .. Players.MaxPlayers)
 end)
 
-BtnFarm.MouseButton1Click:Fire()
+-- ====== تبويب: الإعدادات ======
+local settingsPage = createTab("الإعدادات")
+
+addButton(settingsPage, "إغلاق الواجهة نهائياً", "إغلاق", function()
+    gui:Destroy()
+end)
+
+addButton(settingsPage, "حول السكربت", "عرض", function()
+    notify("Dfx Hub - واجهة عربية حمراء")
+end)
+
+-- ====== أزرار الهيدر ======
+local minimized = false
+local fullSize = main.Size
+minBtn.MouseButton1Click:Connect(function()
+    minimized = not minimized
+    sidebar.Visible = not minimized
+    content.Visible = not minimized
+    searchBar.Visible = not minimized
+    TweenService:Create(main, TweenInfo.new(0.2), {
+        Size = minimized and UDim2.new(0, 540, 0, 42) or fullSize,
+    }):Play()
+end)
+
+closeBtn.MouseButton1Click:Connect(function()
+    gui:Destroy()
+end)
+
+-- ====== إظهار/إخفاء بزر RightShift ======
+UserInputService.InputBegan:Connect(function(input, gp)
+    if gp then return end
+    if input.KeyCode == Enum.KeyCode.RightShift then
+        main.Visible = not main.Visible
+    end
+end)
+
+selectTab("السيرفر")
+notify("تم تشغيل Dfx بنجاح")
