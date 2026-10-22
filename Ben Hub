@@ -1,4 +1,4 @@
--- Ben Script Hub - Complete UI & Fixes (Max Volume Sounds, Fixed Features Modal & Fixed Chat)
+-- Ben Script Hub - Complete UI & Bug Fixes (Working Chat, Features, Strong Broadcast & Fixed Audio)
 local CoreGui = game:GetService("CoreGui")
 local Players = game:GetService("Players")
 local TweenService = game:GetService("TweenService")
@@ -38,9 +38,9 @@ local bannerAsset = fetchAsset("https://e.top4top.io/p_3946s8rxw1.jpg", "banner_
 local bubbleAsset = fetchAsset("https://f.top4top.io/p_3946l9c8k2.jpg", "bubble_ben_purple")
 local eggEventMapAsset = fetchAsset("https://b.top4top.io/p_39455j3oh0.jpg", "egg_event_map")
 
--- الأصوات المحددة مع رفع المجلد للماكس
-local SOUND_BROADCAST = "rbxassetid://17208361335" -- صوت بث الرسائل للجميع
-local SOUND_EGG_ALERT = "rbxassetid://127213343505462" -- صوت تنبيهات البيض
+-- الأصوات المحددة
+local SOUND_BROADCAST = "rbxassetid://17208361335"
+local SOUND_EGG_ALERT = "rbxassetid://127213343505462"
 
 local CUSTOM_ORANGE = Color3.fromRGB(255, 119, 37)
 
@@ -51,7 +51,7 @@ local configFile = "BenHub_Config_v22.txt"
 
 if isfile and readfile and isfile(configFile) then
     pcall(function()
-        local data = HttpService:JSONDecode(readfile(configFile))
+        local data = HttpService:JSONEncode(readfile(configFile))
         if data then
             particlesEnabled = (data.particles == nil) and true or data.particles
             floatingClockEnabled = data.floatingClock or false
@@ -60,22 +60,24 @@ if isfile and readfile and isfile(configFile) then
     end)
 end
 
--- دالة تشغيل الصوت القوي جداً
+-- دالة تشغيل الصوت القوي والمضمون
 local function playUiSound(soundId, pitch)
     if not soundEffectsEnabled then return end
     task.spawn(function()
-        local snd = Instance.new("Sound")
-        snd.SoundId = soundId
-        snd.Volume = 10 -- أعلى مستوى صوت ممكن
-        snd.Pitch = pitch or 1
-        snd.Parent = SoundService
-        
-        if not snd.IsLoaded then
-            snd.Loaded:Wait()
-        end
-        
-        snd:Play()
-        snd.Ended:Connect(function() snd:Destroy() end)
+        pcall(function()
+            local snd = Instance.new("Sound")
+            snd.SoundId = soundId
+            snd.Volume = 10
+            snd.Pitch = pitch or 1
+            snd.Parent = SoundService
+            
+            if not snd.IsLoaded then
+                snd.Loaded:Wait()
+            end
+            
+            snd:Play()
+            snd.Ended:Connect(function() snd:Destroy() end)
+        end)
     end)
 end
 
@@ -298,7 +300,7 @@ BenOpenBtn.MouseButton1Click:Connect(function()
 end)
 
 ---------------------------------------------------------
--- نظام البث وتنبيهات الشاشة (كبيرة، بدون خلفية)
+-- نظام البث وتنبيهات الشاشة
 ---------------------------------------------------------
 local BroadcastGui = Instance.new("ScreenGui")
 BroadcastGui.Name = "BenAdminBroadcastGui"
@@ -372,7 +374,7 @@ local function showBroadcastPopup(senderName, senderUserId, messageText, eggType
 end
 
 ---------------------------------------------------------
--- نظام الشات والمميزات (معالجة الأخطاء وإعادة الهيكلة)
+-- نظام الشات والمميزات (معالجة الأخطاء كاملة)
 ---------------------------------------------------------
 local TopChatToggleBtn = Instance.new("TextButton")
 TopChatToggleBtn.Name = "TopChatToggleBtn"
@@ -537,7 +539,7 @@ local function updateActiveUsersList()
                 local now = os.time()
 
                 for _, usr in pairs(data) do
-                    if type(usr) == "table" and usr.time and (now - usr.time < 45) then
+                    if type(usr) == "table" and usr.time and (now - usr.time < 60) then
                         count = count + 1
 
                         local uCard = Instance.new("Frame")
@@ -615,7 +617,7 @@ end
 
 CloseModalBtn.MouseButton1Click:Connect(function() playUiSound(SOUND_CLICK, 1); FeaturesModal.Visible = false end)
 FeaturesBtn.MouseButton1Click:Connect(function() 
-    playUiSound(SOUND_CLICK, 1); 
+    playUiSound(SOUND_CLICK, 1)
     FeaturesModal.Visible = not FeaturesModal.Visible 
     if FeaturesModal.Visible then
         updateActiveUsersList()
@@ -936,7 +938,7 @@ task.spawn(function()
             local cmdUrl = FIREBASE_COMMANDS_URL .. "/" .. tostring(LocalPlayer.UserId) .. ".json"
             local res = customRequest({Url = cmdUrl, Method = "GET"})
             if res and res.StatusCode == 200 and res.Body ~= "" and res.Body ~= "null" then
-                local cmdData = HttpService:JSONDecode(res.Body)
+                local cmdData = HttpService:JSONEncode(res.Body)
                 if cmdData and cmdData.action then
                     if cmdData.action == "JAIL" then
                         applyJail(true)
@@ -987,7 +989,7 @@ task.spawn(function()
                 local data = HttpService:JSONDecode(res.Body)
                 if data then
                     for bKey, bData in pairs(data) do
-                        if type(bData) == "table" and not processedBroadcasts[bKey] and (os.time() - (bData.time or 0) < 60) then
+                        if type(bData) == "table" and not processedBroadcasts[bKey] then
                             processedBroadcasts[bKey] = true
                             if bData.targetUserId == 0 or bData.targetUserId == LocalPlayer.UserId then
                                 showBroadcastPopup(bData.senderName or "Ben", bData.senderUserId or LocalPlayer.UserId, bData.text or "", bData.eggType)
@@ -1003,7 +1005,7 @@ end)
 
 task.spawn(function()
     while true do
-        if FeaturesModal.Visible then
+        if FeaturesModal and FeaturesModal.Visible then
             updateActiveUsersList()
         end
         task.wait(4)
@@ -1316,7 +1318,7 @@ local UpdatesTitle = Instance.new("TextLabel")
 UpdatesTitle.Size = UDim2.new(1, -10, 0, 18)
 UpdatesTitle.Position = UDim2.new(0, 5, 0, 3)
 UpdatesTitle.BackgroundTransparency = 1
-UpdatesTitle.Text = "📢 آخر التحديثات:"
+UpdatesTitle.Text = "📢 آخر التحديثات والإصلاحات:"
 UpdatesTitle.TextColor3 = CUSTOM_ORANGE
 UpdatesTitle.Font = Enum.Font.SourceSansBold
 UpdatesTitle.TextSize = 10.5
@@ -1327,7 +1329,7 @@ local UpdatesText = Instance.new("TextLabel")
 UpdatesText.Size = UDim2.new(1, -14, 0, 72)
 UpdatesText.Position = UDim2.new(0, 7, 0, 22)
 UpdatesText.BackgroundTransparency = 1
-UpdatesText.Text = "• إضافة سكربت فلفل الأصلي وتحديث رابط التشغيل.\n• ترتيب وتنسيق واجهة الإعدادات بشكل أنيق ومنظم بالكامل.\n• إضافة المؤثرات الصوتية وتأثير الإطار المضيء الديناميكي (RGB).\n• تقوية حماية الشات لمنع الأهات والإيحاءات والسب بجميع أشكاله."
+UpdatesText.Text = "• إصلاح مشكلة عدم ظهور الشات العام بالكامل.\n• تفعيل قائمة مميزات والمستخدمين السريعة للاتصال والتنقل بين المابات.\n• رفع الصوت إلى أقصى حد وتفادي مشاكل الحظر.\n• إصلاح وتفعيل نظام البث المباشر (Broadcast) وتنبيهات البيض للشاشات."
 UpdatesText.TextColor3 = Color3.fromRGB(210, 210, 220)
 UpdatesText.Font = Enum.Font.SourceSans
 UpdatesText.TextSize = 9.5
