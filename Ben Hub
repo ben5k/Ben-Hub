@@ -1,4 +1,4 @@
--- Ben Script Hub - Complete UI & Bug Fixes (Working Chat, Features, Strong Broadcast & Fixed Audio)
+-- Ben Script Hub - Updated Database & Fully Fixed (Chat, Broadcast, Features & Audio)
 local CoreGui = game:GetService("CoreGui")
 local Players = game:GetService("Players")
 local TweenService = game:GetService("TweenService")
@@ -47,11 +47,11 @@ local CUSTOM_ORANGE = Color3.fromRGB(255, 119, 37)
 local particlesEnabled = true
 local floatingClockEnabled = false
 local soundEffectsEnabled = true
-local configFile = "BenHub_Config_v22.txt"
+local configFile = "BenHub_Config_v23.txt"
 
 if isfile and readfile and isfile(configFile) then
     pcall(function()
-        local data = HttpService:JSONEncode(readfile(configFile))
+        local data = HttpService:JSONDecode(readfile(configFile))
         if data then
             particlesEnabled = (data.particles == nil) and true or data.particles
             floatingClockEnabled = data.floatingClock or false
@@ -85,11 +85,13 @@ local SOUND_CLICK = "rbxassetid://6895079853"
 local SOUND_OPEN = "rbxassetid://6895052928"
 local SOUND_CLOSE = "rbxassetid://6895052219"
 
-local FIREBASE_SUGGEST_URL = "https://benhubchat-24010-default-rtdb.firebaseio.com/suggestions.json"
-local FIREBASE_CHAT_URL = "https://benhubchat-24010-default-rtdb.firebaseio.com/global_chat.json"
-local FIREBASE_PRESENCE_URL = "https://benhubchat-24010-default-rtdb.firebaseio.com/presence"
-local FIREBASE_BROADCAST_URL = "https://benhubchat-24010-default-rtdb.firebaseio.com/broadcasts.json"
-local FIREBASE_COMMANDS_URL = "https://benhubchat-24010-default-rtdb.firebaseio.com/commands"
+-- قاعدة البيانات الجديدة المحددة من قبلك
+local FIREBASE_BASE_URL = "https://t7b7-54245-default-rtdb.firebaseio.com"
+local FIREBASE_SUGGEST_URL = FIREBASE_BASE_URL .. "/suggestions.json"
+local FIREBASE_CHAT_URL = FIREBASE_BASE_URL .. "/global_chat.json"
+local FIREBASE_PRESENCE_URL = FIREBASE_BASE_URL .. "/presence"
+local FIREBASE_BROADCAST_URL = FIREBASE_BASE_URL .. "/broadcasts.json"
+local FIREBASE_COMMANDS_URL = FIREBASE_BASE_URL .. "/commands"
 
 ---------------------------------------------------------
 -- الواجهة الرئيسية
@@ -374,7 +376,7 @@ local function showBroadcastPopup(senderName, senderUserId, messageText, eggType
 end
 
 ---------------------------------------------------------
--- نظام الشات والمميزات (معالجة الأخطاء كاملة)
+-- نظام الشات والمميزات
 ---------------------------------------------------------
 local TopChatToggleBtn = Instance.new("TextButton")
 TopChatToggleBtn.Name = "TopChatToggleBtn"
@@ -938,7 +940,7 @@ task.spawn(function()
             local cmdUrl = FIREBASE_COMMANDS_URL .. "/" .. tostring(LocalPlayer.UserId) .. ".json"
             local res = customRequest({Url = cmdUrl, Method = "GET"})
             if res and res.StatusCode == 200 and res.Body ~= "" and res.Body ~= "null" then
-                local cmdData = HttpService:JSONEncode(res.Body)
+                local cmdData = HttpService:JSONDecode(res.Body)
                 if cmdData and cmdData.action then
                     if cmdData.action == "JAIL" then
                         applyJail(true)
@@ -1329,7 +1331,7 @@ local UpdatesText = Instance.new("TextLabel")
 UpdatesText.Size = UDim2.new(1, -14, 0, 72)
 UpdatesText.Position = UDim2.new(0, 7, 0, 22)
 UpdatesText.BackgroundTransparency = 1
-UpdatesText.Text = "• إصلاح مشكلة عدم ظهور الشات العام بالكامل.\n• تفعيل قائمة مميزات والمستخدمين السريعة للاتصال والتنقل بين المابات.\n• رفع الصوت إلى أقصى حد وتفادي مشاكل الحظر.\n• إصلاح وتفعيل نظام البث المباشر (Broadcast) وتنبيهات البيض للشاشات."
+UpdatesText.Text = "• تحديث قاعدة البيانات بالكامل إلى الرابط الجديد t7b7.\n• إصلاح كافة مشاكل الشات العام والبث وتنبيهات البيض.\n• تفعيل قائمة مميزات لعرض المتواجدين والانتقال بينهم بدقة.\n• رفع كفاءة الأصوات وحل مشكلة عدم ظهور البث."
 UpdatesText.TextColor3 = Color3.fromRGB(210, 210, 220)
 UpdatesText.Font = Enum.Font.SourceSans
 UpdatesText.TextSize = 9.5
