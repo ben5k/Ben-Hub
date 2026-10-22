@@ -1,5 +1,5 @@
--- DFX Hub - New Design & Full Arabic Translation (Developer: Tahbah)
--- Version: v2.0.03
+-- DFX Hub - Chilli Style with Purple Index Buttons (Developer: Tahbah)
+-- Version: v2.0.04
 
 local CoreGui = game:GetService("CoreGui")
 local Players = game:GetService("Players")
@@ -12,7 +12,7 @@ local SoundService = game:GetService("SoundService")
 local LocalPlayer = Players.LocalPlayer
 local parent = (gethui and gethui()) or CoreGui:FindFirstChild("RobloxGui") or LocalPlayer:WaitForChild("PlayerGui")
 
-if parent:FindFirstChild("DFXArabicChilliUI") then parent.DFXArabicChilliUI:Destroy() end
+if parent:FindFirstChild("DFXChilliPurpleUI") then parent.DFXChilliPurpleUI:Destroy() end
 if parent:FindFirstChild("DFXAdminBroadcastGui") then parent.DFXAdminBroadcastGui:Destroy() end
 
 local function customRequest(options)
@@ -61,10 +61,10 @@ local FIREBASE_PRESENCE_URL = FIREBASE_BASE_URL .. "/presence"
 local FIREBASE_BROADCAST_URL = FIREBASE_BASE_URL .. "/broadcasts.json"
 
 ---------------------------------------------------------
--- الهيكل الرئيسي بتصميم جديد وعربي كامل (v2.0.03)
+-- الهيكل الرئيسي بستايل تشيلي والأزرار البنفسجية (v2.0.04)
 ---------------------------------------------------------
 local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "DFXArabicChilliUI"
+ScreenGui.Name = "DFXChilliPurpleUI"
 ScreenGui.ResetOnSpawn = false
 ScreenGui.Parent = parent
 
@@ -77,33 +77,27 @@ MainFrame.Active = true
 MainFrame.Draggable = true
 MainFrame.Parent = ScreenGui
 
--- 1. الصندوق الأوسط الرئيسي (بلون زجاجي داكن مع إطار بنفسجي نيون)
+-- 1. الصندوق الأوسط الشفاف
 local CenterBox = Instance.new("Frame")
 CenterBox.Name = "CenterBox"
 CenterBox.Size = UDim2.new(0, 330, 1, 0)
 CenterBox.Position = UDim2.new(0.5, -165, 0, 0)
-CenterBox.BackgroundColor3 = Color3.fromRGB(15, 15, 24)
+CenterBox.BackgroundColor3 = Color3.fromRGB(15, 10, 25)
+CenterBox.BackgroundTransparency = 0.85 -- جعل الوسط شفاف بالكامل
 CenterBox.BorderSizePixel = 0
 CenterBox.Parent = MainFrame
-Instance.new("UICorner", CenterBox).CornerRadius = UDim.new(0, 8)
 
 local centerStroke = Instance.new("UIStroke")
-centerStroke.Color = Color3.fromRGB(130, 60, 240)
-centerStroke.Thickness = 1.8
+centerStroke.Color = Color3.fromRGB(140, 50, 245)
+centerStroke.Thickness = 2
 centerStroke.Parent = CenterBox
 
--- الهيدر العلوي الحديث
+-- الهيدر البنفسجي بستايل تشيلي هوب
 local Header = Instance.new("Frame")
-Header.Size = UDim2.new(1, 0, 0, 38)
-Header.BackgroundColor3 = Color3.fromRGB(24, 20, 38)
+Header.Size = UDim2.new(1, 0, 0, 36)
+Header.BackgroundColor3 = Color3.fromRGB(120, 30, 210)
 Header.BorderSizePixel = 0
 Header.Parent = CenterBox
-Instance.new("UICorner", Header).CornerRadius = UDim.new(0, 8)
-
-local headerStroke = Instance.new("UIStroke")
-headerStroke.Color = Color3.fromRGB(130, 60, 240)
-headerStroke.Thickness = 1
-headerStroke.Parent = Header
 
 local Title = Instance.new("TextLabel")
 Title.Size = UDim2.new(1, -45, 1, 0)
@@ -118,40 +112,40 @@ Title.Parent = Header
 
 local CloseBtn = Instance.new("TextButton")
 CloseBtn.Size = UDim2.new(0, 24, 0, 24)
-CloseBtn.Position = UDim2.new(1, -28, 0, 7)
-CloseBtn.BackgroundColor3 = Color3.fromRGB(220, 45, 75)
+CloseBtn.Position = UDim2.new(1, -28, 0, 6)
+CloseBtn.BackgroundColor3 = Color3.fromRGB(180, 20, 80)
 CloseBtn.Text = "✕"
 CloseBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
 CloseBtn.Font = Enum.Font.SourceSansBold
 CloseBtn.TextSize = 14
 CloseBtn.Parent = Header
-Instance.new("UICorner", CloseBtn).CornerRadius = UDim.new(0, 5)
+Instance.new("UICorner", CloseBtn).CornerRadius = UDim.new(0, 4)
 
--- 2. الأجنحة الجانبية (Left / Right Wings)
+-- 2. الأجنحة الجانبية
 local LeftWing = Instance.new("Frame")
-LeftWing.Size = UDim2.new(0, 100, 1, -42)
-LeftWing.Position = UDim2.new(0.5, -270, 0, 42)
+LeftWing.Size = UDim2.new(0, 100, 1, -40)
+LeftWing.Position = UDim2.new(0.5, -270, 0, 40)
 LeftWing.BackgroundTransparency = 1
 LeftWing.Parent = MainFrame
 
 local LeftLayout = Instance.new("UIListLayout")
-LeftLayout.Padding = UDim.new(0, 4)
+LeftLayout.Padding = UDim.new(0, 5)
 LeftLayout.Parent = LeftWing
 
 local RightWing = Instance.new("Frame")
-RightWing.Size = UDim2.new(0, 100, 1, -42)
-RightWing.Position = UDim2.new(0.5, 170, 0, 42)
+RightWing.Size = UDim2.new(0, 100, 1, -40)
+RightWing.Position = UDim2.new(0.5, 170, 0, 40)
 RightWing.BackgroundTransparency = 1
 RightWing.Parent = MainFrame
 
 local RightLayout = Instance.new("UIListLayout")
-RightLayout.Padding = UDim.new(0, 4)
+RightLayout.Padding = UDim.new(0, 5)
 RightLayout.Parent = RightWing
 
--- 3. محتوى التمرير الأوسط
+-- 3. المحتوى الداخلي الأوسط
 local CenterScroll = Instance.new("ScrollingFrame")
-CenterScroll.Size = UDim2.new(1, -12, 1, -74)
-CenterScroll.Position = UDim2.new(0, 6, 0, 44)
+CenterScroll.Size = UDim2.new(1, -12, 1, -72)
+CenterScroll.Position = UDim2.new(0, 6, 0, 42)
 CenterScroll.BackgroundTransparency = 1
 CenterScroll.CanvasSize = UDim2.new(0, 0, 0, 0)
 CenterScroll.ScrollBarThickness = 3
@@ -162,34 +156,35 @@ CenterLayout.SortOrder = Enum.SortOrder.LayoutOrder
 CenterLayout.Padding = UDim.new(0, 4)
 CenterLayout.Parent = CenterScroll
 
--- 4. شريط البحث العربي بالأسفل
+-- 4. شريط البحث
 local SearchFrame = Instance.new("Frame")
-SearchFrame.Size = UDim2.new(1, -12, 0, 24)
-SearchFrame.Position = UDim2.new(0, 6, 1, -28)
-SearchFrame.BackgroundColor3 = Color3.fromRGB(20, 18, 30)
+SearchFrame.Size = UDim2.new(1, -12, 0, 22)
+SearchFrame.Position = UDim2.new(0, 6, 1, -26)
+SearchFrame.BackgroundColor3 = Color3.fromRGB(20, 15, 30)
+SearchFrame.BackgroundTransparency = 0.5
 SearchFrame.BorderSizePixel = 0
 SearchFrame.Parent = CenterBox
-Instance.new("UICorner", SearchFrame).CornerRadius = UDim.new(0, 5)
 
 local searchStroke = Instance.new("UIStroke")
-searchStroke.Color = Color3.fromRGB(80, 50, 140)
+searchStroke.Color = Color3.fromRGB(120, 40, 210)
 searchStroke.Thickness = 1
 searchStroke.Parent = SearchFrame
 
 local SearchLabel = Instance.new("TextLabel")
-SearchLabel.Size = UDim2.new(0, 55, 1, 0)
+SearchLabel.Size = UDim2.new(0, 50, 1, 0)
 SearchLabel.BackgroundTransparency = 1
 SearchLabel.Text = "بحث:"
-SearchLabel.TextColor3 = Color3.fromRGB(180, 150, 255)
+SearchLabel.TextColor3 = Color3.fromRGB(220, 180, 255)
 SearchLabel.Font = Enum.Font.SourceSansBold
 SearchLabel.TextSize = 13
 SearchLabel.Parent = SearchFrame
 
 local SearchBox = Instance.new("TextBox")
-SearchBox.Size = UDim2.new(1, -60, 1, -2)
-SearchBox.Position = UDim2.new(0, 58, 0, 1)
-SearchBox.BackgroundColor3 = Color3.fromRGB(12, 10, 20)
-SearchBox.PlaceholderText = "تصفية الخيارات..."
+SearchBox.Size = UDim2.new(1, -55, 1, -2)
+SearchBox.Position = UDim2.new(0, 52, 0, 1)
+SearchBox.BackgroundColor3 = Color3.fromRGB(10, 5, 20)
+SearchBox.BackgroundTransparency = 0.5
+SearchBox.PlaceholderText = "تصفية..."
 SearchBox.Text = ""
 SearchBox.TextColor3 = Color3.fromRGB(255, 255, 255)
 SearchBox.Font = Enum.Font.SourceSans
@@ -198,28 +193,30 @@ SearchBox.TextXAlignment = Enum.TextXAlignment.Right
 SearchBox.Parent = SearchFrame
 
 ---------------------------------------------------------
--- دالة تصاميم الأزرار بألوان نيون وعربية بالكامل
+-- تصميم أزرار الأقسام بنفس شكل "الفهرس" باللون البنفسجي
 ---------------------------------------------------------
-local function createWingBtn(text, side)
+local function createIndexStyleBtn(text, side)
     local btn = Instance.new("TextButton")
-    btn.Size = UDim2.new(1, 0, 0, 27)
-    btn.BackgroundColor3 = Color3.fromRGB(35, 28, 55)
+    btn.Size = UDim2.new(1, 0, 0, 30)
+    btn.BackgroundColor3 = Color3.fromRGB(40, 15, 70) -- لون بنفسجي داكن
     btn.Text = text
     btn.TextColor3 = Color3.fromRGB(255, 255, 255)
     btn.Font = Enum.Font.SourceSansBold
-    btn.TextSize = 13.5
+    btn.TextSize = 14
     btn.Parent = (side == "left") and LeftWing or RightWing
-    Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 6)
+    Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 4)
 
+    -- إطار محدد بارز باللون البنفسجي النيون تماماً كزر الفهرس
     local stroke = Instance.new("UIStroke")
-    stroke.Color = Color3.fromRGB(110, 50, 200)
-    stroke.Thickness = 1.2
+    stroke.Color = Color3.fromRGB(180, 60, 255)
+    stroke.Thickness = 1.8
+    stroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
     stroke.Parent = btn
 
     return btn
 end
 
--- إضافة الأكورديون القابل للتوسع العربي
+-- إضافة الخيارات القابلة بالتمدد
 local function addAccordionSection(titleText, builderFunc)
     local sectionFrame = Instance.new("Frame")
     sectionFrame.Size = UDim2.new(1, 0, 0, 26)
@@ -230,7 +227,7 @@ local function addAccordionSection(titleText, builderFunc)
     headBtn.Size = UDim2.new(1, 0, 0, 26)
     headBtn.BackgroundTransparency = 1
     headBtn.Text = "  ◀  " .. titleText
-    headBtn.TextColor3 = Color3.fromRGB(220, 200, 255)
+    headBtn.TextColor3 = Color3.fromRGB(235, 210, 255)
     headBtn.Font = Enum.Font.SourceSansBold
     headBtn.TextSize = 15
     headBtn.TextXAlignment = Enum.TextXAlignment.Right
@@ -252,13 +249,14 @@ local function addAccordionSection(titleText, builderFunc)
     local function addToggleRow(nameText, descText, defaultState, onToggle)
         local rowFrame = Instance.new("Frame")
         rowFrame.Size = UDim2.new(1, 0, 0, descText ~= "" and 40 or 26)
-        rowFrame.BackgroundColor3 = Color3.fromRGB(22, 20, 34)
+        rowFrame.BackgroundColor3 = Color3.fromRGB(25, 15, 45)
+        rowFrame.BackgroundTransparency = 0.4
         rowFrame.BorderSizePixel = 0
         rowFrame.Parent = contentHolder
-        Instance.new("UICorner", rowFrame).CornerRadius = UDim.new(0, 5)
+        Instance.new("UICorner", rowFrame).CornerRadius = UDim.new(0, 4)
 
         local rowStroke = Instance.new("UIStroke")
-        rowStroke.Color = Color3.fromRGB(50, 40, 80)
+        rowStroke.Color = Color3.fromRGB(110, 40, 190)
         rowStroke.Thickness = 1
         rowStroke.Parent = rowFrame
 
@@ -279,7 +277,7 @@ local function addAccordionSection(titleText, builderFunc)
             descLbl.Position = UDim2.new(0, 5, 0, 20)
             descLbl.BackgroundTransparency = 1
             descLbl.Text = descText
-            descLbl.TextColor3 = Color3.fromRGB(160, 150, 200)
+            descLbl.TextColor3 = Color3.fromRGB(180, 160, 220)
             descLbl.Font = Enum.Font.SourceSans
             descLbl.TextSize = 10.5
             descLbl.TextXAlignment = Enum.TextXAlignment.Right
@@ -289,7 +287,7 @@ local function addAccordionSection(titleText, builderFunc)
         local toggleBtn = Instance.new("TextButton")
         toggleBtn.Size = UDim2.new(0, 34, 0, 18)
         toggleBtn.Position = UDim2.new(0, 6, 0.5, -9)
-        toggleBtn.BackgroundColor3 = defaultState and Color3.fromRGB(120, 50, 240) or Color3.fromRGB(40, 35, 60)
+        toggleBtn.BackgroundColor3 = defaultState and Color3.fromRGB(140, 40, 255) or Color3.fromRGB(50, 30, 80)
         toggleBtn.Text = ""
         toggleBtn.Parent = rowFrame
         Instance.new("UICorner", toggleBtn).CornerRadius = UDim.new(0, 4)
@@ -305,7 +303,7 @@ local function addAccordionSection(titleText, builderFunc)
         toggleBtn.MouseButton1Click:Connect(function()
             playUiSound(SOUND_CLICK, 1)
             state = not state
-            toggleBtn.BackgroundColor3 = state and Color3.fromRGB(120, 50, 240) or Color3.fromRGB(40, 35, 60)
+            toggleBtn.BackgroundColor3 = state and Color3.fromRGB(140, 40, 255) or Color3.fromRGB(50, 30, 80)
             innerBox.Position = state and UDim2.new(1, -14, 0.5, -7) or UDim2.new(0, 2, 0.5, -7)
             if onToggle then onToggle(state) end
         end)
@@ -314,13 +312,14 @@ local function addAccordionSection(titleText, builderFunc)
     local function addActionRow(nameText, onClick)
         local rowFrame = Instance.new("Frame")
         rowFrame.Size = UDim2.new(1, 0, 0, 26)
-        rowFrame.BackgroundColor3 = Color3.fromRGB(22, 20, 34)
+        rowFrame.BackgroundColor3 = Color3.fromRGB(25, 15, 45)
+        rowFrame.BackgroundTransparency = 0.4
         rowFrame.BorderSizePixel = 0
         rowFrame.Parent = contentHolder
-        Instance.new("UICorner", rowFrame).CornerRadius = UDim.new(0, 5)
+        Instance.new("UICorner", rowFrame).CornerRadius = UDim.new(0, 4)
 
         local rowStroke = Instance.new("UIStroke")
-        rowStroke.Color = Color3.fromRGB(50, 40, 80)
+        rowStroke.Color = Color3.fromRGB(110, 40, 190)
         rowStroke.Thickness = 1
         rowStroke.Parent = rowFrame
 
@@ -371,11 +370,11 @@ local function clearCenter()
 end
 
 ---------------------------------------------------------
--- التبويبات والميزات المعربة بالكامل
+-- التبويبات والميزات
 ---------------------------------------------------------
 
 -- 1. التجميع (Farm)
-local BtnFarm = createWingBtn("التجميع", "left")
+local BtnFarm = createIndexStyleBtn("التجميع", "left")
 BtnFarm.MouseButton1Click:Connect(function()
     playUiSound(SOUND_CLICK, 1)
     clearCenter()
@@ -396,8 +395,8 @@ BtnFarm.MouseButton1Click:Connect(function()
     CenterScroll.CanvasSize = UDim2.new(0, 0, 0, CenterLayout.AbsoluteContentSize.Y + 10)
 end)
 
--- 2. مابات عامة (Player / General)
-local BtnPlayer = createWingBtn("مابات عامة", "left")
+-- 2. مابات عامة
+local BtnPlayer = createIndexStyleBtn("مابات عامة", "left")
 BtnPlayer.MouseButton1Click:Connect(function()
     playUiSound(SOUND_CLICK, 1)
     clearCenter()
@@ -420,8 +419,8 @@ BtnPlayer.MouseButton1Click:Connect(function()
     CenterScroll.CanvasSize = UDim2.new(0, 0, 0, CenterLayout.AbsoluteContentSize.Y + 10)
 end)
 
--- 3. الشات العام (Global Chat)
-local BtnChat = createWingBtn("الشات العام", "left")
+-- 3. الشات العام
+local BtnChat = createIndexStyleBtn("الشات العام", "left")
 BtnChat.MouseButton1Click:Connect(function()
     playUiSound(SOUND_CLICK, 1)
     clearCenter()
@@ -429,7 +428,8 @@ BtnChat.MouseButton1Click:Connect(function()
     addAccordionSection("غرفة المحادثة المباشرة", function(addToggle, addAction)
         local chatBox = Instance.new("TextBox")
         chatBox.Size = UDim2.new(1, -10, 0, 26)
-        chatBox.BackgroundColor3 = Color3.fromRGB(30, 25, 45)
+        chatBox.BackgroundColor3 = Color3.fromRGB(30, 15, 50)
+        chatBox.BackgroundTransparency = 0.3
         chatBox.PlaceholderText = "اكتب رسالتك واضغط Enter..."
         chatBox.Text = ""
         chatBox.TextColor3 = Color3.fromRGB(255, 255, 255)
@@ -478,8 +478,8 @@ BtnChat.MouseButton1Click:Connect(function()
     CenterScroll.CanvasSize = UDim2.new(0, 0, 0, CenterLayout.AbsoluteContentSize.Y + 10)
 end)
 
--- 4. المتواجدون (Presence)
-local BtnServer = createWingBtn("المتواجدون", "left")
+-- 4. المتواجدون
+local BtnServer = createIndexStyleBtn("المتواجدون", "left")
 BtnServer.MouseButton1Click:Connect(function()
     playUiSound(SOUND_CLICK, 1)
     clearCenter()
@@ -507,9 +507,9 @@ BtnServer.MouseButton1Click:Connect(function()
 end)
 
 ---------------------------------------------------------
--- الجناح الأيمن (Right Wing - Admin & Links)
+-- الجناح الأيمن
 ---------------------------------------------------------
-local BtnAdmin = createWingBtn("لوحة الأدمن", "right")
+local BtnAdmin = createIndexStyleBtn("لوحة الأدمن", "right")
 BtnAdmin.MouseButton1Click:Connect(function()
     playUiSound(SOUND_CLICK, 1)
     clearCenter()
@@ -553,13 +553,13 @@ BtnAdmin.MouseButton1Click:Connect(function()
     end
 end)
 
-local BtnDiscord = createWingBtn("الديسكورد", "right")
+local BtnDiscord = createIndexStyleBtn("الديسكورد", "right")
 BtnDiscord.MouseButton1Click:Connect(function()
     playUiSound(SOUND_CLICK, 1)
     if setclipboard then setclipboard("https://discord.gg/benhub") end
 end)
 
-local BtnSettings = createWingBtn("الإعدادات", "right")
+local BtnSettings = createIndexStyleBtn("الإعدادات", "right")
 BtnSettings.MouseButton1Click:Connect(function()
     playUiSound(SOUND_CLICK, 1)
     clearCenter()
@@ -595,12 +595,12 @@ task.spawn(function()
                             local popFrame = Instance.new("Frame")
                             popFrame.Size = UDim2.new(0, 500, 0, 70)
                             popFrame.Position = UDim2.new(0.5, -250, 0, 20)
-                            popFrame.BackgroundColor3 = Color3.fromRGB(20, 18, 30)
+                            popFrame.BackgroundColor3 = Color3.fromRGB(20, 10, 30)
                             popFrame.Parent = BroadcastGui
                             Instance.new("UICorner", popFrame).CornerRadius = UDim.new(0, 8)
 
                             local pStroke = Instance.new("UIStroke")
-                            pStroke.Color = Color3.fromRGB(130, 60, 240)
+                            pStroke.Color = Color3.fromRGB(150, 40, 255)
                             pStroke.Thickness = 2
                             pStroke.Parent = popFrame
 
