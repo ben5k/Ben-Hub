@@ -1,5 +1,5 @@
--- DFX Hub - Direct Options, Custom Themes, Dashboard & Exact Chat UI (Developer: Tahbah)
--- Version: v2.0.08
+-- DFX Hub - Dynamic Theme Chat Sync, Roblox Style Square Chat Button & RGB Glow Buttons
+-- Version: v2.0.09
 
 local CoreGui = game:GetService("CoreGui")
 local Players = game:GetService("Players")
@@ -13,7 +13,7 @@ local MarketplaceService = game:GetService("MarketplaceService")
 local LocalPlayer = Players.LocalPlayer
 local parent = (gethui and gethui()) or CoreGui:FindFirstChild("RobloxGui") or LocalPlayer:WaitForChild("PlayerGui")
 
-if parent:FindFirstChild("DFXFullV8UI") then parent.DFXFullV8UI:Destroy() end
+if parent:FindFirstChild("DFXFullV9UI") then parent.DFXFullV9UI:Destroy() end
 if parent:FindFirstChild("DFXAdminBroadcastGui") then parent.DFXAdminBroadcastGui:Destroy() end
 if parent:FindFirstChild("DFXExactChatGui") then parent.DFXExactChatGui:Destroy() end
 
@@ -77,10 +77,10 @@ local FIREBASE_PRESENCE_URL = FIREBASE_BASE_URL .. "/presence"
 local FIREBASE_BROADCAST_URL = FIREBASE_BASE_URL .. "/broadcasts.json"
 
 ---------------------------------------------------------
--- الهيكل الرئيسي (v2.0.08)
+-- الهيكل الرئيسي (v2.0.09)
 ---------------------------------------------------------
 local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "DFXFullV8UI"
+ScreenGui.Name = "DFXFullV9UI"
 ScreenGui.ResetOnSpawn = false
 ScreenGui.Parent = parent
 
@@ -182,7 +182,7 @@ local RightLayout = Instance.new("UIListLayout")
 RightLayout.Padding = UDim.new(0, 5)
 RightLayout.Parent = RightWing
 
--- محتوى التمرير
+-- محتوى التمرير الأوسط
 local CenterScroll = Instance.new("ScrollingFrame")
 CenterScroll.Size = UDim2.new(1, -12, 1, -48)
 CenterScroll.Position = UDim2.new(0, 6, 0, 42)
@@ -198,14 +198,16 @@ CenterLayout.Padding = UDim.new(0, 6)
 CenterLayout.Parent = CenterScroll
 
 ---------------------------------------------------------
--- نظام الثيمات المترابط والشامل
+-- نظام الثيمات المترابط والشامل مع الشات
 ---------------------------------------------------------
 local currentAccentColor = Color3.fromRGB(150, 40, 255)
 local currentHeaderColor = Color3.fromRGB(110, 25, 200)
 
 local registeredWingStrokes = {}
 local registeredRowStrokes = {}
+local registeredChatThemeBtns = {}
 local dynamicChatStroke = nil
+local dynamicFloatStroke = nil
 
 local function updateThemeColors(accent, headerCol)
     currentAccentColor = accent
@@ -214,6 +216,11 @@ local function updateThemeColors(accent, headerCol)
     Header.BackgroundColor3 = headerCol
     
     if dynamicChatStroke then dynamicChatStroke.Color = accent end
+    if dynamicFloatStroke then dynamicFloatStroke.Color = accent end
+
+    for _, btn in ipairs(registeredChatThemeBtns) do
+        if btn and btn.Parent then btn.BackgroundColor3 = accent end
+    end
 
     for _, stroke in ipairs(registeredWingStrokes) do
         if stroke and stroke.Parent then stroke.Color = accent end
@@ -224,7 +231,24 @@ local function updateThemeColors(accent, headerCol)
 end
 
 ---------------------------------------------------------
--- أزرار الأجنحة والخيارات المباشرة الحرة (بدون أسهم)
+-- تأثير الإضاءة والتوهج المتحرك RGB للأزرار
+---------------------------------------------------------
+task.spawn(function()
+    local hue = 0
+    while true do
+        task.wait(0.05)
+        hue = (hue + 0.01) % 1
+        local rgbGlow = Color3.fromHSV(hue, 0.7, 1)
+        for _, stroke in ipairs(registeredRowStrokes) do
+            if stroke and stroke.Parent then
+                stroke.Color = currentAccentColor:Lerp(rgbGlow, 0.25)
+            end
+        end
+    end
+end)
+
+---------------------------------------------------------
+-- أزرار الأجنحة والخيارات المباشرة
 ---------------------------------------------------------
 local function createProStyleBtn(text, side)
     local btn = Instance.new("TextButton")
@@ -247,7 +271,6 @@ local function createProStyleBtn(text, side)
     return btn
 end
 
--- إضافة زر مفتاح تشغيل مباشر (Direct Toggle Row)
 local function addDirectToggle(nameText, descText, defaultState, onToggle)
     local rowFrame = Instance.new("Frame")
     rowFrame.Size = UDim2.new(1, 0, 0, descText ~= "" and 42 or 30)
@@ -317,7 +340,6 @@ local function addDirectToggle(nameText, descText, defaultState, onToggle)
     end)
 end
 
--- إضافة زر إجراء مباشر (Direct Action Row)
 local function addDirectAction(nameText, onClick)
     local rowFrame = Instance.new("Frame")
     rowFrame.Size = UDim2.new(1, 0, 0, 30)
@@ -354,13 +376,13 @@ end
 
 local function addCategoryHeader(titleText)
     local lbl = Instance.new("TextLabel")
-    lbl.Size = UDim2.new(1, 0, 0, 22)
+    lbl.Size = UDim2.new(1, 0, 0, 24)
     lbl.BackgroundTransparency = 1
-    lbl.Text = "✦ " .. titleText
+    lbl.Text = "✧ " .. titleText .. " ✧"
     lbl.TextColor3 = Color3.fromRGB(220, 190, 255)
     lbl.Font = Enum.Font.SourceSansBold
     lbl.TextSize = 14
-    lbl.TextXAlignment = Enum.TextXAlignment.Right
+    lbl.TextXAlignment = Enum.TextXAlignment.Center
     lbl.ZIndex = 2
     lbl.Parent = CenterScroll
 end
@@ -374,36 +396,37 @@ local function clearCenter()
 end
 
 ---------------------------------------------------------
--- تصميم واجهة وحجم الشات المباشر المطابق 100% للصورة الأولى
+-- نافذة الشات المفتوحة مع مربع المطور لستايل روبلوكس
 ---------------------------------------------------------
 local ChatScreenGui = Instance.new("ScreenGui")
 ChatScreenGui.Name = "DFXExactChatGui"
 ChatScreenGui.ResetOnSpawn = false
 ChatScreenGui.Parent = parent
 
--- أيقونة الشات العلوي العائمة بجوار أزرار روبلوكس
+-- أيقونة الشات المربعة الكبيرة المطابقة لستايل روبلوكس الأصلي (بجوار زر روبلوكس)
 local FloatingChatBtn = Instance.new("TextButton")
 FloatingChatBtn.Name = "FloatingChatBtn"
-FloatingChatBtn.Size = UDim2.new(0, 36, 0, 36)
-FloatingChatBtn.Position = UDim2.new(0, 180, 0, 10)
-FloatingChatBtn.BackgroundColor3 = Color3.fromRGB(25, 15, 45)
+FloatingChatBtn.Size = UDim2.new(0, 42, 0, 42)
+FloatingChatBtn.Position = UDim2.new(0, 120, 0, 8)
+FloatingChatBtn.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+FloatingChatBtn.BackgroundTransparency = 0.2
 FloatingChatBtn.Text = "💬"
-FloatingChatBtn.TextSize = 18
+FloatingChatBtn.TextSize = 22
 FloatingChatBtn.Active = true
 FloatingChatBtn.Draggable = true
 FloatingChatBtn.Parent = ChatScreenGui
-Instance.new("UICorner", FloatingChatBtn).CornerRadius = UDim.new(1, 0)
+Instance.new("UICorner", FloatingChatBtn).CornerRadius = UDim.new(0, 10)
 
-local floatStroke = Instance.new("UIStroke")
-floatStroke.Color = currentAccentColor
-floatStroke.Thickness = 2
-floatStroke.Parent = FloatingChatBtn
+dynamicFloatStroke = Instance.new("UIStroke")
+dynamicFloatStroke.Color = currentAccentColor
+dynamicFloatStroke.Thickness = 2
+dynamicFloatStroke.Parent = FloatingChatBtn
 
--- صندوق الشات المطابق للصورة الأولى
+-- صندوق الشات المكبر بالكامل
 local ChatWin = Instance.new("Frame")
 ChatWin.Name = "ChatWin"
-ChatWin.Size = UDim2.new(0, 340, 0, 260)
-ChatWin.Position = UDim2.new(0.5, -170, 0.5, -130)
+ChatWin.Size = UDim2.new(0, 380, 0, 290)
+ChatWin.Position = UDim2.new(0.5, -190, 0.5, -145)
 ChatWin.BackgroundColor3 = Color3.fromRGB(12, 16, 12)
 ChatWin.Active = true
 ChatWin.Draggable = true
@@ -416,33 +439,34 @@ dynamicChatStroke.Color = currentAccentColor
 dynamicChatStroke.Thickness = 2
 dynamicChatStroke.Parent = ChatWin
 
--- الأزرار العلوية البرتقالية داخل الشات
+-- الأزرار العلوية للشات المسجلة للتبديل مع الثيم
 local ChatHeaderBtn1 = Instance.new("TextButton")
-ChatHeaderBtn1.Size = UDim2.new(0, 100, 0, 24)
+ChatHeaderBtn1.Size = UDim2.new(0, 110, 0, 26)
 ChatHeaderBtn1.Position = UDim2.new(0, 10, 0, 10)
-ChatHeaderBtn1.BackgroundColor3 = Color3.fromRGB(235, 75, 45)
+ChatHeaderBtn1.BackgroundColor3 = currentAccentColor
 ChatHeaderBtn1.Text = "💬 الشات العام"
 ChatHeaderBtn1.TextColor3 = Color3.fromRGB(255, 255, 255)
 ChatHeaderBtn1.Font = Enum.Font.SourceSansBold
-ChatHeaderBtn1.TextSize = 12
+ChatHeaderBtn1.TextSize = 13
 ChatHeaderBtn1.Parent = ChatWin
 Instance.new("UICorner", ChatHeaderBtn1).CornerRadius = UDim.new(0, 6)
+table.insert(registeredChatThemeBtns, ChatHeaderBtn1)
 
 local ChatHeaderBtn2 = Instance.new("TextButton")
-ChatHeaderBtn2.Size = UDim2.new(0, 100, 0, 24)
-ChatHeaderBtn2.Position = UDim2.new(0, 120, 0, 10)
-ChatHeaderBtn2.BackgroundColor3 = Color3.fromRGB(235, 75, 45)
+ChatHeaderBtn2.Size = UDim2.new(0, 100, 0, 26)
+ChatHeaderBtn2.Position = UDim2.new(0, 130, 0, 10)
+ChatHeaderBtn2.BackgroundColor3 = currentAccentColor
 ChatHeaderBtn2.Text = "★ مميزات"
 ChatHeaderBtn2.TextColor3 = Color3.fromRGB(255, 255, 255)
 ChatHeaderBtn2.Font = Enum.Font.SourceSansBold
-ChatHeaderBtn2.TextSize = 12
+ChatHeaderBtn2.TextSize = 13
 ChatHeaderBtn2.Parent = ChatWin
 Instance.new("UICorner", ChatHeaderBtn2).CornerRadius = UDim.new(0, 6)
+table.insert(registeredChatThemeBtns, ChatHeaderBtn2)
 
--- العداد الزمني بالجانب
 local ChatTimerLbl = Instance.new("TextLabel")
-ChatTimerLbl.Size = UDim2.new(0, 70, 0, 24)
-ChatTimerLbl.Position = UDim2.new(1, -80, 0, 10)
+ChatTimerLbl.Size = UDim2.new(0, 75, 0, 26)
+ChatTimerLbl.Position = UDim2.new(1, -85, 0, 10)
 ChatTimerLbl.BackgroundTransparency = 1
 ChatTimerLbl.Text = "⏱ 00:00"
 ChatTimerLbl.TextColor3 = Color3.fromRGB(255, 255, 255)
@@ -462,8 +486,8 @@ task.spawn(function()
 end)
 
 local ChatScroll = Instance.new("ScrollingFrame")
-ChatScroll.Size = UDim2.new(1, -20, 1, -85)
-ChatScroll.Position = UDim2.new(0, 10, 0, 42)
+ChatScroll.Size = UDim2.new(1, -20, 1, -90)
+ChatScroll.Position = UDim2.new(0, 10, 0, 44)
 ChatScroll.BackgroundTransparency = 1
 ChatScroll.CanvasSize = UDim2.new(0, 0, 0, 0)
 ChatScroll.ScrollBarThickness = 3
@@ -474,29 +498,30 @@ ChatLayout.Padding = UDim.new(0, 4)
 ChatLayout.Parent = ChatScroll
 
 local ChatInput = Instance.new("TextBox")
-ChatInput.Size = UDim2.new(1, -115, 0, 30)
-ChatInput.Position = UDim2.new(0, 10, 1, -38)
+ChatInput.Size = UDim2.new(1, -125, 0, 32)
+ChatInput.Position = UDim2.new(0, 10, 1, -40)
 ChatInput.BackgroundColor3 = Color3.fromRGB(25, 20, 35)
 ChatInput.BackgroundTransparency = 0.3
 ChatInput.PlaceholderText = "اكتب رسالتك هنا..."
 ChatInput.Text = ""
 ChatInput.TextColor3 = Color3.fromRGB(255, 255, 255)
 ChatInput.Font = Enum.Font.SourceSans
-ChatInput.TextSize = 12
+ChatInput.TextSize = 13
 ChatInput.TextXAlignment = Enum.TextXAlignment.Right
 ChatInput.Parent = ChatWin
 Instance.new("UICorner", ChatInput).CornerRadius = UDim.new(0, 6)
 
 local SendBtn = Instance.new("TextButton")
-SendBtn.Size = UDim2.new(0, 90, 0, 30)
-SendBtn.Position = UDim2.new(1, -100, 1, -38)
-SendBtn.BackgroundColor3 = Color3.fromRGB(235, 75, 45)
+SendBtn.Size = UDim2.new(0, 100, 0, 32)
+SendBtn.Position = UDim2.new(1, -110, 1, -40)
+SendBtn.BackgroundColor3 = currentAccentColor
 SendBtn.Text = "إرسال 🚀"
 SendBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
 SendBtn.Font = Enum.Font.SourceSansBold
-SendBtn.TextSize = 13
+SendBtn.TextSize = 13.5
 SendBtn.Parent = ChatWin
 Instance.new("UICorner", SendBtn).CornerRadius = UDim.new(0, 6)
+table.insert(registeredChatThemeBtns, SendBtn)
 
 FloatingChatBtn.MouseButton1Click:Connect(function()
     playUiSound(SOUND_CLICK, 1)
@@ -506,7 +531,7 @@ end)
 local renderedMsgs = {}
 local function addChatMessage(sender, text)
     local msgFrame = Instance.new("Frame")
-    msgFrame.Size = UDim2.new(1, 0, 0, 24)
+    msgFrame.Size = UDim2.new(1, 0, 0, 26)
     msgFrame.BackgroundColor3 = Color3.fromRGB(25, 16, 42)
     msgFrame.BackgroundTransparency = 0.3
     msgFrame.Parent = ChatScroll
@@ -516,11 +541,11 @@ local function addChatMessage(sender, text)
     lbl.Size = UDim2.new(1, -10, 1, 0)
     lbl.Position = UDim2.new(0, 5, 0, 0)
     lbl.BackgroundTransparency = 1
-    lbl.Text = "<font color='#ff6060'><b>" .. sender .. "</b></font>: " .. text
+    lbl.Text = "<b>" .. sender .. "</b>: " .. text
     lbl.RichText = true
     lbl.TextColor3 = Color3.fromRGB(255, 255, 255)
     lbl.Font = Enum.Font.SourceSans
-    lbl.TextSize = 12.5
+    lbl.TextSize = 13
     lbl.TextXAlignment = Enum.TextXAlignment.Right
     lbl.Parent = msgFrame
 
@@ -555,13 +580,12 @@ ChatInput.FocusLost:Connect(function(enter) if enter then sendMessageNow() end e
 -- بناء التبويبات والمكونات الداخلية
 ---------------------------------------------------------
 
--- 1. تبويب "الرئيسية" (بدلاً من التجميع) + بطاقة معلومات الماب والوقت
+-- 1. تبويب "الرئيسية"
 local BtnMainHome = createProStyleBtn("الرئيسية", "left")
 BtnMainHome.MouseButton1Click:Connect(function()
     playUiSound(SOUND_CLICK, 1)
     clearCenter()
 
-    -- معلومات الماب الحالي
     local placeId = game.PlaceId
     local placeName = "ماب روبلوكس"
     pcall(function()
@@ -569,9 +593,8 @@ BtnMainHome.MouseButton1Click:Connect(function()
         if info then placeName = info.Name end
     end)
 
-    addCategoryHeader("معلومات الماب والوقت الحالي")
+    addCategoryHeader("معلومات الماب والوقت المباشر")
 
-    -- بطاقة تفاعلية للماب
     local mapFrame = Instance.new("Frame")
     mapFrame.Size = UDim2.new(1, 0, 0, 55)
     mapFrame.BackgroundColor3 = Color3.fromRGB(24, 14, 42)
@@ -694,7 +717,7 @@ BtnServer.MouseButton1Click:Connect(function()
 end)
 
 ---------------------------------------------------------
--- الجناح الأيمن (لوحة الأدمن + الإعدادات + ديسكورد)
+-- الجناح الأيمن (لوحة الأدمن + الإعدادات المرتبة)
 ---------------------------------------------------------
 local BtnAdmin = createProStyleBtn("لوحة الأدمن", "right")
 BtnAdmin.MouseButton1Click:Connect(function()
@@ -750,24 +773,26 @@ BtnSettings.MouseButton1Click:Connect(function()
     playUiSound(SOUND_CLICK, 1)
     clearCenter()
 
-    addCategoryHeader("تخصيص ثيمات وألوان الواجهة")
-    addDirectAction("🎨 الثيم البنفسجي (الافتراضي)", function()
+    -- 1. قسم ألوان وثيمات الواجهة
+    addCategoryHeader("🎨 تخصيص ثيمات وألوان الواجهة")
+    addDirectAction("💜 الثيم البنفسجي (الافتراضي)", function()
         updateThemeColors(Color3.fromRGB(150, 40, 255), Color3.fromRGB(110, 25, 200))
     end)
-    addDirectAction("🎨 الثيم الأحمر", function()
+    addDirectAction("❤️ الثيم الأحمر", function()
         updateThemeColors(Color3.fromRGB(235, 75, 65), Color3.fromRGB(210, 45, 45))
     end)
-    addDirectAction("🎨 الثيم الأزرق", function()
+    addDirectAction("💙 الثيم الأزرق", function()
         updateThemeColors(Color3.fromRGB(50, 150, 255), Color3.fromRGB(30, 100, 220))
     end)
-    addDirectAction("🎨 الثيم الأخضر", function()
+    addDirectAction("💚 الثيم الأخضر", function()
         updateThemeColors(Color3.fromRGB(50, 200, 100), Color3.fromRGB(30, 150, 70))
     end)
-    addDirectAction("🎨 الثيم الذهبي", function()
+    addDirectAction("💛 الثيم الذهبي", function()
         updateThemeColors(Color3.fromRGB(255, 200, 50), Color3.fromRGB(210, 150, 20))
     end)
 
-    addCategoryHeader("تخصيص خلفية الواجهة")
+    -- 2. قسم خلفية الواجهة
+    addCategoryHeader("🖼️ تخصيص خلفية الواجهة")
     addDirectAction("🖼️ تفعيل الخلفية الأولى (1)", function()
         BgImage.Image = bg1Url
         BgImage.Visible = true
@@ -780,7 +805,8 @@ BtnSettings.MouseButton1Click:Connect(function()
         BgImage.Visible = false
     end)
 
-    addCategoryHeader("خيارات الأداء والسيرفر")
+    -- 3. قسم خيارات السيرفر وإعادة الدخول (في مكان مخصص لمنع الهوسة)
+    addCategoryHeader("🌐 خيارات السيرفر والأداء")
     addDirectAction("🔄 إعادة دخول السيرفر (Rejoin)", function()
         TeleportService:Teleport(game.PlaceId, LocalPlayer)
     end)
@@ -789,7 +815,7 @@ BtnSettings.MouseButton1Click:Connect(function()
 end)
 
 ---------------------------------------------------------
--- الاستماع للشات والبث
+-- الاستماع المباشر للشات والبث
 ---------------------------------------------------------
 task.spawn(function()
     while true do
