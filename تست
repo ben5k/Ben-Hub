@@ -1,5 +1,5 @@
--- DFX Hub - Chilli Style with Purple Index Buttons (Developer: Tahbah)
--- Version: v2.0.04
+-- DFX Hub - Customizable Themes & Backgrounds (Developer: Tahbah)
+-- Version: v2.0.05
 
 local CoreGui = game:GetService("CoreGui")
 local Players = game:GetService("Players")
@@ -12,7 +12,7 @@ local SoundService = game:GetService("SoundService")
 local LocalPlayer = Players.LocalPlayer
 local parent = (gethui and gethui()) or CoreGui:FindFirstChild("RobloxGui") or LocalPlayer:WaitForChild("PlayerGui")
 
-if parent:FindFirstChild("DFXChilliPurpleUI") then parent.DFXChilliPurpleUI:Destroy() end
+if parent:FindFirstChild("DFXChilliCustomUI") then parent.DFXChilliCustomUI:Destroy() end
 if parent:FindFirstChild("DFXAdminBroadcastGui") then parent.DFXAdminBroadcastGui:Destroy() end
 
 local function customRequest(options)
@@ -34,6 +34,20 @@ local function safeDecode(jsonStr)
     if success then return result end
     return nil
 end
+
+local function fetchAsset(url, fileName)
+    if writefile and getcustomasset and readfile then
+        local file = "DFXHub_" .. fileName .. ".jpg"
+        if not isfile(file) then
+            pcall(function() writefile(file, game:HttpGet(url)) end)
+        end
+        if isfile(file) then return getcustomasset(file) end
+    end
+    return url
+end
+
+local bg1Url = fetchAsset("https://j.top4top.io/p_3947namvl1.jpg", "bg_custom_1")
+local bg2Url = fetchAsset("https://i.top4top.io/p_3947szrlj0.jpg", "bg_custom_2")
 
 local SOUND_CLICK = "rbxassetid://6895079853"
 local SOUND_BROADCAST = "rbxassetid://17208361335"
@@ -61,10 +75,10 @@ local FIREBASE_PRESENCE_URL = FIREBASE_BASE_URL .. "/presence"
 local FIREBASE_BROADCAST_URL = FIREBASE_BASE_URL .. "/broadcasts.json"
 
 ---------------------------------------------------------
--- الهيكل الرئيسي بستايل تشيلي والأزرار البنفسجية (v2.0.04)
+-- الهيكل الرئيسي (v2.0.05)
 ---------------------------------------------------------
 local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "DFXChilliPurpleUI"
+ScreenGui.Name = "DFXChilliCustomUI"
 ScreenGui.ResetOnSpawn = false
 ScreenGui.Parent = parent
 
@@ -77,26 +91,37 @@ MainFrame.Active = true
 MainFrame.Draggable = true
 MainFrame.Parent = ScreenGui
 
--- 1. الصندوق الأوسط الشفاف
+-- الصندوق الأوسط
 local CenterBox = Instance.new("Frame")
 CenterBox.Name = "CenterBox"
 CenterBox.Size = UDim2.new(0, 330, 1, 0)
 CenterBox.Position = UDim2.new(0.5, -165, 0, 0)
 CenterBox.BackgroundColor3 = Color3.fromRGB(15, 10, 25)
-CenterBox.BackgroundTransparency = 0.85 -- جعل الوسط شفاف بالكامل
+CenterBox.BackgroundTransparency = 0.85
 CenterBox.BorderSizePixel = 0
 CenterBox.Parent = MainFrame
+
+-- خلفية الصورة داخل الصندوق الأوسط
+local BgImage = Instance.new("ImageLabel")
+BgImage.Name = "BgImage"
+BgImage.Size = UDim2.new(1, 0, 1, 0)
+BgImage.BackgroundTransparency = 1
+BgImage.Visible = false
+BgImage.ScaleType = Enum.ScaleType.Crop
+BgImage.ZIndex = 0
+BgImage.Parent = CenterBox
 
 local centerStroke = Instance.new("UIStroke")
 centerStroke.Color = Color3.fromRGB(140, 50, 245)
 centerStroke.Thickness = 2
 centerStroke.Parent = CenterBox
 
--- الهيدر البنفسجي بستايل تشيلي هوب
+-- الهيدر العلوي
 local Header = Instance.new("Frame")
 Header.Size = UDim2.new(1, 0, 0, 36)
 Header.BackgroundColor3 = Color3.fromRGB(120, 30, 210)
 Header.BorderSizePixel = 0
+Header.ZIndex = 2
 Header.Parent = CenterBox
 
 local Title = Instance.new("TextLabel")
@@ -108,6 +133,7 @@ Title.TextColor3 = Color3.fromRGB(255, 255, 255)
 Title.Font = Enum.Font.SourceSansBold
 Title.TextSize = 20
 Title.TextXAlignment = Enum.TextXAlignment.Center
+Title.ZIndex = 3
 Title.Parent = Header
 
 local CloseBtn = Instance.new("TextButton")
@@ -118,10 +144,11 @@ CloseBtn.Text = "✕"
 CloseBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
 CloseBtn.Font = Enum.Font.SourceSansBold
 CloseBtn.TextSize = 14
+CloseBtn.ZIndex = 3
 CloseBtn.Parent = Header
 Instance.new("UICorner", CloseBtn).CornerRadius = UDim.new(0, 4)
 
--- 2. الأجنحة الجانبية
+-- الأجنحة الجانبية
 local LeftWing = Instance.new("Frame")
 LeftWing.Size = UDim2.new(0, 100, 1, -40)
 LeftWing.Position = UDim2.new(0.5, -270, 0, 40)
@@ -142,13 +169,14 @@ local RightLayout = Instance.new("UIListLayout")
 RightLayout.Padding = UDim.new(0, 5)
 RightLayout.Parent = RightWing
 
--- 3. المحتوى الداخلي الأوسط
+-- محتوى التمرير الأوسط
 local CenterScroll = Instance.new("ScrollingFrame")
 CenterScroll.Size = UDim2.new(1, -12, 1, -72)
 CenterScroll.Position = UDim2.new(0, 6, 0, 42)
 CenterScroll.BackgroundTransparency = 1
 CenterScroll.CanvasSize = UDim2.new(0, 0, 0, 0)
 CenterScroll.ScrollBarThickness = 3
+CenterScroll.ZIndex = 2
 CenterScroll.Parent = CenterBox
 
 local CenterLayout = Instance.new("UIListLayout")
@@ -156,13 +184,14 @@ CenterLayout.SortOrder = Enum.SortOrder.LayoutOrder
 CenterLayout.Padding = UDim.new(0, 4)
 CenterLayout.Parent = CenterScroll
 
--- 4. شريط البحث
+-- شريط البحث
 local SearchFrame = Instance.new("Frame")
 SearchFrame.Size = UDim2.new(1, -12, 0, 22)
 SearchFrame.Position = UDim2.new(0, 6, 1, -26)
 SearchFrame.BackgroundColor3 = Color3.fromRGB(20, 15, 30)
 SearchFrame.BackgroundTransparency = 0.5
 SearchFrame.BorderSizePixel = 0
+SearchFrame.ZIndex = 2
 SearchFrame.Parent = CenterBox
 
 local searchStroke = Instance.new("UIStroke")
@@ -177,6 +206,7 @@ SearchLabel.Text = "بحث:"
 SearchLabel.TextColor3 = Color3.fromRGB(220, 180, 255)
 SearchLabel.Font = Enum.Font.SourceSansBold
 SearchLabel.TextSize = 13
+SearchLabel.ZIndex = 3
 SearchLabel.Parent = SearchFrame
 
 local SearchBox = Instance.new("TextBox")
@@ -190,15 +220,31 @@ SearchBox.TextColor3 = Color3.fromRGB(255, 255, 255)
 SearchBox.Font = Enum.Font.SourceSans
 SearchBox.TextSize = 12
 SearchBox.TextXAlignment = Enum.TextXAlignment.Right
+SearchBox.ZIndex = 3
 SearchBox.Parent = SearchFrame
 
 ---------------------------------------------------------
--- تصميم أزرار الأقسام بنفس شكل "الفهرس" باللون البنفسجي
+-- إدارة الثيمات والألوان
+---------------------------------------------------------
+local currentAccentColor = Color3.fromRGB(140, 50, 255)
+local currentHeaderColor = Color3.fromRGB(120, 30, 210)
+local allStrokes = {centerStroke, searchStroke, headerStroke} -- سنجمع الـ strokes هنا إذا لزم
+
+local function updateThemeColors(accent, headerCol)
+    currentAccentColor = accent
+    currentHeaderColor = headerCol
+    centerStroke.Color = accent
+    searchStroke.Color = accent
+    Header.BackgroundColor3 = headerCol
+end
+
+---------------------------------------------------------
+-- دالة تصاميم الأزرار
 ---------------------------------------------------------
 local function createIndexStyleBtn(text, side)
     local btn = Instance.new("TextButton")
     btn.Size = UDim2.new(1, 0, 0, 30)
-    btn.BackgroundColor3 = Color3.fromRGB(40, 15, 70) -- لون بنفسجي داكن
+    btn.BackgroundColor3 = Color3.fromRGB(40, 15, 70)
     btn.Text = text
     btn.TextColor3 = Color3.fromRGB(255, 255, 255)
     btn.Font = Enum.Font.SourceSansBold
@@ -206,7 +252,6 @@ local function createIndexStyleBtn(text, side)
     btn.Parent = (side == "left") and LeftWing or RightWing
     Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 4)
 
-    -- إطار محدد بارز باللون البنفسجي النيون تماماً كزر الفهرس
     local stroke = Instance.new("UIStroke")
     stroke.Color = Color3.fromRGB(180, 60, 255)
     stroke.Thickness = 1.8
@@ -216,11 +261,12 @@ local function createIndexStyleBtn(text, side)
     return btn
 end
 
--- إضافة الخيارات القابلة بالتمدد
+-- إضافة الأقسام القابلة للتمدد
 local function addAccordionSection(titleText, builderFunc)
     local sectionFrame = Instance.new("Frame")
     sectionFrame.Size = UDim2.new(1, 0, 0, 26)
     sectionFrame.BackgroundTransparency = 1
+    sectionFrame.ZIndex = 2
     sectionFrame.Parent = CenterScroll
 
     local headBtn = Instance.new("TextButton")
@@ -231,6 +277,7 @@ local function addAccordionSection(titleText, builderFunc)
     headBtn.Font = Enum.Font.SourceSansBold
     headBtn.TextSize = 15
     headBtn.TextXAlignment = Enum.TextXAlignment.Right
+    headBtn.ZIndex = 2
     headBtn.Parent = sectionFrame
 
     local contentHolder = Instance.new("Frame")
@@ -238,6 +285,7 @@ local function addAccordionSection(titleText, builderFunc)
     contentHolder.Position = UDim2.new(0, 0, 0, 26)
     contentHolder.BackgroundTransparency = 1
     contentHolder.Visible = false
+    contentHolder.ZIndex = 2
     contentHolder.Parent = sectionFrame
 
     local contentLayout = Instance.new("UIListLayout")
@@ -252,6 +300,7 @@ local function addAccordionSection(titleText, builderFunc)
         rowFrame.BackgroundColor3 = Color3.fromRGB(25, 15, 45)
         rowFrame.BackgroundTransparency = 0.4
         rowFrame.BorderSizePixel = 0
+        rowFrame.ZIndex = 2
         rowFrame.Parent = contentHolder
         Instance.new("UICorner", rowFrame).CornerRadius = UDim.new(0, 4)
 
@@ -269,6 +318,7 @@ local function addAccordionSection(titleText, builderFunc)
         nameLbl.Font = Enum.Font.SourceSansBold
         nameLbl.TextSize = 13.5
         nameLbl.TextXAlignment = Enum.TextXAlignment.Right
+        nameLbl.ZIndex = 3
         nameLbl.Parent = rowFrame
 
         if descText ~= "" then
@@ -281,6 +331,7 @@ local function addAccordionSection(titleText, builderFunc)
             descLbl.Font = Enum.Font.SourceSans
             descLbl.TextSize = 10.5
             descLbl.TextXAlignment = Enum.TextXAlignment.Right
+            descLbl.ZIndex = 3
             descLbl.Parent = rowFrame
         end
 
@@ -289,6 +340,7 @@ local function addAccordionSection(titleText, builderFunc)
         toggleBtn.Position = UDim2.new(0, 6, 0.5, -9)
         toggleBtn.BackgroundColor3 = defaultState and Color3.fromRGB(140, 40, 255) or Color3.fromRGB(50, 30, 80)
         toggleBtn.Text = ""
+        toggleBtn.ZIndex = 3
         toggleBtn.Parent = rowFrame
         Instance.new("UICorner", toggleBtn).CornerRadius = UDim.new(0, 4)
 
@@ -296,6 +348,7 @@ local function addAccordionSection(titleText, builderFunc)
         innerBox.Size = UDim2.new(0, 12, 0, 14)
         innerBox.Position = defaultState and UDim2.new(1, -14, 0.5, -7) or UDim2.new(0, 2, 0.5, -7)
         innerBox.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+        innerBox.ZIndex = 4
         innerBox.Parent = toggleBtn
         Instance.new("UICorner", innerBox).CornerRadius = UDim.new(0, 3)
 
@@ -303,7 +356,7 @@ local function addAccordionSection(titleText, builderFunc)
         toggleBtn.MouseButton1Click:Connect(function()
             playUiSound(SOUND_CLICK, 1)
             state = not state
-            toggleBtn.BackgroundColor3 = state and Color3.fromRGB(140, 40, 255) or Color3.fromRGB(50, 30, 80)
+            toggleBtn.BackgroundColor3 = state and currentAccentColor or Color3.fromRGB(50, 30, 80)
             innerBox.Position = state and UDim2.new(1, -14, 0.5, -7) or UDim2.new(0, 2, 0.5, -7)
             if onToggle then onToggle(state) end
         end)
@@ -315,6 +368,7 @@ local function addAccordionSection(titleText, builderFunc)
         rowFrame.BackgroundColor3 = Color3.fromRGB(25, 15, 45)
         rowFrame.BackgroundTransparency = 0.4
         rowFrame.BorderSizePixel = 0
+        rowFrame.ZIndex = 2
         rowFrame.Parent = contentHolder
         Instance.new("UICorner", rowFrame).CornerRadius = UDim.new(0, 4)
 
@@ -332,6 +386,7 @@ local function addAccordionSection(titleText, builderFunc)
         btn.Font = Enum.Font.SourceSansBold
         btn.TextSize = 13.5
         btn.TextXAlignment = Enum.TextXAlignment.Right
+        btn.ZIndex = 3
         btn.Parent = rowFrame
 
         btn.MouseButton1Click:Connect(function()
@@ -436,6 +491,7 @@ BtnChat.MouseButton1Click:Connect(function()
         chatBox.Font = Enum.Font.SourceSans
         chatBox.TextSize = 12
         chatBox.TextXAlignment = Enum.TextXAlignment.Right
+        chatBox.ZIndex = 2
         chatBox.Parent = CenterScroll
 
         chatBox.FocusLost:Connect(function(enter)
@@ -564,11 +620,45 @@ BtnSettings.MouseButton1Click:Connect(function()
     playUiSound(SOUND_CLICK, 1)
     clearCenter()
 
+    addAccordionSection("تخصيص ثيمات وألوان الواجهة", function(addToggle, addAction)
+        addAction("🎨 الثيم البنفسجي (الافتراضي)", function()
+            updateThemeColors(Color3.fromRGB(140, 50, 255), Color3.fromRGB(120, 30, 210))
+        end)
+        addAction("🎨 الثيم الأحمر", function()
+            updateThemeColors(Color3.fromRGB(235, 75, 65), Color3.fromRGB(210, 45, 45))
+        end)
+        addAction("🎨 الثيم الأزرق", function()
+            updateThemeColors(Color3.fromRGB(50, 150, 255), Color3.fromRGB(30, 100, 220))
+        end)
+        addAction("🎨 الثيم الأخضر", function()
+            updateThemeColors(Color3.fromRGB(50, 200, 100), Color3.fromRGB(30, 150, 70))
+        end)
+        addAction("🎨 الثيم الذهبي", function()
+            updateThemeColors(Color3.fromRGB(255, 200, 50), Color3.fromRGB(210, 150, 20))
+        end)
+    end)
+
+    addAccordionSection("تخصيص خلفية الواجهة", function(addToggle, addAction)
+        addAction("🖼️ تفعيل الخلفية الأولى (1)", function()
+            BgImage.Image = bg1Url
+            BgImage.Visible = true
+        end)
+        addAction("🖼️ تفعيل الخلفية الثانية (2)", function()
+            BgImage.Image = bg2Url
+            BgImage.Visible = true
+        end)
+        addAction("🫥 جعل الخلفية شفافة تماماً", function()
+            BgImage.Visible = false
+        end)
+    end)
+
     addAccordionSection("خيارات الأداء والسيرفر", function(addToggle, addAction)
         addAction("🔄 إعادة دخول السيرفر (Rejoin)", function()
             TeleportService:Teleport(game.PlaceId, LocalPlayer)
         end)
     end)
+
+    CenterScroll.CanvasSize = UDim2.new(0, 0, 0, CenterLayout.AbsoluteContentSize.Y + 10)
 end)
 
 ---------------------------------------------------------
