@@ -1,5 +1,5 @@
--- DFX Hub - Customizable Themes & Backgrounds (Developer: Tahbah)
--- Version: v2.0.05
+-- DFX Hub - 3D Title, Custom Modern UI & Independent Chat (Developer: Tahbah)
+-- Version: v2.0.06
 
 local CoreGui = game:GetService("CoreGui")
 local Players = game:GetService("Players")
@@ -12,8 +12,9 @@ local SoundService = game:GetService("SoundService")
 local LocalPlayer = Players.LocalPlayer
 local parent = (gethui and gethui()) or CoreGui:FindFirstChild("RobloxGui") or LocalPlayer:WaitForChild("PlayerGui")
 
-if parent:FindFirstChild("DFXChilliCustomUI") then parent.DFXChilliCustomUI:Destroy() end
+if parent:FindFirstChild("DFXModernChilliUI") then parent.DFXModernChilliUI:Destroy() end
 if parent:FindFirstChild("DFXAdminBroadcastGui") then parent.DFXAdminBroadcastGui:Destroy() end
+if parent:FindFirstChild("DFXIndependentChatWindow") then parent.DFXIndependentChatWindow:Destroy() end
 
 local function customRequest(options)
     local req = request or http_request or (syn and syn.request) or (http and http.request) or (fluxus and fluxus.request)
@@ -75,10 +76,10 @@ local FIREBASE_PRESENCE_URL = FIREBASE_BASE_URL .. "/presence"
 local FIREBASE_BROADCAST_URL = FIREBASE_BASE_URL .. "/broadcasts.json"
 
 ---------------------------------------------------------
--- الهيكل الرئيسي (v2.0.05)
+-- الهيكل الرئيسي (v2.0.06)
 ---------------------------------------------------------
 local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "DFXChilliCustomUI"
+ScreenGui.Name = "DFXModernChilliUI"
 ScreenGui.ResetOnSpawn = false
 ScreenGui.Parent = parent
 
@@ -101,7 +102,6 @@ CenterBox.BackgroundTransparency = 0.85
 CenterBox.BorderSizePixel = 0
 CenterBox.Parent = MainFrame
 
--- خلفية الصورة داخل الصندوق الأوسط
 local BgImage = Instance.new("ImageLabel")
 BgImage.Name = "BgImage"
 BgImage.Size = UDim2.new(1, 0, 1, 0)
@@ -112,46 +112,71 @@ BgImage.ZIndex = 0
 BgImage.Parent = CenterBox
 
 local centerStroke = Instance.new("UIStroke")
-centerStroke.Color = Color3.fromRGB(140, 50, 245)
-centerStroke.Thickness = 2
+centerStroke.Color = Color3.fromRGB(140, 50, 255)
+centerStroke.Thickness = 2.2
 centerStroke.Parent = CenterBox
 
 -- الهيدر العلوي
 local Header = Instance.new("Frame")
-Header.Size = UDim2.new(1, 0, 0, 36)
+Header.Size = UDim2.new(1, 0, 0, 38)
 Header.BackgroundColor3 = Color3.fromRGB(120, 30, 210)
 Header.BorderSizePixel = 0
 Header.ZIndex = 2
 Header.Parent = CenterBox
 
-local Title = Instance.new("TextLabel")
-Title.Size = UDim2.new(1, -45, 1, 0)
-Title.Position = UDim2.new(0, 10, 0, 0)
-Title.BackgroundTransparency = 1
-Title.Text = "⚡ DFX Hub | المطور: طحبح"
-Title.TextColor3 = Color3.fromRGB(255, 255, 255)
-Title.Font = Enum.Font.SourceSansBold
-Title.TextSize = 20
-Title.TextXAlignment = Enum.TextXAlignment.Center
-Title.ZIndex = 3
-Title.Parent = Header
+local headerStroke = Instance.new("UIStroke")
+headerStroke.Color = Color3.fromRGB(180, 70, 255)
+headerStroke.Thickness = 1
+headerStroke.Parent = Header
+
+---------------------------------------------------------
+-- عنوان 3D احترافي في الهيدر
+---------------------------------------------------------
+local TitleShadow = Instance.new("TextLabel")
+TitleShadow.Size = UDim2.new(1, -45, 1, 0)
+TitleShadow.Position = UDim2.new(0, 12, 0, 2)
+TitleShadow.BackgroundTransparency = 1
+TitleShadow.Text = "⚡ DFX Hub | المطور: طحبح"
+TitleShadow.TextColor3 = Color3.fromRGB(0, 0, 0)
+TitleShadow.Font = Enum.Font.SourceSansBold
+TitleShadow.TextSize = 20
+TitleShadow.TextXAlignment = Enum.TextXAlignment.Center
+TitleShadow.ZIndex = 3
+TitleShadow.Parent = Header
+
+local TitleMain = Instance.new("TextLabel")
+TitleMain.Size = UDim2.new(1, -45, 1, 0)
+TitleMain.Position = UDim2.new(0, 10, 0, 0)
+TitleMain.BackgroundTransparency = 1
+TitleMain.Text = "⚡ DFX Hub | المطور: طحبح"
+TitleMain.TextColor3 = Color3.fromRGB(255, 255, 255)
+TitleMain.Font = Enum.Font.SourceSansBold
+TitleMain.TextSize = 20
+TitleMain.TextXAlignment = Enum.TextXAlignment.Center
+TitleMain.ZIndex = 4
+TitleMain.Parent = Header
+
+local titleStroke = Instance.new("UIStroke")
+titleStroke.Color = Color3.fromRGB(40, 0, 80)
+titleStroke.Thickness = 1.8
+titleStroke.Parent = TitleMain
 
 local CloseBtn = Instance.new("TextButton")
 CloseBtn.Size = UDim2.new(0, 24, 0, 24)
-CloseBtn.Position = UDim2.new(1, -28, 0, 6)
-CloseBtn.BackgroundColor3 = Color3.fromRGB(180, 20, 80)
+CloseBtn.Position = UDim2.new(1, -28, 0, 7)
+CloseBtn.BackgroundColor3 = Color3.fromRGB(200, 30, 80)
 CloseBtn.Text = "✕"
 CloseBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
 CloseBtn.Font = Enum.Font.SourceSansBold
 CloseBtn.TextSize = 14
-CloseBtn.ZIndex = 3
+CloseBtn.ZIndex = 4
 CloseBtn.Parent = Header
 Instance.new("UICorner", CloseBtn).CornerRadius = UDim.new(0, 4)
 
 -- الأجنحة الجانبية
 local LeftWing = Instance.new("Frame")
-LeftWing.Size = UDim2.new(0, 100, 1, -40)
-LeftWing.Position = UDim2.new(0.5, -270, 0, 40)
+LeftWing.Size = UDim2.new(0, 100, 1, -42)
+LeftWing.Position = UDim2.new(0.5, -270, 0, 42)
 LeftWing.BackgroundTransparency = 1
 LeftWing.Parent = MainFrame
 
@@ -160,8 +185,8 @@ LeftLayout.Padding = UDim.new(0, 5)
 LeftLayout.Parent = LeftWing
 
 local RightWing = Instance.new("Frame")
-RightWing.Size = UDim2.new(0, 100, 1, -40)
-RightWing.Position = UDim2.new(0.5, 170, 0, 40)
+RightWing.Size = UDim2.new(0, 100, 1, -42)
+RightWing.Position = UDim2.new(0.5, 170, 0, 42)
 RightWing.BackgroundTransparency = 1
 RightWing.Parent = MainFrame
 
@@ -169,9 +194,9 @@ local RightLayout = Instance.new("UIListLayout")
 RightLayout.Padding = UDim.new(0, 5)
 RightLayout.Parent = RightWing
 
--- محتوى التمرير الأوسط
+-- محتوى التمرير الأوسط (يمتد كاملاً بدون شريط البحث)
 local CenterScroll = Instance.new("ScrollingFrame")
-CenterScroll.Size = UDim2.new(1, -12, 1, -72)
+CenterScroll.Size = UDim2.new(1, -12, 1, -48)
 CenterScroll.Position = UDim2.new(0, 6, 0, 42)
 CenterScroll.BackgroundTransparency = 1
 CenterScroll.CanvasSize = UDim2.new(0, 0, 0, 0)
@@ -181,83 +206,54 @@ CenterScroll.Parent = CenterBox
 
 local CenterLayout = Instance.new("UIListLayout")
 CenterLayout.SortOrder = Enum.SortOrder.LayoutOrder
-CenterLayout.Padding = UDim.new(0, 4)
+CenterLayout.Padding = UDim.new(0, 5)
 CenterLayout.Parent = CenterScroll
 
--- شريط البحث
-local SearchFrame = Instance.new("Frame")
-SearchFrame.Size = UDim2.new(1, -12, 0, 22)
-SearchFrame.Position = UDim2.new(0, 6, 1, -26)
-SearchFrame.BackgroundColor3 = Color3.fromRGB(20, 15, 30)
-SearchFrame.BackgroundTransparency = 0.5
-SearchFrame.BorderSizePixel = 0
-SearchFrame.ZIndex = 2
-SearchFrame.Parent = CenterBox
-
-local searchStroke = Instance.new("UIStroke")
-searchStroke.Color = Color3.fromRGB(120, 40, 210)
-searchStroke.Thickness = 1
-searchStroke.Parent = SearchFrame
-
-local SearchLabel = Instance.new("TextLabel")
-SearchLabel.Size = UDim2.new(0, 50, 1, 0)
-SearchLabel.BackgroundTransparency = 1
-SearchLabel.Text = "بحث:"
-SearchLabel.TextColor3 = Color3.fromRGB(220, 180, 255)
-SearchLabel.Font = Enum.Font.SourceSansBold
-SearchLabel.TextSize = 13
-SearchLabel.ZIndex = 3
-SearchLabel.Parent = SearchFrame
-
-local SearchBox = Instance.new("TextBox")
-SearchBox.Size = UDim2.new(1, -55, 1, -2)
-SearchBox.Position = UDim2.new(0, 52, 0, 1)
-SearchBox.BackgroundColor3 = Color3.fromRGB(10, 5, 20)
-SearchBox.BackgroundTransparency = 0.5
-SearchBox.PlaceholderText = "تصفية..."
-SearchBox.Text = ""
-SearchBox.TextColor3 = Color3.fromRGB(255, 255, 255)
-SearchBox.Font = Enum.Font.SourceSans
-SearchBox.TextSize = 12
-SearchBox.TextXAlignment = Enum.TextXAlignment.Right
-SearchBox.ZIndex = 3
-SearchBox.Parent = SearchFrame
-
 ---------------------------------------------------------
--- إدارة الثيمات والألوان
+-- إدارة الثيمات الشاملة (لتغيير الأجنحة والوسط معاً)
 ---------------------------------------------------------
 local currentAccentColor = Color3.fromRGB(140, 50, 255)
 local currentHeaderColor = Color3.fromRGB(120, 30, 210)
-local allStrokes = {centerStroke, searchStroke, headerStroke} -- سنجمع الـ strokes هنا إذا لزم
+
+local registeredWingStrokes = {}
+local registeredRowStrokes = {}
 
 local function updateThemeColors(accent, headerCol)
     currentAccentColor = accent
     currentHeaderColor = headerCol
     centerStroke.Color = accent
-    searchStroke.Color = accent
+    headerStroke.Color = accent
     Header.BackgroundColor3 = headerCol
+    
+    for _, stroke in ipairs(registeredWingStrokes) do
+        if stroke and stroke.Parent then stroke.Color = accent end
+    end
+    for _, stroke in ipairs(registeredRowStrokes) do
+        if stroke and stroke.Parent then stroke.Color = accent end
+    end
 end
 
 ---------------------------------------------------------
--- دالة تصاميم الأزرار
+-- دالة تصاميم الأزرار الأنيقة
 ---------------------------------------------------------
 local function createIndexStyleBtn(text, side)
     local btn = Instance.new("TextButton")
     btn.Size = UDim2.new(1, 0, 0, 30)
-    btn.BackgroundColor3 = Color3.fromRGB(40, 15, 70)
+    btn.BackgroundColor3 = Color3.fromRGB(20, 12, 35)
     btn.Text = text
     btn.TextColor3 = Color3.fromRGB(255, 255, 255)
     btn.Font = Enum.Font.SourceSansBold
     btn.TextSize = 14
     btn.Parent = (side == "left") and LeftWing or RightWing
-    Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 4)
+    Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 5)
 
     local stroke = Instance.new("UIStroke")
-    stroke.Color = Color3.fromRGB(180, 60, 255)
+    stroke.Color = currentAccentColor
     stroke.Thickness = 1.8
     stroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
     stroke.Parent = btn
 
+    table.insert(registeredWingStrokes, stroke)
     return btn
 end
 
@@ -273,7 +269,7 @@ local function addAccordionSection(titleText, builderFunc)
     headBtn.Size = UDim2.new(1, 0, 0, 26)
     headBtn.BackgroundTransparency = 1
     headBtn.Text = "  ◀  " .. titleText
-    headBtn.TextColor3 = Color3.fromRGB(235, 210, 255)
+    headBtn.TextColor3 = Color3.fromRGB(240, 220, 255)
     headBtn.Font = Enum.Font.SourceSansBold
     headBtn.TextSize = 15
     headBtn.TextXAlignment = Enum.TextXAlignment.Right
@@ -296,22 +292,23 @@ local function addAccordionSection(titleText, builderFunc)
 
     local function addToggleRow(nameText, descText, defaultState, onToggle)
         local rowFrame = Instance.new("Frame")
-        rowFrame.Size = UDim2.new(1, 0, 0, descText ~= "" and 40 or 26)
-        rowFrame.BackgroundColor3 = Color3.fromRGB(25, 15, 45)
-        rowFrame.BackgroundTransparency = 0.4
+        rowFrame.Size = UDim2.new(1, 0, 0, descText ~= "" and 42 or 28)
+        rowFrame.BackgroundColor3 = Color3.fromRGB(20, 12, 35)
+        rowFrame.BackgroundTransparency = 0.3
         rowFrame.BorderSizePixel = 0
         rowFrame.ZIndex = 2
         rowFrame.Parent = contentHolder
-        Instance.new("UICorner", rowFrame).CornerRadius = UDim.new(0, 4)
+        Instance.new("UICorner", rowFrame).CornerRadius = UDim.new(0, 5)
 
         local rowStroke = Instance.new("UIStroke")
-        rowStroke.Color = Color3.fromRGB(110, 40, 190)
+        rowStroke.Color = currentAccentColor
         rowStroke.Thickness = 1
         rowStroke.Parent = rowFrame
+        table.insert(registeredRowStrokes, rowStroke)
 
         local nameLbl = Instance.new("TextLabel")
         nameLbl.Size = UDim2.new(1, -48, 0, 18)
-        nameLbl.Position = UDim2.new(0, 5, 0, 2)
+        nameLbl.Position = UDim2.new(0, 5, 0, 3)
         nameLbl.BackgroundTransparency = 1
         nameLbl.Text = nameText
         nameLbl.TextColor3 = Color3.fromRGB(255, 255, 255)
@@ -324,10 +321,10 @@ local function addAccordionSection(titleText, builderFunc)
         if descText ~= "" then
             local descLbl = Instance.new("TextLabel")
             descLbl.Size = UDim2.new(1, -48, 0, 16)
-            descLbl.Position = UDim2.new(0, 5, 0, 20)
+            descLbl.Position = UDim2.new(0, 5, 0, 22)
             descLbl.BackgroundTransparency = 1
             descLbl.Text = descText
-            descLbl.TextColor3 = Color3.fromRGB(180, 160, 220)
+            descLbl.TextColor3 = Color3.fromRGB(180, 170, 210)
             descLbl.Font = Enum.Font.SourceSans
             descLbl.TextSize = 10.5
             descLbl.TextXAlignment = Enum.TextXAlignment.Right
@@ -338,7 +335,7 @@ local function addAccordionSection(titleText, builderFunc)
         local toggleBtn = Instance.new("TextButton")
         toggleBtn.Size = UDim2.new(0, 34, 0, 18)
         toggleBtn.Position = UDim2.new(0, 6, 0.5, -9)
-        toggleBtn.BackgroundColor3 = defaultState and Color3.fromRGB(140, 40, 255) or Color3.fromRGB(50, 30, 80)
+        toggleBtn.BackgroundColor3 = defaultState and currentAccentColor or Color3.fromRGB(40, 30, 60)
         toggleBtn.Text = ""
         toggleBtn.ZIndex = 3
         toggleBtn.Parent = rowFrame
@@ -356,7 +353,7 @@ local function addAccordionSection(titleText, builderFunc)
         toggleBtn.MouseButton1Click:Connect(function()
             playUiSound(SOUND_CLICK, 1)
             state = not state
-            toggleBtn.BackgroundColor3 = state and currentAccentColor or Color3.fromRGB(50, 30, 80)
+            toggleBtn.BackgroundColor3 = state and currentAccentColor or Color3.fromRGB(40, 30, 60)
             innerBox.Position = state and UDim2.new(1, -14, 0.5, -7) or UDim2.new(0, 2, 0.5, -7)
             if onToggle then onToggle(state) end
         end)
@@ -364,18 +361,19 @@ local function addAccordionSection(titleText, builderFunc)
 
     local function addActionRow(nameText, onClick)
         local rowFrame = Instance.new("Frame")
-        rowFrame.Size = UDim2.new(1, 0, 0, 26)
-        rowFrame.BackgroundColor3 = Color3.fromRGB(25, 15, 45)
-        rowFrame.BackgroundTransparency = 0.4
+        rowFrame.Size = UDim2.new(1, 0, 0, 28)
+        rowFrame.BackgroundColor3 = Color3.fromRGB(20, 12, 35)
+        rowFrame.BackgroundTransparency = 0.3
         rowFrame.BorderSizePixel = 0
         rowFrame.ZIndex = 2
         rowFrame.Parent = contentHolder
-        Instance.new("UICorner", rowFrame).CornerRadius = UDim.new(0, 4)
+        Instance.new("UICorner", rowFrame).CornerRadius = UDim.new(0, 5)
 
         local rowStroke = Instance.new("UIStroke")
-        rowStroke.Color = Color3.fromRGB(110, 40, 190)
+        rowStroke.Color = currentAccentColor
         rowStroke.Thickness = 1
         rowStroke.Parent = rowFrame
+        table.insert(registeredRowStrokes, rowStroke)
 
         local btn = Instance.new("TextButton")
         btn.Size = UDim2.new(1, -10, 1, 0)
@@ -423,6 +421,126 @@ local function clearCenter()
         end
     end
 end
+
+---------------------------------------------------------
+-- النافذة المستقلة للشات المباشر (Independent Chat Window)
+---------------------------------------------------------
+local ChatScreenGui = Instance.new("ScreenGui")
+ChatScreenGui.Name = "DFXIndependentChatWindow"
+ChatScreenGui.ResetOnSpawn = false
+ChatScreenGui.Parent = parent
+
+local ChatWin = Instance.new("Frame")
+ChatWin.Name = "ChatWin"
+ChatWin.Size = UDim2.new(0, 320, 0, 240)
+ChatWin.Position = UDim2.new(0, 20, 0.5, -120)
+ChatWin.BackgroundColor3 = Color3.fromRGB(15, 10, 25)
+ChatWin.BackgroundTransparency = 0.2
+ChatWin.Active = true
+ChatWin.Draggable = true
+ChatWin.Visible = false
+ChatWin.Parent = ChatScreenGui
+Instance.new("UICorner", ChatWin).CornerRadius = UDim.new(0, 8)
+
+local chatStroke = Instance.new("UIStroke")
+chatStroke.Color = Color3.fromRGB(140, 50, 255)
+chatStroke.Thickness = 1.8
+chatStroke.Parent = ChatWin
+
+local ChatHeader = Instance.new("Frame")
+ChatHeader.Size = UDim2.new(1, 0, 0, 32)
+ChatHeader.BackgroundColor3 = Color3.fromRGB(30, 20, 50)
+ChatHeader.Parent = ChatWin
+Instance.new("UICorner", ChatHeader).CornerRadius = UDim.new(0, 8)
+
+local ChatTitle = Instance.new("TextLabel")
+ChatTitle.Size = UDim2.new(1, -30, 1, 0)
+ChatTitle.Position = UDim2.new(0, 10, 0, 0)
+ChatTitle.BackgroundTransparency = 1
+ChatTitle.Text = "💬 الشات المباشر العام"
+ChatTitle.TextColor3 = Color3.fromRGB(255, 255, 255)
+ChatTitle.Font = Enum.Font.SourceSansBold
+ChatTitle.TextSize = 14
+ChatTitle.TextXAlignment = Enum.TextXAlignment.Left
+ChatTitle.Parent = ChatHeader
+
+local ChatClose = Instance.new("TextButton")
+ChatClose.Size = UDim2.new(0, 20, 0, 20)
+ChatClose.Position = UDim2.new(1, -24, 0, 6)
+ChatClose.BackgroundColor3 = Color3.fromRGB(180, 20, 80)
+ChatClose.Text = "✕"
+ChatClose.TextColor3 = Color3.fromRGB(255, 255, 255)
+ChatClose.Font = Enum.Font.SourceSansBold
+ChatClose.TextSize = 12
+ChatClose.Parent = ChatHeader
+Instance.new("UICorner", ChatClose).CornerRadius = UDim.new(0, 4)
+
+ChatClose.MouseButton1Click:Connect(function()
+    playUiSound(SOUND_CLICK, 1)
+    ChatWin.Visible = false
+end)
+
+local ChatScroll = Instance.new("ScrollingFrame")
+ChatScroll.Size = UDim2.new(1, -12, 1, -72)
+ChatScroll.Position = UDim2.new(0, 6, 0, 36)
+ChatScroll.BackgroundTransparency = 1
+ChatScroll.CanvasSize = UDim2.new(0, 0, 0, 0)
+ChatScroll.ScrollBarThickness = 3
+ChatScroll.Parent = ChatWin
+
+local ChatLayout = Instance.new("UIListLayout")
+ChatLayout.Padding = UDim.new(0, 4)
+ChatLayout.Parent = ChatScroll
+
+local ChatInput = Instance.new("TextBox")
+ChatInput.Size = UDim2.new(1, -12, 0, 26)
+ChatInput.Position = UDim2.new(0, 6, 1, -30)
+ChatInput.BackgroundColor3 = Color3.fromRGB(25, 18, 40)
+ChatInput.PlaceholderText = "اكتب رسالتك واضغط Enter..."
+ChatInput.Text = ""
+ChatInput.TextColor3 = Color3.fromRGB(255, 255, 255)
+ChatInput.Font = Enum.Font.SourceSans
+ChatInput.TextSize = 12
+ChatInput.TextXAlignment = Enum.TextXAlignment.Right
+ChatInput.Parent = ChatWin
+Instance.new("UICorner", ChatInput).CornerRadius = UDim.new(0, 5)
+
+local renderedMsgs = {}
+local function addChatMessage(sender, text)
+    local lbl = Instance.new("TextLabel")
+    lbl.Size = UDim2.new(1, 0, 0, 20)
+    lbl.BackgroundTransparency = 1
+    lbl.Text = "<b>" .. sender .. ":</b> " .. text
+    lbl.RichText = true
+    lbl.TextColor3 = Color3.fromRGB(240, 230, 255)
+    lbl.Font = Enum.Font.SourceSans
+    lbl.TextSize = 12
+    lbl.TextXAlignment = Enum.TextXAlignment.Right
+    lbl.Parent = ChatScroll
+
+    ChatScroll.CanvasSize = UDim2.new(0, 0, 0, ChatLayout.AbsoluteContentSize.Y + 10)
+    ChatScroll.CanvasPosition = Vector2.new(0, ChatScroll.AbsoluteCanvasSize.Y)
+end
+
+ChatInput.FocusLost:Connect(function(enter)
+    if enter and ChatInput.Text ~= "" then
+        local msg = ChatInput.Text
+        ChatInput.Text = ""
+        pcall(function()
+            customRequest({
+                Url = FIREBASE_CHAT_URL,
+                Method = "POST",
+                Headers = {["Content-Type"] = "application/json"},
+                Body = HttpService:JSONEncode({
+                    sender = LocalPlayer.DisplayName ~= "" and LocalPlayer.DisplayName or LocalPlayer.Name,
+                    userId = LocalPlayer.UserId,
+                    text = msg,
+                    time = os.time()
+                })
+            })
+        end)
+    end
+end)
 
 ---------------------------------------------------------
 -- التبويبات والميزات
@@ -474,64 +592,11 @@ BtnPlayer.MouseButton1Click:Connect(function()
     CenterScroll.CanvasSize = UDim2.new(0, 0, 0, CenterLayout.AbsoluteContentSize.Y + 10)
 end)
 
--- 3. الشات العام
+-- 3. الشات العام (مستقل)
 local BtnChat = createIndexStyleBtn("الشات العام", "left")
 BtnChat.MouseButton1Click:Connect(function()
     playUiSound(SOUND_CLICK, 1)
-    clearCenter()
-
-    addAccordionSection("غرفة المحادثة المباشرة", function(addToggle, addAction)
-        local chatBox = Instance.new("TextBox")
-        chatBox.Size = UDim2.new(1, -10, 0, 26)
-        chatBox.BackgroundColor3 = Color3.fromRGB(30, 15, 50)
-        chatBox.BackgroundTransparency = 0.3
-        chatBox.PlaceholderText = "اكتب رسالتك واضغط Enter..."
-        chatBox.Text = ""
-        chatBox.TextColor3 = Color3.fromRGB(255, 255, 255)
-        chatBox.Font = Enum.Font.SourceSans
-        chatBox.TextSize = 12
-        chatBox.TextXAlignment = Enum.TextXAlignment.Right
-        chatBox.ZIndex = 2
-        chatBox.Parent = CenterScroll
-
-        chatBox.FocusLost:Connect(function(enter)
-            if enter and chatBox.Text ~= "" then
-                local msg = chatBox.Text
-                chatBox.Text = ""
-                pcall(function()
-                    customRequest({
-                        Url = FIREBASE_CHAT_URL,
-                        Method = "POST",
-                        Headers = {["Content-Type"] = "application/json"},
-                        Body = HttpService:JSONEncode({
-                            sender = LocalPlayer.DisplayName ~= "" and LocalPlayer.DisplayName or LocalPlayer.Name,
-                            userId = LocalPlayer.UserId,
-                            text = msg,
-                            time = os.time()
-                        })
-                    })
-                end)
-            end
-        end)
-
-        addAction("تحديث الشات الآن 🔄", function()
-            pcall(function()
-                local res = customRequest({Url = FIREBASE_CHAT_URL, Method = "GET"})
-                if res and res.StatusCode == 200 then
-                    local data = safeDecode(res.Body)
-                    if data then
-                        for _, m in pairs(data) do
-                            if type(m) == "table" and m.text then
-                                addAction(tostring(m.sender) .. ": " .. tostring(m.text), nil)
-                            end
-                        end
-                    end
-                end
-            end)
-        end)
-    end)
-
-    CenterScroll.CanvasSize = UDim2.new(0, 0, 0, CenterLayout.AbsoluteContentSize.Y + 10)
+    ChatWin.Visible = not ChatWin.Visible
 end)
 
 -- 4. المتواجدون
@@ -563,7 +628,7 @@ BtnServer.MouseButton1Click:Connect(function()
 end)
 
 ---------------------------------------------------------
--- الجناح الأيمن
+-- الجناح الأيمن (محفوظة بالكامل)
 ---------------------------------------------------------
 local BtnAdmin = createIndexStyleBtn("لوحة الأدمن", "right")
 BtnAdmin.MouseButton1Click:Connect(function()
@@ -662,8 +727,28 @@ BtnSettings.MouseButton1Click:Connect(function()
 end)
 
 ---------------------------------------------------------
--- نظام استقبال البث المباشر
+-- الاستماع للشات والبث المباشر
 ---------------------------------------------------------
+task.spawn(function()
+    while true do
+        pcall(function()
+            local res = customRequest({Url = FIREBASE_CHAT_URL, Method = "GET"})
+            if res and res.StatusCode == 200 then
+                local data = safeDecode(res.Body)
+                if data then
+                    for k, m in pairs(data) do
+                        if type(m) == "table" and m.text and not renderedMsgs[k] then
+                            renderedMsgs[k] = true
+                            addChatMessage(tostring(m.sender or "مجهول"), tostring(m.text or ""))
+                        end
+                    end
+                end
+            end
+        end)
+        task.wait(2)
+    end
+end)
+
 local BroadcastGui = Instance.new("ScreenGui")
 BroadcastGui.Name = "DFXAdminBroadcastGui"
 BroadcastGui.ResetOnSpawn = false
@@ -690,7 +775,7 @@ task.spawn(function()
                             Instance.new("UICorner", popFrame).CornerRadius = UDim.new(0, 8)
 
                             local pStroke = Instance.new("UIStroke")
-                            pStroke.Color = Color3.fromRGB(150, 40, 255)
+                            pStroke.Color = currentAccentColor
                             pStroke.Thickness = 2
                             pStroke.Parent = popFrame
 
