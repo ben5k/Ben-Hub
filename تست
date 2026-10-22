@@ -1,5 +1,5 @@
--- DFX Hub - Dynamic Theme Chat Sync, Roblox Style Square Chat Button & RGB Glow Buttons
--- Version: v2.0.09
+-- DFX Hub - Clean UI & Fixed Unicode Text Issues
+-- Version: v2.1.0 (Developer: Tahbah)
 
 local CoreGui = game:GetService("CoreGui")
 local Players = game:GetService("Players")
@@ -13,7 +13,7 @@ local MarketplaceService = game:GetService("MarketplaceService")
 local LocalPlayer = Players.LocalPlayer
 local parent = (gethui and gethui()) or CoreGui:FindFirstChild("RobloxGui") or LocalPlayer:WaitForChild("PlayerGui")
 
-if parent:FindFirstChild("DFXFullV9UI") then parent.DFXFullV9UI:Destroy() end
+if parent:FindFirstChild("DFXCleanV10UI") then parent.DFXCleanV10UI:Destroy() end
 if parent:FindFirstChild("DFXAdminBroadcastGui") then parent.DFXAdminBroadcastGui:Destroy() end
 if parent:FindFirstChild("DFXExactChatGui") then parent.DFXExactChatGui:Destroy() end
 
@@ -77,10 +77,10 @@ local FIREBASE_PRESENCE_URL = FIREBASE_BASE_URL .. "/presence"
 local FIREBASE_BROADCAST_URL = FIREBASE_BASE_URL .. "/broadcasts.json"
 
 ---------------------------------------------------------
--- الهيكل الرئيسي (v2.0.09)
+-- الهيكل الرئيسي
 ---------------------------------------------------------
 local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "DFXFullV9UI"
+ScreenGui.Name = "DFXCleanV10UI"
 ScreenGui.ResetOnSpawn = false
 ScreenGui.Parent = parent
 
@@ -129,10 +129,10 @@ local TitleShadow = Instance.new("TextLabel")
 TitleShadow.Size = UDim2.new(1, -45, 1, 0)
 TitleShadow.Position = UDim2.new(0, 12, 0, 2)
 TitleShadow.BackgroundTransparency = 1
-TitleShadow.Text = "⚡ DFX Hub | المطور: طحبح"
+TitleShadow.Text = "DFX Hub | المطور: طحبح"
 TitleShadow.TextColor3 = Color3.fromRGB(0, 0, 0)
-TitleShadow.Font = Enum.Font.SourceSansBold
-TitleShadow.TextSize = 20
+TitleShadow.Font = Enum.Font.GothamBold
+TitleShadow.TextSize = 18
 TitleShadow.TextXAlignment = Enum.TextXAlignment.Center
 TitleShadow.ZIndex = 3
 TitleShadow.Parent = Header
@@ -141,10 +141,10 @@ local TitleMain = Instance.new("TextLabel")
 TitleMain.Size = UDim2.new(1, -45, 1, 0)
 TitleMain.Position = UDim2.new(0, 10, 0, 0)
 TitleMain.BackgroundTransparency = 1
-TitleMain.Text = "⚡ DFX Hub | المطور: طحبح"
+TitleMain.Text = "DFX Hub | المطور: طحبح"
 TitleMain.TextColor3 = Color3.fromRGB(255, 255, 255)
-TitleMain.Font = Enum.Font.SourceSansBold
-TitleMain.TextSize = 20
+TitleMain.Font = Enum.Font.GothamBold
+TitleMain.TextSize = 18
 TitleMain.TextXAlignment = Enum.TextXAlignment.Center
 TitleMain.ZIndex = 4
 TitleMain.Parent = Header
@@ -153,9 +153,9 @@ local CloseBtn = Instance.new("TextButton")
 CloseBtn.Size = UDim2.new(0, 24, 0, 24)
 CloseBtn.Position = UDim2.new(1, -28, 0, 7)
 CloseBtn.BackgroundColor3 = Color3.fromRGB(200, 30, 80)
-CloseBtn.Text = "✕"
+CloseBtn.Text = "X"
 CloseBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-CloseBtn.Font = Enum.Font.SourceSansBold
+CloseBtn.Font = Enum.Font.GothamBold
 CloseBtn.TextSize = 14
 CloseBtn.ZIndex = 4
 CloseBtn.Parent = Header
@@ -169,7 +169,7 @@ LeftWing.BackgroundTransparency = 1
 LeftWing.Parent = MainFrame
 
 local LeftLayout = Instance.new("UIListLayout")
-LeftLayout.Padding = UDim.new(0, 5)
+LeftLayout.Padding = UDim.new(0, 6)
 LeftLayout.Parent = LeftWing
 
 local RightWing = Instance.new("Frame")
@@ -179,7 +179,7 @@ RightWing.BackgroundTransparency = 1
 RightWing.Parent = MainFrame
 
 local RightLayout = Instance.new("UIListLayout")
-RightLayout.Padding = UDim.new(0, 5)
+RightLayout.Padding = UDim.new(0, 6)
 RightLayout.Parent = RightWing
 
 -- محتوى التمرير الأوسط
@@ -198,7 +198,7 @@ CenterLayout.Padding = UDim.new(0, 6)
 CenterLayout.Parent = CenterScroll
 
 ---------------------------------------------------------
--- نظام الثيمات المترابط والشامل مع الشات
+-- نظام الثيمات المترابط والشامل
 ---------------------------------------------------------
 local currentAccentColor = Color3.fromRGB(150, 40, 255)
 local currentHeaderColor = Color3.fromRGB(110, 25, 200)
@@ -231,24 +231,7 @@ local function updateThemeColors(accent, headerCol)
 end
 
 ---------------------------------------------------------
--- تأثير الإضاءة والتوهج المتحرك RGB للأزرار
----------------------------------------------------------
-task.spawn(function()
-    local hue = 0
-    while true do
-        task.wait(0.05)
-        hue = (hue + 0.01) % 1
-        local rgbGlow = Color3.fromHSV(hue, 0.7, 1)
-        for _, stroke in ipairs(registeredRowStrokes) do
-            if stroke and stroke.Parent then
-                stroke.Color = currentAccentColor:Lerp(rgbGlow, 0.25)
-            end
-        end
-    end
-end)
-
----------------------------------------------------------
--- أزرار الأجنحة والخيارات المباشرة
+-- أزرار الأجنحة والخيارات المباشرة الواضحة
 ---------------------------------------------------------
 local function createProStyleBtn(text, side)
     local btn = Instance.new("TextButton")
@@ -256,8 +239,8 @@ local function createProStyleBtn(text, side)
     btn.BackgroundColor3 = Color3.fromRGB(28, 15, 48)
     btn.Text = text
     btn.TextColor3 = Color3.fromRGB(255, 255, 255)
-    btn.Font = Enum.Font.SourceSansBold
-    btn.TextSize = 14
+    btn.Font = Enum.Font.GothamBold
+    btn.TextSize = 13
     btn.Parent = (side == "left") and LeftWing or RightWing
     Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 6)
 
@@ -273,7 +256,7 @@ end
 
 local function addDirectToggle(nameText, descText, defaultState, onToggle)
     local rowFrame = Instance.new("Frame")
-    rowFrame.Size = UDim2.new(1, 0, 0, descText ~= "" and 42 or 30)
+    rowFrame.Size = UDim2.new(1, 0, 0, descText ~= "" and 44 or 32)
     rowFrame.BackgroundColor3 = Color3.fromRGB(24, 14, 42)
     rowFrame.BackgroundTransparency = 0.2
     rowFrame.BorderSizePixel = 0
@@ -289,12 +272,12 @@ local function addDirectToggle(nameText, descText, defaultState, onToggle)
 
     local nameLbl = Instance.new("TextLabel")
     nameLbl.Size = UDim2.new(1, -48, 0, 18)
-    nameLbl.Position = UDim2.new(0, 5, 0, 3)
+    nameLbl.Position = UDim2.new(0, 5, 0, 4)
     nameLbl.BackgroundTransparency = 1
     nameLbl.Text = nameText
     nameLbl.TextColor3 = Color3.fromRGB(255, 255, 255)
-    nameLbl.Font = Enum.Font.SourceSansBold
-    nameLbl.TextSize = 13.5
+    nameLbl.Font = Enum.Font.GothamBold
+    nameLbl.TextSize = 13
     nameLbl.TextXAlignment = Enum.TextXAlignment.Right
     nameLbl.ZIndex = 3
     nameLbl.Parent = rowFrame
@@ -302,12 +285,12 @@ local function addDirectToggle(nameText, descText, defaultState, onToggle)
     if descText ~= "" then
         local descLbl = Instance.new("TextLabel")
         descLbl.Size = UDim2.new(1, -48, 0, 16)
-        descLbl.Position = UDim2.new(0, 5, 0, 22)
+        descLbl.Position = UDim2.new(0, 5, 0, 24)
         descLbl.BackgroundTransparency = 1
         descLbl.Text = descText
-        descLbl.TextColor3 = Color3.fromRGB(180, 170, 210)
+        descLbl.TextColor3 = Color3.fromRGB(190, 180, 220)
         descLbl.Font = Enum.Font.SourceSans
-        descLbl.TextSize = 10.5
+        descLbl.TextSize = 11
         descLbl.TextXAlignment = Enum.TextXAlignment.Right
         descLbl.ZIndex = 3
         descLbl.Parent = rowFrame
@@ -342,7 +325,7 @@ end
 
 local function addDirectAction(nameText, onClick)
     local rowFrame = Instance.new("Frame")
-    rowFrame.Size = UDim2.new(1, 0, 0, 30)
+    rowFrame.Size = UDim2.new(1, 0, 0, 32)
     rowFrame.BackgroundColor3 = Color3.fromRGB(24, 14, 42)
     rowFrame.BackgroundTransparency = 0.2
     rowFrame.BorderSizePixel = 0
@@ -362,8 +345,8 @@ local function addDirectAction(nameText, onClick)
     btn.BackgroundTransparency = 1
     btn.Text = nameText
     btn.TextColor3 = Color3.fromRGB(255, 255, 255)
-    btn.Font = Enum.Font.SourceSansBold
-    btn.TextSize = 13.5
+    btn.Font = Enum.Font.GothamBold
+    btn.TextSize = 13
     btn.TextXAlignment = Enum.TextXAlignment.Center
     btn.ZIndex = 3
     btn.Parent = rowFrame
@@ -376,12 +359,12 @@ end
 
 local function addCategoryHeader(titleText)
     local lbl = Instance.new("TextLabel")
-    lbl.Size = UDim2.new(1, 0, 0, 24)
+    lbl.Size = UDim2.new(1, 0, 0, 22)
     lbl.BackgroundTransparency = 1
-    lbl.Text = "✧ " .. titleText .. " ✧"
-    lbl.TextColor3 = Color3.fromRGB(220, 190, 255)
-    lbl.Font = Enum.Font.SourceSansBold
-    lbl.TextSize = 14
+    lbl.Text = "--- " .. titleText .. " ---"
+    lbl.TextColor3 = Color3.fromRGB(230, 210, 255)
+    lbl.Font = Enum.Font.GothamBold
+    lbl.TextSize = 13
     lbl.TextXAlignment = Enum.TextXAlignment.Center
     lbl.ZIndex = 2
     lbl.Parent = CenterScroll
@@ -396,22 +379,23 @@ local function clearCenter()
 end
 
 ---------------------------------------------------------
--- نافذة الشات المفتوحة مع مربع المطور لستايل روبلوكس
+-- نافذة الشات المفتوحة والمربعة بدون أي رموز مشوهة
 ---------------------------------------------------------
 local ChatScreenGui = Instance.new("ScreenGui")
 ChatScreenGui.Name = "DFXExactChatGui"
 ChatScreenGui.ResetOnSpawn = false
 ChatScreenGui.Parent = parent
 
--- أيقونة الشات المربعة الكبيرة المطابقة لستايل روبلوكس الأصلي (بجوار زر روبلوكس)
 local FloatingChatBtn = Instance.new("TextButton")
 FloatingChatBtn.Name = "FloatingChatBtn"
 FloatingChatBtn.Size = UDim2.new(0, 42, 0, 42)
 FloatingChatBtn.Position = UDim2.new(0, 120, 0, 8)
 FloatingChatBtn.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
 FloatingChatBtn.BackgroundTransparency = 0.2
-FloatingChatBtn.Text = "💬"
-FloatingChatBtn.TextSize = 22
+FloatingChatBtn.Text = "CHAT"
+FloatingChatBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+FloatingChatBtn.Font = Enum.Font.GothamBold
+FloatingChatBtn.TextSize = 11
 FloatingChatBtn.Active = true
 FloatingChatBtn.Draggable = true
 FloatingChatBtn.Parent = ChatScreenGui
@@ -422,7 +406,6 @@ dynamicFloatStroke.Color = currentAccentColor
 dynamicFloatStroke.Thickness = 2
 dynamicFloatStroke.Parent = FloatingChatBtn
 
--- صندوق الشات المكبر بالكامل
 local ChatWin = Instance.new("Frame")
 ChatWin.Name = "ChatWin"
 ChatWin.Size = UDim2.new(0, 380, 0, 290)
@@ -439,15 +422,14 @@ dynamicChatStroke.Color = currentAccentColor
 dynamicChatStroke.Thickness = 2
 dynamicChatStroke.Parent = ChatWin
 
--- الأزرار العلوية للشات المسجلة للتبديل مع الثيم
 local ChatHeaderBtn1 = Instance.new("TextButton")
 ChatHeaderBtn1.Size = UDim2.new(0, 110, 0, 26)
 ChatHeaderBtn1.Position = UDim2.new(0, 10, 0, 10)
 ChatHeaderBtn1.BackgroundColor3 = currentAccentColor
-ChatHeaderBtn1.Text = "💬 الشات العام"
+ChatHeaderBtn1.Text = "الشات العام"
 ChatHeaderBtn1.TextColor3 = Color3.fromRGB(255, 255, 255)
-ChatHeaderBtn1.Font = Enum.Font.SourceSansBold
-ChatHeaderBtn1.TextSize = 13
+ChatHeaderBtn1.Font = Enum.Font.GothamBold
+ChatHeaderBtn1.TextSize = 12
 ChatHeaderBtn1.Parent = ChatWin
 Instance.new("UICorner", ChatHeaderBtn1).CornerRadius = UDim.new(0, 6)
 table.insert(registeredChatThemeBtns, ChatHeaderBtn1)
@@ -456,10 +438,10 @@ local ChatHeaderBtn2 = Instance.new("TextButton")
 ChatHeaderBtn2.Size = UDim2.new(0, 100, 0, 26)
 ChatHeaderBtn2.Position = UDim2.new(0, 130, 0, 10)
 ChatHeaderBtn2.BackgroundColor3 = currentAccentColor
-ChatHeaderBtn2.Text = "★ مميزات"
+ChatHeaderBtn2.Text = "المميزات"
 ChatHeaderBtn2.TextColor3 = Color3.fromRGB(255, 255, 255)
-ChatHeaderBtn2.Font = Enum.Font.SourceSansBold
-ChatHeaderBtn2.TextSize = 13
+ChatHeaderBtn2.Font = Enum.Font.GothamBold
+ChatHeaderBtn2.TextSize = 12
 ChatHeaderBtn2.Parent = ChatWin
 Instance.new("UICorner", ChatHeaderBtn2).CornerRadius = UDim.new(0, 6)
 table.insert(registeredChatThemeBtns, ChatHeaderBtn2)
@@ -468,9 +450,9 @@ local ChatTimerLbl = Instance.new("TextLabel")
 ChatTimerLbl.Size = UDim2.new(0, 75, 0, 26)
 ChatTimerLbl.Position = UDim2.new(1, -85, 0, 10)
 ChatTimerLbl.BackgroundTransparency = 1
-ChatTimerLbl.Text = "⏱ 00:00"
+ChatTimerLbl.Text = "00:00"
 ChatTimerLbl.TextColor3 = Color3.fromRGB(255, 255, 255)
-ChatTimerLbl.Font = Enum.Font.SourceSansBold
+ChatTimerLbl.Font = Enum.Font.GothamBold
 ChatTimerLbl.TextSize = 13
 ChatTimerLbl.Parent = ChatWin
 
@@ -481,7 +463,7 @@ task.spawn(function()
         chatSeconds = chatSeconds + 1
         local m = math.floor(chatSeconds / 60)
         local s = chatSeconds % 60
-        ChatTimerLbl.Text = string.format("⏱ %02d:%02d", m, s)
+        ChatTimerLbl.Text = string.format("%02d:%02d", m, s)
     end
 end)
 
@@ -505,8 +487,8 @@ ChatInput.BackgroundTransparency = 0.3
 ChatInput.PlaceholderText = "اكتب رسالتك هنا..."
 ChatInput.Text = ""
 ChatInput.TextColor3 = Color3.fromRGB(255, 255, 255)
-ChatInput.Font = Enum.Font.SourceSans
-ChatInput.TextSize = 13
+ChatInput.Font = Enum.Font.Gotham
+ChatInput.TextSize = 12
 ChatInput.TextXAlignment = Enum.TextXAlignment.Right
 ChatInput.Parent = ChatWin
 Instance.new("UICorner", ChatInput).CornerRadius = UDim.new(0, 6)
@@ -515,10 +497,10 @@ local SendBtn = Instance.new("TextButton")
 SendBtn.Size = UDim2.new(0, 100, 0, 32)
 SendBtn.Position = UDim2.new(1, -110, 1, -40)
 SendBtn.BackgroundColor3 = currentAccentColor
-SendBtn.Text = "إرسال 🚀"
+SendBtn.Text = "إرسال"
 SendBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-SendBtn.Font = Enum.Font.SourceSansBold
-SendBtn.TextSize = 13.5
+SendBtn.Font = Enum.Font.GothamBold
+SendBtn.TextSize = 13
 SendBtn.Parent = ChatWin
 Instance.new("UICorner", SendBtn).CornerRadius = UDim.new(0, 6)
 table.insert(registeredChatThemeBtns, SendBtn)
@@ -544,8 +526,8 @@ local function addChatMessage(sender, text)
     lbl.Text = "<b>" .. sender .. "</b>: " .. text
     lbl.RichText = true
     lbl.TextColor3 = Color3.fromRGB(255, 255, 255)
-    lbl.Font = Enum.Font.SourceSans
-    lbl.TextSize = 13
+    lbl.Font = Enum.Font.Gotham
+    lbl.TextSize = 12
     lbl.TextXAlignment = Enum.TextXAlignment.Right
     lbl.Parent = msgFrame
 
@@ -580,7 +562,7 @@ ChatInput.FocusLost:Connect(function(enter) if enter then sendMessageNow() end e
 -- بناء التبويبات والمكونات الداخلية
 ---------------------------------------------------------
 
--- 1. تبويب "الرئيسية"
+-- 1. تبويب "الرئيسية" المرتب جداً
 local BtnMainHome = createProStyleBtn("الرئيسية", "left")
 BtnMainHome.MouseButton1Click:Connect(function()
     playUiSound(SOUND_CLICK, 1)
@@ -593,7 +575,7 @@ BtnMainHome.MouseButton1Click:Connect(function()
         if info then placeName = info.Name end
     end)
 
-    addCategoryHeader("معلومات الماب والوقت المباشر")
+    addCategoryHeader("معلومات الماب الحالي")
 
     local mapFrame = Instance.new("Frame")
     mapFrame.Size = UDim2.new(1, 0, 0, 55)
@@ -621,10 +603,10 @@ BtnMainHome.MouseButton1Click:Connect(function()
     mapTitleLbl.Size = UDim2.new(1, -60, 0, 20)
     mapTitleLbl.Position = UDim2.new(0, 5, 0, 5)
     mapTitleLbl.BackgroundTransparency = 1
-    mapTitleLbl.Text = "🎮 " .. placeName
+    mapTitleLbl.Text = placeName
     mapTitleLbl.TextColor3 = Color3.fromRGB(255, 255, 255)
-    mapTitleLbl.Font = Enum.Font.SourceSansBold
-    mapTitleLbl.TextSize = 13.5
+    mapTitleLbl.Font = Enum.Font.GothamBold
+    mapTitleLbl.TextSize = 13
     mapTitleLbl.TextXAlignment = Enum.TextXAlignment.Right
     mapTitleLbl.Parent = mapFrame
 
@@ -632,10 +614,10 @@ BtnMainHome.MouseButton1Click:Connect(function()
     timeLbl.Size = UDim2.new(1, -60, 0, 20)
     timeLbl.Position = UDim2.new(0, 5, 0, 28)
     timeLbl.BackgroundTransparency = 1
-    timeLbl.Text = "⏱ الوقت بالداخل: 0 دقيقة"
+    timeLbl.Text = "الوقت بالداخل: 0 دقيقة"
     timeLbl.TextColor3 = Color3.fromRGB(200, 180, 255)
-    timeLbl.Font = Enum.Font.SourceSans
-    timeLbl.TextSize = 11.5
+    timeLbl.Font = Enum.Font.Gotham
+    timeLbl.TextSize = 11
     timeLbl.TextXAlignment = Enum.TextXAlignment.Right
     timeLbl.Parent = mapFrame
 
@@ -644,16 +626,16 @@ BtnMainHome.MouseButton1Click:Connect(function()
         while timeLbl and timeLbl.Parent do
             local elapsed = os.time() - startT
             local mins = math.floor(elapsed / 60)
-            timeLbl.Text = "⏱ الوقت بالداخل: " .. tostring(mins) .. " دقيقة"
+            timeLbl.Text = "الوقت بالداخل: " .. tostring(mins) .. " دقيقة"
             task.wait(5)
         end
     end)
 
     addCategoryHeader("روابط التواصل والسكربتات")
-    addDirectAction("📢 سيرفر الديسكورد الرسمي", function()
+    addDirectAction("سيرفر الديسكورد الرسمي", function()
         if setclipboard then setclipboard("https://discord.gg/benhub") end
     end)
-    addDirectAction("✈️ قناة التليجرام الرسمية", function()
+    addDirectAction("قناة التليجرام الرسمية", function()
         if setclipboard then setclipboard("https://t.me/DFXHub") end
     end)
 
@@ -672,7 +654,7 @@ BtnPlayer.MouseButton1Click:Connect(function()
     playUiSound(SOUND_CLICK, 1)
     clearCenter()
 
-    addCategoryHeader("قائمة سكربتات المابات الشائعة")
+    addCategoryHeader("سكربتات المابات الشائعة")
     addDirectAction("بلوكس فروت - سكربت موز المباشر", function()
         loadstring(game:HttpGet("https://raw.githubusercontent.com/bloxfruitsnokey/Banana/refs/heads/main/DB/script.luau"))()
     end)
@@ -695,7 +677,7 @@ BtnServer.MouseButton1Click:Connect(function()
     playUiSound(SOUND_CLICK, 1)
     clearCenter()
 
-    addCategoryHeader("قائمة اللاعبين النشطين بالسيرفرات")
+    addCategoryHeader("اللاعبين النشطين بالسيرفرات")
     pcall(function()
         local res = customRequest({Url = FIREBASE_PRESENCE_URL .. ".json", Method = "GET"})
         if res and res.StatusCode == 200 then
@@ -703,7 +685,7 @@ BtnServer.MouseButton1Click:Connect(function()
             if data then
                 for _, usr in pairs(data) do
                     if type(usr) == "table" and usr.displayName then
-                        addDirectAction("🟢 " .. tostring(usr.displayName), function()
+                        addDirectAction("لاعب: " .. tostring(usr.displayName), function()
                             if usr.jobId then
                                 TeleportService:TeleportToPlaceInstance(usr.placeId or game.PlaceId, usr.jobId, LocalPlayer)
                             end
@@ -717,7 +699,7 @@ BtnServer.MouseButton1Click:Connect(function()
 end)
 
 ---------------------------------------------------------
--- الجناح الأيمن (لوحة الأدمن + الإعدادات المرتبة)
+-- الجناح الأيمن
 ---------------------------------------------------------
 local BtnAdmin = createProStyleBtn("لوحة الأدمن", "right")
 BtnAdmin.MouseButton1Click:Connect(function()
@@ -725,8 +707,8 @@ BtnAdmin.MouseButton1Click:Connect(function()
     clearCenter()
 
     if LocalPlayer.Name == "Dms921" or LocalPlayer.Name == "طحبح" then
-        addCategoryHeader("أدوات ومميزات أدمن DFX")
-        addDirectAction("📢 إرسال بث مباشر للشاشات", function()
+        addCategoryHeader("أدوات أدمن DFX")
+        addDirectAction("إرسال بث مباشر للشاشات", function()
             pcall(function()
                 customRequest({
                     Url = FIREBASE_BROADCAST_URL,
@@ -742,7 +724,7 @@ BtnAdmin.MouseButton1Click:Connect(function()
                 })
             end)
         end)
-        addDirectAction("🚨 تنبيه بيضة ديفاين حوت", function()
+        addDirectAction("تنبيه بيضة ديفاين حوت", function()
             pcall(function()
                 customRequest({
                     Url = FIREBASE_BROADCAST_URL,
@@ -752,7 +734,7 @@ BtnAdmin.MouseButton1Click:Connect(function()
                         senderName = "DFX Alert",
                         senderUserId = LocalPlayer.UserId,
                         targetUserId = 0,
-                        text = "🚨 DFX: لحقو نزلت بيضة ديفاين حوت كبيرة!",
+                        text = "DFX: لحقو نزلت بيضة ديفاين حوت كبيرة!",
                         eggType = "DIVINE",
                         time = os.time()
                     })
@@ -773,41 +755,38 @@ BtnSettings.MouseButton1Click:Connect(function()
     playUiSound(SOUND_CLICK, 1)
     clearCenter()
 
-    -- 1. قسم ألوان وثيمات الواجهة
-    addCategoryHeader("🎨 تخصيص ثيمات وألوان الواجهة")
-    addDirectAction("💜 الثيم البنفسجي (الافتراضي)", function()
+    addCategoryHeader("تخصيص ثيمات وألوان الواجهة")
+    addDirectAction("الثيم البنفسجي الافتراضي", function()
         updateThemeColors(Color3.fromRGB(150, 40, 255), Color3.fromRGB(110, 25, 200))
     end)
-    addDirectAction("❤️ الثيم الأحمر", function()
+    addDirectAction("الثيم الأحمر", function()
         updateThemeColors(Color3.fromRGB(235, 75, 65), Color3.fromRGB(210, 45, 45))
     end)
-    addDirectAction("💙 الثيم الأزرق", function()
+    addDirectAction("الثيم الأزرق", function()
         updateThemeColors(Color3.fromRGB(50, 150, 255), Color3.fromRGB(30, 100, 220))
     end)
-    addDirectAction("💚 الثيم الأخضر", function()
+    addDirectAction("الثيم الأخضر", function()
         updateThemeColors(Color3.fromRGB(50, 200, 100), Color3.fromRGB(30, 150, 70))
     end)
-    addDirectAction("💛 الثيم الذهبي", function()
+    addDirectAction("الثيم الذهبي", function()
         updateThemeColors(Color3.fromRGB(255, 200, 50), Color3.fromRGB(210, 150, 20))
     end)
 
-    -- 2. قسم خلفية الواجهة
-    addCategoryHeader("🖼️ تخصيص خلفية الواجهة")
-    addDirectAction("🖼️ تفعيل الخلفية الأولى (1)", function()
+    addCategoryHeader("تخصيص خلفية الواجهة")
+    addDirectAction("تفعيل الخلفية الأولى (1)", function()
         BgImage.Image = bg1Url
         BgImage.Visible = true
     end)
-    addDirectAction("🖼️ تفعيل الخلفية الثانية (2)", function()
+    addDirectAction("تفعيل الخلفية الثانية (2)", function()
         BgImage.Image = bg2Url
         BgImage.Visible = true
     end)
-    addDirectAction("🫥 جعل الخلفية شفافة تماماً", function()
+    addDirectAction("جعل الخلفية شفافة تماماً", function()
         BgImage.Visible = false
     end)
 
-    -- 3. قسم خيارات السيرفر وإعادة الدخول (في مكان مخصص لمنع الهوسة)
-    addCategoryHeader("🌐 خيارات السيرفر والأداء")
-    addDirectAction("🔄 إعادة دخول السيرفر (Rejoin)", function()
+    addCategoryHeader("خيارات السيرفر والأداء")
+    addDirectAction("إعادة دخول السيرفر Rejoin", function()
         TeleportService:Teleport(game.PlaceId, LocalPlayer)
     end)
 
@@ -815,7 +794,7 @@ BtnSettings.MouseButton1Click:Connect(function()
 end)
 
 ---------------------------------------------------------
--- الاستماع المباشر للشات والبث
+-- الاستماع للشات والبث
 ---------------------------------------------------------
 task.spawn(function()
     while true do
@@ -871,10 +850,10 @@ task.spawn(function()
                             pLbl.Size = UDim2.new(1, -20, 1, 0)
                             pLbl.Position = UDim2.new(0, 10, 0, 0)
                             pLbl.BackgroundTransparency = 1
-                            pLbl.Text = "📢 " .. tostring(bData.senderName or "DFX") .. ": " .. tostring(bData.text or "")
+                            pLbl.Text = tostring(bData.senderName or "DFX") .. ": " .. tostring(bData.text or "")
                             pLbl.TextColor3 = Color3.fromRGB(255, 255, 255)
-                            pLbl.Font = Enum.Font.SourceSansBold
-                            pLbl.TextSize = 18
+                            pLbl.Font = Enum.Font.GothamBold
+                            pLbl.TextSize = 16
                             pLbl.TextWrapped = true
                             pLbl.Parent = popFrame
 
