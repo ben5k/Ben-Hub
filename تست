@@ -1,4 +1,4 @@
--- DFX Hub - Chilli Hub Style (Developer: Tahbah)
+-- DFX Hub - Exact Chilli Hub UI Replica (Developer: Tahbah)
 local CoreGui = game:GetService("CoreGui")
 local Players = game:GetService("Players")
 local TweenService = game:GetService("TweenService")
@@ -8,10 +8,9 @@ local RunService = game:GetService("RunService")
 local SoundService = game:GetService("SoundService")
 
 local LocalPlayer = Players.LocalPlayer
-local Camera = workspace.CurrentCamera
 local parent = (gethui and gethui()) or CoreGui:FindFirstChild("RobloxGui") or LocalPlayer:WaitForChild("PlayerGui")
 
-if parent:FindFirstChild("DFXHubChilliUI") then parent.DFXHubChilliUI:Destroy() end
+if parent:FindFirstChild("DFXExactChilliUI") then parent.DFXExactChilliUI:Destroy() end
 if parent:FindFirstChild("DFXAdminBroadcastGui") then parent.DFXAdminBroadcastGui:Destroy() end
 
 local function customRequest(options)
@@ -34,21 +33,6 @@ local function safeDecode(jsonStr)
     return nil
 end
 
-local function fetchAsset(url, fileName)
-    if writefile and getcustomasset and readfile then
-        local file = "DFXHub_" .. fileName .. ".png"
-        if not isfile(file) then
-            pcall(function() writefile(file, game:HttpGet(url)) end)
-        end
-        if isfile(file) then return getcustomasset(file) end
-    end
-    return url
-end
-
--- اللوجو الجديد المحدد من قبلك
-local dfxLogoAsset = fetchAsset("https://f.top4top.io/p_3947o3vfq0.jpg", "dfx_logo_new")
-
--- الأصوات
 local SOUND_CLICK = "rbxassetid://6895079853"
 local SOUND_BROADCAST = "rbxassetid://17208361335"
 local SOUND_EGG_ALERT = "rbxassetid://127213343505462"
@@ -70,59 +54,50 @@ end
 
 -- قاعدة البيانات t7b7
 local FIREBASE_BASE_URL = "https://t7b7-54245-default-rtdb.firebaseio.com"
-local FIREBASE_SUGGEST_URL = FIREBASE_BASE_URL .. "/suggestions.json"
 local FIREBASE_CHAT_URL = FIREBASE_BASE_URL .. "/global_chat.json"
 local FIREBASE_PRESENCE_URL = FIREBASE_BASE_URL .. "/presence"
 local FIREBASE_BROADCAST_URL = FIREBASE_BASE_URL .. "/broadcasts.json"
 
 ---------------------------------------------------------
--- الواجهة الرئيسية بستايل Chilli Hub للشعار DFX
+-- الواجهة الرئيسية المطابقة لـ Chilli Hub بالظبط
 ---------------------------------------------------------
 local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "DFXHubChilliUI"
+ScreenGui.Name = "DFXExactChilliUI"
 ScreenGui.ResetOnSpawn = false
 ScreenGui.Parent = parent
 
 local Main = Instance.new("Frame")
 Main.Name = "Main"
-Main.Size = UDim2.new(0, 570, 0, 320)
-Main.Position = UDim2.new(0.5, -285, 0.5, -160)
-Main.BackgroundColor3 = Color3.fromRGB(28, 28, 28)
+Main.Size = UDim2.new(0, 580, 0, 320)
+Main.Position = UDim2.new(0.5, -290, 0.5, -160)
+Main.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
 Main.BorderSizePixel = 0
 Main.Active = true
 Main.Draggable = true
 Main.Parent = ScreenGui
 
--- الهيدر العلوي الأحمر
+-- 1. الهيدر العلوي الأحـمـر
 local Header = Instance.new("Frame")
-Header.Size = UDim2.new(1, 0, 0, 36)
-Header.BackgroundColor3 = Color3.fromRGB(230, 40, 40)
+Header.Size = UDim2.new(1, 0, 0, 38)
+Header.BackgroundColor3 = Color3.fromRGB(235, 60, 55)
 Header.BorderSizePixel = 0
 Header.Parent = Main
 
-local LogoImg = Instance.new("ImageLabel")
-LogoImg.Size = UDim2.new(0, 28, 0, 28)
-LogoImg.Position = UDim2.new(0, 6, 0, 4)
-LogoImg.BackgroundTransparency = 1
-LogoImg.Image = dfxLogoAsset
-LogoImg.ScaleType = Enum.ScaleType.Fit
-LogoImg.Parent = Header
-
 local Title = Instance.new("TextLabel")
-Title.Size = UDim2.new(1, -80, 1, 0)
-Title.Position = UDim2.new(0, 40, 0, 0)
+Title.Size = UDim2.new(1, -50, 1, 0)
+Title.Position = UDim2.new(0, 0, 0, 0)
 Title.BackgroundTransparency = 1
 Title.Text = "DFX Hub | المطور: طحبح"
 Title.TextColor3 = Color3.fromRGB(255, 255, 255)
-Title.Font = Enum.Font.SourceSansItalic
-Title.TextSize = 20
-Title.TextXAlignment = Enum.TextXAlignment.Left
+Title.Font = Enum.Font.SourceSansBold
+Title.TextSize = 22
+Title.TextXAlignment = Enum.TextXAlignment.Center
 Title.Parent = Header
 
 local CloseBtn = Instance.new("TextButton")
-CloseBtn.Size = UDim2.new(0, 26, 0, 24)
-CloseBtn.Position = UDim2.new(1, -30, 0, 6)
-CloseBtn.BackgroundColor3 = Color3.fromRGB(180, 30, 30)
+CloseBtn.Size = UDim2.new(0, 28, 0, 26)
+CloseBtn.Position = UDim2.new(1, -33, 0, 6)
+CloseBtn.BackgroundColor3 = Color3.fromRGB(200, 35, 35)
 CloseBtn.Text = "X"
 CloseBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
 CloseBtn.Font = Enum.Font.SourceSansBold
@@ -130,10 +105,15 @@ CloseBtn.TextSize = 16
 CloseBtn.Parent = Header
 Instance.new("UICorner", CloseBtn).CornerRadius = UDim.new(0, 4)
 
--- القوائم الجانبية (يمين ويسار)
+local closeStroke = Instance.new("UIStroke")
+closeStroke.Color = Color3.fromRGB(130, 20, 20)
+closeStroke.Thickness = 1.5
+closeStroke.Parent = CloseBtn
+
+-- 2. الجانب الأيسر (Left Red Buttons)
 local LeftSidebar = Instance.new("Frame")
-LeftSidebar.Size = UDim2.new(0, 115, 1, -42)
-LeftSidebar.Position = UDim2.new(0, 6, 0, 38)
+LeftSidebar.Size = UDim2.new(0, 115, 1, -72)
+LeftSidebar.Position = UDim2.new(0, 6, 0, 42)
 LeftSidebar.BackgroundTransparency = 1
 LeftSidebar.Parent = Main
 
@@ -141,9 +121,10 @@ local LeftLayout = Instance.new("UIListLayout")
 LeftLayout.Padding = UDim.new(0, 5)
 LeftLayout.Parent = LeftSidebar
 
+-- 3. الجانب الأيمن (Right Red Buttons)
 local RightSidebar = Instance.new("Frame")
-RightSidebar.Size = UDim2.new(0, 115, 1, -42)
-RightSidebar.Position = UDim2.new(1, -121, 0, 38)
+RightSidebar.Size = UDim2.new(0, 115, 1, -72)
+RightSidebar.Position = UDim2.new(1, -121, 0, 42)
 RightSidebar.BackgroundTransparency = 1
 RightSidebar.Parent = Main
 
@@ -151,17 +132,22 @@ local RightLayout = Instance.new("UIListLayout")
 RightLayout.Padding = UDim.new(0, 5)
 RightLayout.Parent = RightSidebar
 
--- منطقة المحتوى الوسطى
+-- 4. المنطقة الوسطى (Dark Center)
 local CenterArea = Instance.new("Frame")
 CenterArea.Size = UDim2.new(1, -252, 1, -72)
-CenterArea.Position = UDim2.new(0, 126, 0, 38)
+CenterArea.Position = UDim2.new(0, 126, 0, 42)
 CenterArea.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
 CenterArea.BorderSizePixel = 0
 CenterArea.Parent = Main
 
+local centerBorder = Instance.new("UIStroke")
+centerBorder.Color = Color3.fromRGB(40, 40, 40)
+centerBorder.Thickness = 1
+centerBorder.Parent = CenterArea
+
 local CenterScroll = Instance.new("ScrollingFrame")
-CenterScroll.Size = UDim2.new(1, -10, 1, -10)
-CenterScroll.Position = UDim2.new(0, 5, 0, 5)
+CenterScroll.Size = UDim2.new(1, -8, 1, -8)
+CenterScroll.Position = UDim2.new(0, 4, 0, 4)
 CenterScroll.BackgroundTransparency = 1
 CenterScroll.CanvasSize = UDim2.new(0, 0, 0, 0)
 CenterScroll.ScrollBarThickness = 4
@@ -172,45 +158,105 @@ CenterLayout.SortOrder = Enum.SortOrder.LayoutOrder
 CenterLayout.Padding = UDim.new(0, 4)
 CenterLayout.Parent = CenterScroll
 
--- شريط البحث بالأسفل
+-- 5. شريط البحث بالأسفل (Search & Filter)
+local SearchFrame = Instance.new("Frame")
+SearchFrame.Size = UDim2.new(1, -12, 0, 22)
+SearchFrame.Position = UDim2.new(0, 6, 1, -26)
+SearchFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+SearchFrame.Parent = Main
+
+local SearchLabel = Instance.new("TextLabel")
+SearchLabel.Size = UDim2.new(0, 60, 1, 0)
+SearchLabel.BackgroundTransparency = 1
+SearchLabel.Text = "Search"
+SearchLabel.TextColor3 = Color3.fromRGB(200, 200, 200)
+SearchLabel.Font = Enum.Font.SourceSansBold
+SearchLabel.TextSize = 13
+SearchLabel.Parent = SearchFrame
+
 local SearchBox = Instance.new("TextBox")
-SearchBox.Size = UDim2.new(1, -252, 0, 26)
-SearchBox.Position = UDim2.new(0, 126, 1, -30)
+SearchBox.Size = UDim2.new(1, -65, 1, -2)
+SearchBox.Position = UDim2.new(0, 62, 0, 1)
 SearchBox.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
-SearchBox.PlaceholderText = "بحث في سكربتات DFX..."
+SearchBox.PlaceholderText = "تصفية المميزات..."
 SearchBox.Text = ""
 SearchBox.TextColor3 = Color3.fromRGB(255, 255, 255)
 SearchBox.Font = Enum.Font.SourceSans
-SearchBox.TextSize = 13
-SearchBox.Parent = Main
+SearchBox.TextSize = 12
+SearchBox.TextXAlignment = Enum.TextXAlignment.Left
+SearchBox.Parent = SearchFrame
 
 ---------------------------------------------------------
--- دالة إنشاء الأزرار وخيارات القائمة الوسطى
+-- دالة تصاميم الأزرار المطابقة تماماً لـ Chilli Hub
 ---------------------------------------------------------
 local function createRedBtn(text, side)
     local btn = Instance.new("TextButton")
-    btn.Size = UDim2.new(1, 0, 0, 28)
-    btn.BackgroundColor3 = Color3.fromRGB(235, 65, 55)
+    btn.Size = UDim2.new(1, 0, 0, 27)
+    btn.BackgroundColor3 = Color3.fromRGB(235, 75, 65)
     btn.Text = text
     btn.TextColor3 = Color3.fromRGB(255, 255, 255)
     btn.Font = Enum.Font.SourceSansBold
-    btn.TextSize = 13
+    btn.TextSize = 14
     btn.Parent = (side == "left") and LeftSidebar or RightSidebar
     Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 5)
 
     local stroke = Instance.new("UIStroke")
     stroke.Color = Color3.fromRGB(170, 35, 25)
-    stroke.Thickness = 1.2
+    stroke.Thickness = 1.5
     stroke.Parent = btn
 
     return btn
 end
 
-local function addCenterItem(text, onClick)
+-- تصميم الأزرار والمفاتيح (Toggles 🟩 / ⬜) بالوسط مثل الصورة
+local function addToggleItem(text, defaultState, onToggle)
+    local frame = Instance.new("Frame")
+    frame.Size = UDim2.new(1, -4, 0, 28)
+    frame.BackgroundTransparency = 1
+    frame.Parent = CenterScroll
+
+    local lbl = Instance.new("TextLabel")
+    lbl.Size = UDim2.new(1, -45, 1, 0)
+    lbl.Position = UDim2.new(0, 4, 0, 0)
+    lbl.BackgroundTransparency = 1
+    lbl.Text = text
+    lbl.TextColor3 = Color3.fromRGB(255, 255, 255)
+    lbl.Font = Enum.Font.SourceSansBold
+    lbl.TextSize = 14
+    lbl.TextXAlignment = Enum.TextXAlignment.Left
+    lbl.Parent = frame
+
+    local toggleBtn = Instance.new("TextButton")
+    toggleBtn.Size = UDim2.new(0, 34, 0, 18)
+    toggleBtn.Position = UDim2.new(1, -38, 0.5, -9)
+    toggleBtn.BackgroundColor3 = defaultState and Color3.fromRGB(45, 200, 80) or Color3.fromRGB(220, 220, 220)
+    toggleBtn.Text = ""
+    toggleBtn.Parent = frame
+    Instance.new("UICorner", toggleBtn).CornerRadius = UDim.new(0, 3)
+
+    local innerBox = Instance.new("Frame")
+    innerBox.Size = UDim2.new(0, 12, 0, 14)
+    innerBox.Position = defaultState and UDim2.new(1, -14, 0.5, -7) or UDim2.new(0, 2, 0.5, -7)
+    innerBox.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+    innerBox.Parent = toggleBtn
+    Instance.new("UICorner", innerBox).CornerRadius = UDim.new(0, 2)
+
+    local state = defaultState
+    toggleBtn.MouseButton1Click:Connect(function()
+        playUiSound(SOUND_CLICK, 1)
+        state = not state
+        toggleBtn.BackgroundColor3 = state and Color3.fromRGB(45, 200, 80) or Color3.fromRGB(220, 220, 220)
+        innerBox.Position = state and UDim2.new(1, -14, 0.5, -7) or UDim2.new(0, 2, 0.5, -7)
+        if onToggle then onToggle(state) end
+    end)
+    return frame
+end
+
+local function addActionItem(text, onClick)
     local btn = Instance.new("TextButton")
-    btn.Size = UDim2.new(1, 0, 0, 24)
+    btn.Size = UDim2.new(1, -4, 0, 26)
     btn.BackgroundTransparency = 1
-    btn.Text = "  > " .. text
+    btn.Text = "  ▶  " .. text
     btn.TextColor3 = Color3.fromRGB(255, 255, 255)
     btn.Font = Enum.Font.SourceSansBold
     btn.TextSize = 14
@@ -224,72 +270,89 @@ local function addCenterItem(text, onClick)
     return btn
 end
 
+local function addCategoryHeader(titleText)
+    local lbl = Instance.new("TextLabel")
+    lbl.Size = UDim2.new(1, 0, 0, 22)
+    lbl.BackgroundTransparency = 1
+    lbl.Text = "  ˅  " .. titleText
+    lbl.TextColor3 = Color3.fromRGB(255, 255, 255)
+    lbl.Font = Enum.Font.SourceSansBold
+    lbl.TextSize = 15
+    lbl.TextXAlignment = Enum.TextXAlignment.Left
+    lbl.Parent = CenterScroll
+end
+
 local function clearCenter()
     for _, child in ipairs(CenterScroll:GetChildren()) do
-        if child:IsA("TextButton") or child:IsA("Frame") or child:IsA("TextLabel") or child:IsA("TextBox") then
+        if not child:IsA("UIListLayout") then
             child:Destroy()
         end
     end
 end
 
 ---------------------------------------------------------
--- تبويبات DFX Hub
+-- القوائم الجانبية ومميزات السكربتات
 ---------------------------------------------------------
 
--- 1. التجميع المباشر
+-- 1. التجميع (Farm)
 local BtnFarm = createRedBtn("التجميع", "left")
 BtnFarm.MouseButton1Click:Connect(function()
     playUiSound(SOUND_CLICK, 1)
     clearCenter()
-    addCenterItem("سكربت فلفل DFX (سرقة البيض)", function()
-        loadstring(game:HttpGet("https://raw.githubusercontent.com/tienkhanh1/spicy/main/Chilli.lua"))()
+    
+    addCategoryHeader("عالم البيض وسرقة المابات")
+    
+    addToggleItem("سرقة البيض التلقائية (Auto Steal)", false, function(st)
+        if st then loadstring(game:HttpGet("https://raw.githubusercontent.com/tienkhanh1/spicy/main/Chilli.lua"))() end
     end)
-    addCenterItem("سكربت كسر البيض (Serenity Hub)", function()
+    
+    addToggleItem("سرقة فورية (Instant Steal Eggs)", false, function(st) end)
+    
+    addActionItem("تشغيل سكربت كسر البيض (Serenity Hub)", function()
         loadstring(game:HttpGet("https://scriptblox.com/raw/Break-and-Steal-an-Egg-Serenity-Hub-greater-INSTANT-STEAL-DEMON-EVENT-AUTO-BUY!-ETC-231865"))()
     end)
-    addCenterItem("سكربت 99 ليلة (Cookie Hub)", function()
+    
+    addActionItem("تشغيل سكربت 99 ليلة (Cookie Hub)", function()
         loadstring(game:HttpGet("https://github.com/Cookie-Hub-Roblox/Cookie-Hub-Roblox/raw/refs/heads/main/loader.luau"))()
     end)
+    
     CenterScroll.CanvasSize = UDim2.new(0, 0, 0, CenterLayout.AbsoluteContentSize.Y + 10)
 end)
 
--- 2. مابات عامة
+-- 2. مابات عامة (Player / General)
 local BtnPlayer = createRedBtn("مابات عامة", "left")
 BtnPlayer.MouseButton1Click:Connect(function()
     playUiSound(SOUND_CLICK, 1)
     clearCenter()
-    addCenterItem("بلوكس فروت - سكربت موز المباشر", function()
+    
+    addCategoryHeader("قائمة مابات روبلوكس الشائعة")
+    
+    addActionItem("بلوكس فروت - سكربت موز المباشر", function()
         loadstring(game:HttpGet("https://raw.githubusercontent.com/bloxfruitsnokey/Banana/refs/heads/main/DB/script.luau"))()
     end)
-    addCenterItem("بلوكس فروت - ريدز في 2", function()
+    addActionItem("بلوكس فروت - ريدز في 2", function()
         loadstring(game:HttpGet("https://raw.githubusercontent.com/UCT-hub/main/refs/heads/main/redz-v2"))()
     end)
-    addCenterItem("ماب كيبورد - هوشي هوب", function()
+    addActionItem("ماب كيبورد - هوشي هوب", function()
         loadstring(game:HttpGet("https://hoshihub.site/loader.lua"))()
     end)
-    addCenterItem("ركوب حيوانات - Mystrix Hub", function()
+    addActionItem("ركوب حيوانات - Mystrix Hub", function()
         loadstring(game:HttpGet("https://raw.githubusercontent.com/ummarxfarooq/mystrix-hub/refs/heads/main/loader"))()
     end)
+    
     CenterScroll.CanvasSize = UDim2.new(0, 0, 0, CenterLayout.AbsoluteContentSize.Y + 10)
 end)
 
--- 3. الشات العام DFX
+-- 3. الشات العام (Chat)
 local BtnChat = createRedBtn("الشات العام", "left")
 BtnChat.MouseButton1Click:Connect(function()
     playUiSound(SOUND_CLICK, 1)
     clearCenter()
     
-    local titleLbl = Instance.new("TextLabel")
-    titleLbl.Size = UDim2.new(1, 0, 0, 20)
-    titleLbl.BackgroundTransparency = 1
-    titleLbl.Text = "💬 شات DFX العام (المطور طحبح)"
-    titleLbl.TextColor3 = Color3.fromRGB(255, 200, 50)
-    titleLbl.Font = Enum.Font.SourceSansBold
-    titleLbl.TextSize = 13
-    titleLbl.Parent = CenterScroll
-
+    addCategoryHeader("شات DFX المباشر")
+    
     local chatBox = Instance.new("TextBox")
-    chatBox.Size = UDim2.new(1, 0, 0, 26)
+    chatBox.Size = UDim2.new(1, -10, 0, 26)
     chatBox.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
     chatBox.PlaceholderText = "اكتب رسالتك واضغط Enter..."
     chatBox.Text = ""
@@ -318,7 +381,7 @@ BtnChat.MouseButton1Click:Connect(function()
         end
     end)
 
-    addCenterItem("تحديث رسائل الشات 🔄", function()
+    addActionItem("تحديث الشات 🔄", function()
         pcall(function()
             local res = customRequest({Url = FIREBASE_CHAT_URL, Method = "GET"})
             if res and res.StatusCode == 200 then
@@ -326,7 +389,7 @@ BtnChat.MouseButton1Click:Connect(function()
                 if data then
                     for _, m in pairs(data) do
                         if type(m) == "table" and m.text then
-                            addCenterItem(tostring(m.sender) .. ": " .. tostring(m.text), nil)
+                            addActionItem(tostring(m.sender) .. ": " .. tostring(m.text), nil)
                         end
                     end
                 end
@@ -337,11 +400,13 @@ BtnChat.MouseButton1Click:Connect(function()
     CenterScroll.CanvasSize = UDim2.new(0, 0, 0, CenterLayout.AbsoluteContentSize.Y + 10)
 end)
 
--- 4. المتواجدون الآن
+-- 4. المتواجدون (Server / Presence)
 local BtnServer = createRedBtn("المتواجدون", "left")
 BtnServer.MouseButton1Click:Connect(function()
     playUiSound(SOUND_CLICK, 1)
     clearCenter()
+    
+    addCategoryHeader("المستخدمون النشطون الآن")
     
     pcall(function()
         local res = customRequest({Url = FIREBASE_PRESENCE_URL .. ".json", Method = "GET"})
@@ -350,7 +415,7 @@ BtnServer.MouseButton1Click:Connect(function()
             if data then
                 for _, usr in pairs(data) do
                     if type(usr) == "table" and usr.displayName then
-                        addCenterItem("🟢 " .. tostring(usr.displayName), function()
+                        addActionItem("🟢 " .. tostring(usr.displayName), function()
                             if usr.jobId then
                                 TeleportService:TeleportToPlaceInstance(usr.placeId or game.PlaceId, usr.jobId, LocalPlayer)
                             end
@@ -363,24 +428,26 @@ BtnServer.MouseButton1Click:Connect(function()
     CenterScroll.CanvasSize = UDim2.new(0, 0, 0, CenterLayout.AbsoluteContentSize.Y + 10)
 end)
 
--- 5. لوحة الأدمن الخاصة بـ Dms921 والطحبح
+-- 5. لوحة الأدمن الخاصة بـ Dms921 و طحبح
 if LocalPlayer.Name == "Dms921" or LocalPlayer.Name == "طحبح" then
     local BtnAdmin = createRedBtn("لوحة الأدمن", "right")
     BtnAdmin.MouseButton1Click:Connect(function()
         playUiSound(SOUND_CLICK, 1)
         clearCenter()
 
-        addCenterItem("📢 بث DFX المباشر للشاشات", function()
+        addCategoryHeader("أدوات التحكم والبث المباشر")
+
+        addActionItem("📢 إرسال بث للشاشات", function()
             clearCenter()
             local bBox = Instance.new("TextBox")
-            bBox.Size = UDim2.new(1, 0, 0, 30)
+            bBox.Size = UDim2.new(1, -10, 0, 28)
             bBox.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
-            bBox.PlaceholderText = "اكتب نص البث..."
+            bBox.PlaceholderText = "اكتب نص البث هنا..."
             bBox.Text = ""
             bBox.TextColor3 = Color3.fromRGB(255, 255, 255)
             bBox.Parent = CenterScroll
 
-            addCenterItem("🚀 بث الآن عبر DFX", function()
+            addActionItem("🚀 إرسال البث الآن", function()
                 if bBox.Text ~= "" then
                     pcall(function()
                         customRequest({
@@ -400,7 +467,7 @@ if LocalPlayer.Name == "Dms921" or LocalPlayer.Name == "طحبح" then
             end)
         end)
 
-        addCenterItem("🥚 إنذار بيضة ديفاين حوت هامة", function()
+        addActionItem("🚨 إرسال تنبيه بيضة ديفاين حوت", function()
             pcall(function()
                 customRequest({
                     Url = FIREBASE_BROADCAST_URL,
@@ -421,26 +488,28 @@ if LocalPlayer.Name == "Dms921" or LocalPlayer.Name == "طحبح" then
     end)
 end
 
--- 6. ديسكورد وإعدادات
+-- 6. الديسكورد والإعدادات (Discord & Settings)
 local BtnDiscord = createRedBtn("ديسكورد", "right")
 BtnDiscord.MouseButton1Click:Connect(function()
     playUiSound(SOUND_CLICK, 1)
     if setclipboard then setclipboard("https://discord.gg/benhub") end
     clearCenter()
-    addCenterItem("✅ تم نسخ رابط ديسكورد DFX!", nil)
+    addCategoryHeader("مجتمع DFX")
+    addActionItem("✅ تم نسخ رابط الديسكورد!", nil)
 end)
 
 local BtnSettings = createRedBtn("الإعدادات", "right")
 BtnSettings.MouseButton1Click:Connect(function()
     playUiSound(SOUND_CLICK, 1)
     clearCenter()
-    addCenterItem("🔄 إعادة دخول السيرفر (Rejoin)", function()
+    addCategoryHeader("إعدادات السيرفر والأداء")
+    addActionItem("🔄 إعادة دخول السيرفر (Rejoin)", function()
         TeleportService:Teleport(game.PlaceId, LocalPlayer)
     end)
 end)
 
 ---------------------------------------------------------
--- استقبال البث المباشر للشاشة بألوان DFX
+-- نظام البث وتحديث الحضور
 ---------------------------------------------------------
 local BroadcastGui = Instance.new("ScreenGui")
 BroadcastGui.Name = "DFXAdminBroadcastGui"
@@ -461,14 +530,14 @@ task.spawn(function()
                             processedBroadcasts[bKey] = true
                             
                             local popFrame = Instance.new("Frame")
-                            popFrame.Size = UDim2.new(0, 520, 0, 75)
-                            popFrame.Position = UDim2.new(0.5, -260, 0, 20)
+                            popFrame.Size = UDim2.new(0, 500, 0, 70)
+                            popFrame.Position = UDim2.new(0.5, -250, 0, 20)
                             popFrame.BackgroundColor3 = Color3.fromRGB(18, 18, 18)
                             popFrame.Parent = BroadcastGui
                             Instance.new("UICorner", popFrame).CornerRadius = UDim.new(0, 8)
 
                             local pStroke = Instance.new("UIStroke")
-                            pStroke.Color = Color3.fromRGB(230, 40, 40)
+                            pStroke.Color = Color3.fromRGB(235, 60, 55)
                             pStroke.Thickness = 2
                             pStroke.Parent = popFrame
 
@@ -497,7 +566,7 @@ task.spawn(function()
     end
 end)
 
--- تحديث الحضور بأسماء مطوري DFX
+-- تحديث الحضور
 task.spawn(function()
     while true do
         pcall(function()
@@ -524,4 +593,5 @@ CloseBtn.MouseButton1Click:Connect(function()
     Main.Visible = false
 end)
 
+-- تشغيل القائمة الأولى تلقائياً
 BtnFarm.MouseButton1Click:Fire()
