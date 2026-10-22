@@ -1,4 +1,4 @@
--- Ben Script Hub - Complete UI & Fixes (Correct Audio IDs, Big Broadcast/Egg Alerts & Working Jail/Remote)
+-- Ben Script Hub - Complete UI & Fixes (Max Volume Sounds, Fixed Features Modal & Fixed Chat)
 local CoreGui = game:GetService("CoreGui")
 local Players = game:GetService("Players")
 local TweenService = game:GetService("TweenService")
@@ -38,7 +38,7 @@ local bannerAsset = fetchAsset("https://e.top4top.io/p_3946s8rxw1.jpg", "banner_
 local bubbleAsset = fetchAsset("https://f.top4top.io/p_3946l9c8k2.jpg", "bubble_ben_purple")
 local eggEventMapAsset = fetchAsset("https://b.top4top.io/p_39455j3oh0.jpg", "egg_event_map")
 
--- الأصوات المحددة من قبلك
+-- الأصوات المحددة مع رفع المجلد للماكس
 local SOUND_BROADCAST = "rbxassetid://17208361335" -- صوت بث الرسائل للجميع
 local SOUND_EGG_ALERT = "rbxassetid://127213343505462" -- صوت تنبيهات البيض
 
@@ -60,17 +60,20 @@ if isfile and readfile and isfile(configFile) then
     end)
 end
 
+-- دالة تشغيل الصوت القوي جداً
 local function playUiSound(soundId, pitch)
     if not soundEffectsEnabled then return end
     task.spawn(function()
         local snd = Instance.new("Sound")
         snd.SoundId = soundId
-        snd.Volume = 2
+        snd.Volume = 10 -- أعلى مستوى صوت ممكن
         snd.Pitch = pitch or 1
         snd.Parent = SoundService
+        
         if not snd.IsLoaded then
             snd.Loaded:Wait()
         end
+        
         snd:Play()
         snd.Ended:Connect(function() snd:Destroy() end)
     end)
@@ -295,7 +298,7 @@ BenOpenBtn.MouseButton1Click:Connect(function()
 end)
 
 ---------------------------------------------------------
--- نظام البث وتنبيهات الشاشة (حجم كبير، بدون خلفية، وبأصواتك المحددة)
+-- نظام البث وتنبيهات الشاشة (كبيرة، بدون خلفية)
 ---------------------------------------------------------
 local BroadcastGui = Instance.new("ScreenGui")
 BroadcastGui.Name = "BenAdminBroadcastGui"
@@ -310,8 +313,8 @@ local function showBroadcastPopup(senderName, senderUserId, messageText, eggType
 
     local popFrame = Instance.new("Frame")
     popFrame.Name = "ActivePopup"
-    popFrame.Size = UDim2.new(0, 650, 0, 90)
-    popFrame.Position = UDim2.new(0.5, -325, 0, -120)
+    popFrame.Size = UDim2.new(0, 680, 0, 100)
+    popFrame.Position = UDim2.new(0.5, -340, 0, -130)
     popFrame.BackgroundTransparency = 1
     popFrame.Parent = BroadcastGui
 
@@ -326,25 +329,25 @@ local function showBroadcastPopup(senderName, senderUserId, messageText, eggType
         textLbl.Text = messageText
         textLbl.RichText = true
         textLbl.Font = Enum.Font.SourceSansBold
-        textLbl.TextSize = 26
+        textLbl.TextSize = 28
         textLbl.TextWrapped = true
         textLbl.TextStrokeTransparency = 0.1
         textLbl.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
         textLbl.Parent = popFrame
     else
         local avatarImg = Instance.new("ImageLabel")
-        avatarImg.Size = UDim2.new(0, 60, 0, 60)
-        avatarImg.Position = UDim2.new(0, 10, 0.5, -30)
+        avatarImg.Size = UDim2.new(0, 64, 0, 64)
+        avatarImg.Position = UDim2.new(0, 10, 0.5, -32)
         avatarImg.BackgroundColor3 = Color3.fromRGB(30, 30, 40)
         avatarImg.Image = "rbxthumb://type=AvatarHeadShot&id=" .. tostring(senderUserId or 1) .. "&w=150&h=150"
         avatarImg.Parent = popFrame
         Instance.new("UICorner", avatarImg).CornerRadius = UDim.new(1, 0)
 
         local textLbl = Instance.new("TextLabel")
-        textLbl.Size = UDim2.new(1, -85, 1, 0)
-        textLbl.Position = UDim2.new(0, 80, 0, 0)
+        textLbl.Size = UDim2.new(1, -90, 1, 0)
+        textLbl.Position = UDim2.new(0, 85, 0, 0)
         textLbl.BackgroundTransparency = 1
-        textLbl.Text = string.format("<font color=\"#FFA500\" size=\"28\"><b>%s</b></font> <font color=\"#00A2FF\" size=\"26\">✔</font> : <font size=\"26\"><b>%s</b></font>", senderName, messageText)
+        textLbl.Text = string.format("<font color=\"#FFA500\" size=\"30\"><b>%s</b></font> <font color=\"#00A2FF\" size=\"28\">✔</font> : <font size=\"28\"><b>%s</b></font>", senderName, messageText)
         textLbl.RichText = true
         textLbl.TextColor3 = Color3.fromRGB(255, 255, 255)
         textLbl.Font = Enum.Font.SourceSansBold
@@ -357,11 +360,11 @@ local function showBroadcastPopup(senderName, senderUserId, messageText, eggType
 
     playUiSound(soundToPlay, 1)
 
-    TweenService:Create(popFrame, TweenInfo.new(0.4, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {Position = UDim2.new(0.5, -325, 0, 25)}):Play()
+    TweenService:Create(popFrame, TweenInfo.new(0.4, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {Position = UDim2.new(0.5, -340, 0, 25)}):Play()
 
     task.delay(8, function()
         if popFrame and popFrame.Parent then
-            TweenService:Create(popFrame, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {Position = UDim2.new(0.5, -325, 0, -130)}):Play()
+            TweenService:Create(popFrame, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {Position = UDim2.new(0.5, -340, 0, -140)}):Play()
             task.wait(0.3)
             if popFrame then popFrame:Destroy() end
         end
@@ -369,7 +372,7 @@ local function showBroadcastPopup(senderName, senderUserId, messageText, eggType
 end
 
 ---------------------------------------------------------
--- نظام الشات
+-- نظام الشات والمميزات (معالجة الأخطاء وإعادة الهيكلة)
 ---------------------------------------------------------
 local TopChatToggleBtn = Instance.new("TextButton")
 TopChatToggleBtn.Name = "TopChatToggleBtn"
@@ -474,7 +477,7 @@ local ModalTitle = Instance.new("TextLabel")
 ModalTitle.Size = UDim2.new(1, -40, 1, 0)
 ModalTitle.Position = UDim2.new(0, 10, 0, 0)
 ModalTitle.BackgroundTransparency = 1
-ModalTitle.Text = "⭐ قائمة مميزات - مستخدمو السكربت"
+ModalTitle.Text = "⭐ قائمة المتواجدين بالسيرفرات"
 ModalTitle.TextColor3 = CUSTOM_ORANGE
 ModalTitle.Font = Enum.Font.SourceSansBold
 ModalTitle.TextSize = 12.5
@@ -520,8 +523,104 @@ UsersLayout.SortOrder = Enum.SortOrder.LayoutOrder
 UsersLayout.Padding = UDim.new(0, 6)
 UsersLayout.Parent = UsersScroll
 
+local function updateActiveUsersList()
+    pcall(function()
+        local res = customRequest({Url = FIREBASE_PRESENCE_URL .. ".json", Method = "GET"})
+        if res and res.StatusCode == 200 and res.Body ~= "" and res.Body ~= "null" then
+            local data = HttpService:JSONDecode(res.Body)
+            if data then
+                for _, child in ipairs(UsersScroll:GetChildren()) do
+                    if child:IsA("Frame") then child:Destroy() end
+                end
+
+                local count = 0
+                local now = os.time()
+
+                for _, usr in pairs(data) do
+                    if type(usr) == "table" and usr.time and (now - usr.time < 45) then
+                        count = count + 1
+
+                        local uCard = Instance.new("Frame")
+                        uCard.Size = UDim2.new(1, -6, 0, 42)
+                        uCard.BackgroundColor3 = Color3.fromRGB(24, 24, 34)
+                        uCard.ZIndex = 1012
+                        uCard.Parent = UsersScroll
+                        Instance.new("UICorner", uCard).CornerRadius = UDim.new(0, 6)
+
+                        local uCardStroke = Instance.new("UIStroke")
+                        uCardStroke.Color = Color3.fromRGB(50, 50, 70)
+                        uCardStroke.Thickness = 1
+                        uCardStroke.Parent = uCard
+
+                        local uImg = Instance.new("ImageLabel")
+                        uImg.Size = UDim2.new(0, 32, 0, 32)
+                        uImg.Position = UDim2.new(0, 5, 0.5, -16)
+                        uImg.BackgroundColor3 = Color3.fromRGB(35, 35, 45)
+                        uImg.Image = "rbxthumb://type=AvatarHeadShot&id=" .. tostring(usr.userId or 1) .. "&w=150&h=150"
+                        uImg.ZIndex = 1013
+                        uImg.Parent = uCard
+                        Instance.new("UICorner", uImg).CornerRadius = UDim.new(1, 0)
+
+                        local uLbl = Instance.new("TextLabel")
+                        uLbl.Size = UDim2.new(1, -120, 1, 0)
+                        uLbl.Position = UDim2.new(0, 42, 0, 0)
+                        uLbl.BackgroundTransparency = 1
+                        uLbl.Text = usr.displayName or usr.name or "مستخدم"
+                        uLbl.TextColor3 = CUSTOM_ORANGE
+                        uLbl.Font = Enum.Font.SourceSansBold
+                        uLbl.TextSize = 12
+                        uLbl.TextXAlignment = Enum.TextXAlignment.Left
+                        uLbl.ZIndex = 1013
+                        uLbl.Parent = uCard
+
+                        local joinBtn = Instance.new("TextButton")
+                        joinBtn.Size = UDim2.new(0, 68, 0, 26)
+                        joinBtn.Position = UDim2.new(1, -74, 0.5, -13)
+                        joinBtn.BackgroundColor3 = Color3.fromRGB(40, 140, 60)
+                        joinBtn.Text = "انتقال ✈"
+                        joinBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+                        joinBtn.Font = Enum.Font.SourceSansBold
+                        joinBtn.TextSize = 10.5
+                        joinBtn.ZIndex = 1013
+                        joinBtn.Parent = uCard
+                        Instance.new("UICorner", joinBtn).CornerRadius = UDim.new(0, 5)
+
+                        joinBtn.MouseButton1Click:Connect(function()
+                            playUiSound(SOUND_CLICK, 1)
+                            if usr.jobId == game.JobId then
+                                joinBtn.Text = "أنت هنا!"
+                                task.wait(1.5)
+                                joinBtn.Text = "انتقال ✈"
+                            else
+                                joinBtn.Text = "جارٍ..."
+                                local success = pcall(function()
+                                    TeleportService:TeleportToPlaceInstance(usr.placeId or game.PlaceId, usr.jobId, LocalPlayer)
+                                end)
+                                if not success then
+                                    joinBtn.Text = "❌ ممتلئ"
+                                    task.wait(2)
+                                    joinBtn.Text = "انتقال ✈"
+                                end
+                            end
+                        end)
+                    end
+                end
+
+                ActiveCountLbl.Text = "🟢 المتواجدون الآن: " .. tostring(count)
+                UsersScroll.CanvasSize = UDim2.new(0, 0, 0, UsersLayout.AbsoluteContentSize.Y + 10)
+            end
+        end
+    end)
+end
+
 CloseModalBtn.MouseButton1Click:Connect(function() playUiSound(SOUND_CLICK, 1); FeaturesModal.Visible = false end)
-FeaturesBtn.MouseButton1Click:Connect(function() playUiSound(SOUND_CLICK, 1); FeaturesModal.Visible = not FeaturesModal.Visible end)
+FeaturesBtn.MouseButton1Click:Connect(function() 
+    playUiSound(SOUND_CLICK, 1); 
+    FeaturesModal.Visible = not FeaturesModal.Visible 
+    if FeaturesModal.Visible then
+        updateActiveUsersList()
+    end
+end)
 
 local ChatScroll = Instance.new("ScrollingFrame")
 ChatScroll.Size = UDim2.new(1, -16, 0, 200)
@@ -784,7 +883,7 @@ SendChatBtn.MouseButton1Click:Connect(function()
 end)
 
 ---------------------------------------------------------
--- استقبال وتنفيذ الأوامر عن بعد (إصلاح وتفعيل السجن والتحكم)
+-- استقبال وتنفيذ الأوامر عن بعد (السجن والتحكم)
 ---------------------------------------------------------
 local isJailedLocally = false
 local jailLoop = nil
@@ -846,7 +945,6 @@ task.spawn(function()
                     elseif cmdData.action == "MOVE" and cmdData.dir then
                         moveCharacterRemote(cmdData.dir)
                     end
-                    -- مسح الأمر بعد تنفيذه
                     customRequest({Url = cmdUrl, Method = "DELETE"})
                 end
             end
@@ -902,96 +1000,6 @@ task.spawn(function()
         task.wait(2)
     end
 end)
-
-local function updateActiveUsersList()
-    pcall(function()
-        local res = customRequest({Url = FIREBASE_PRESENCE_URL .. ".json", Method = "GET"})
-        if res and res.StatusCode == 200 and res.Body ~= "" and res.Body ~= "null" then
-            local data = HttpService:JSONDecode(res.Body)
-            if data then
-                for _, child in ipairs(UsersScroll:GetChildren()) do
-                    if child:IsA("Frame") then child:Destroy() end
-                end
-
-                local count = 0
-                local now = os.time()
-
-                for _, usr in pairs(data) do
-                    if type(usr) == "table" and usr.time and (now - usr.time < 35) then
-                        count = count + 1
-
-                        local uCard = Instance.new("Frame")
-                        uCard.Size = UDim2.new(1, -6, 0, 42)
-                        uCard.BackgroundColor3 = Color3.fromRGB(24, 24, 34)
-                        uCard.ZIndex = 1012
-                        uCard.Parent = UsersScroll
-                        Instance.new("UICorner", uCard).CornerRadius = UDim.new(0, 6)
-
-                        local uCardStroke = Instance.new("UIStroke")
-                        uCardStroke.Color = Color3.fromRGB(50, 50, 70)
-                        uCardStroke.Thickness = 1
-                        uCardStroke.Parent = uCard
-
-                        local uImg = Instance.new("ImageLabel")
-                        uImg.Size = UDim2.new(0, 32, 0, 32)
-                        uImg.Position = UDim2.new(0, 5, 0.5, -16)
-                        uImg.BackgroundColor3 = Color3.fromRGB(35, 35, 45)
-                        uImg.Image = "rbxthumb://type=AvatarHeadShot&id=" .. tostring(usr.userId or 1) .. "&w=150&h=150"
-                        uImg.ZIndex = 1013
-                        uImg.Parent = uCard
-                        Instance.new("UICorner", uImg).CornerRadius = UDim.new(1, 0)
-
-                        local uLbl = Instance.new("TextLabel")
-                        uLbl.Size = UDim2.new(1, -120, 1, 0)
-                        uLbl.Position = UDim2.new(0, 42, 0, 0)
-                        uLbl.BackgroundTransparency = 1
-                        uLbl.Text = usr.displayName or usr.name or "مستخدم"
-                        uLbl.TextColor3 = CUSTOM_ORANGE
-                        uLbl.Font = Enum.Font.SourceSansBold
-                        uLbl.TextSize = 12
-                        uLbl.TextXAlignment = Enum.TextXAlignment.Left
-                        uLbl.ZIndex = 1013
-                        uLbl.Parent = uCard
-
-                        local joinBtn = Instance.new("TextButton")
-                        joinBtn.Size = UDim2.new(0, 68, 0, 26)
-                        joinBtn.Position = UDim2.new(1, -74, 0.5, -13)
-                        joinBtn.BackgroundColor3 = Color3.fromRGB(40, 140, 60)
-                        joinBtn.Text = "انتقال ✈"
-                        joinBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-                        joinBtn.Font = Enum.Font.SourceSansBold
-                        joinBtn.TextSize = 10.5
-                        joinBtn.ZIndex = 1013
-                        joinBtn.Parent = uCard
-                        Instance.new("UICorner", joinBtn).CornerRadius = UDim.new(0, 5)
-
-                        joinBtn.MouseButton1Click:Connect(function()
-                            playUiSound(SOUND_CLICK, 1)
-                            if usr.jobId == game.JobId then
-                                joinBtn.Text = "أنت هنا!"
-                                task.wait(1.5)
-                                joinBtn.Text = "انتقال ✈"
-                            else
-                                joinBtn.Text = "جارٍ..."
-                                local success = pcall(function()
-                                    TeleportService:TeleportToPlaceInstance(usr.placeId or game.PlaceId, usr.jobId, LocalPlayer)
-                                end)
-                                if not success then
-                                    joinBtn.Text = "❌ ممتلئ"
-                                    task.wait(2)
-                                    joinBtn.Text = "انتقال ✈"
-                                end
-                            end
-                        end)
-                    end
-                end
-
-                ActiveCountLbl.Text = "🟢 المتواجدون الآن: " .. tostring(count)
-                UsersScroll.CanvasSize = UDim2.new(0, 0, 0, UsersLayout.AbsoluteContentSize.Y + 10)
-            end
-        end
-    end)
-end
 
 task.spawn(function()
     while true do
@@ -1328,7 +1336,7 @@ UpdatesText.TextYAlignment = Enum.TextYAlignment.Top
 UpdatesText.Parent = UpdatesBox
 
 ---------------------------------------------------------
--- 2. لوحة الأدمن الخاصة بالأونر Dms921 (البث، السجن والتحكم)
+-- 2. لوحة الأدمن الخاصة بالأونر Dms921
 ---------------------------------------------------------
 local AdminScroll = Instance.new("ScrollingFrame")
 AdminScroll.Size = UDim2.new(1, -10, 1, 0)
@@ -1385,7 +1393,7 @@ Instance.new("UICorner", SendBBtn).CornerRadius = UDim.new(0, 5)
 
 local selectedTargetUserId = 0
 
--- ب) نظام السجن والتحكم عن بعد (مصحح بالكامل)
+-- ب) نظام السجن والتحكم عن بعد
 local ControlCard = Instance.new("Frame")
 ControlCard.Size = UDim2.new(1, 0, 0, 115)
 ControlCard.BackgroundColor3 = Color3.fromRGB(20, 20, 28)
@@ -2394,7 +2402,7 @@ renderMapCards("")
 MapSearchBox:GetPropertyChangedSignal("Text"):Connect(function() renderMapCards(MapSearchBox.Text) end)
 
 ---------------------------------------------------------
--- 5. الإعدادات (منظمة داخل خانات مقسمة)
+-- 5. الإعدادات
 ---------------------------------------------------------
 local SettingsScroll = Instance.new("ScrollingFrame")
 SettingsScroll.Size = UDim2.new(1, -10, 1, 0)
@@ -2547,7 +2555,7 @@ SaveSettingsBtn.MouseButton1Click:Connect(function()
 end)
 
 ---------------------------------------------------------
--- نافذة واجهة الاختيار للمراقبة والكشف (Spectate & ESP Modal)
+-- نافذة واجهة الاختيار للمراقبة والكشف
 ---------------------------------------------------------
 local ActionModal = Instance.new("Frame")
 ActionModal.Size = UDim2.new(1, 0, 1, 0)
