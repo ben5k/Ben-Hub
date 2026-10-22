@@ -1,561 +1,437 @@
--- DFX Hub - 100% Pixel Perfect Chilli Hub Replica (Developer: Tahbah)
--- Version: v2.0.01
 
-local CoreGui = game:GetService("CoreGui")
+-- Chilli Hub UI Replica
+-- Visual demo only
+-- No server hopping or exploit functions
+
 local Players = game:GetService("Players")
 local TweenService = game:GetService("TweenService")
-local TeleportService = game:GetService("TeleportService")
-local HttpService = game:GetService("HttpService")
-local RunService = game:GetService("RunService")
-local SoundService = game:GetService("SoundService")
+local UserInputService = game:GetService("UserInputService")
 
-local LocalPlayer = Players.LocalPlayer
-local parent = (gethui and gethui()) or CoreGui:FindFirstChild("RobloxGui") or LocalPlayer:WaitForChild("PlayerGui")
+local player = Players.LocalPlayer
+local playerGui = player:WaitForChild("PlayerGui")
 
-if parent:FindFirstChild("DFXPerfectChilliUI") then parent.DFXPerfectChilliUI:Destroy() end
-if parent:FindFirstChild("DFXAdminBroadcastGui") then parent.DFXAdminBroadcastGui:Destroy() end
+local old = playerGui:FindFirstChild("ChilliHubUI")
+if old then old:Destroy() end
 
-local function customRequest(options)
-    local req = request or http_request or (syn and syn.request) or (http and http.request) or (fluxus and fluxus.request)
-    if req then
-        local success, response = pcall(function() return req(options) end)
-        if success and response then return response end
+local gui = Instance.new("ScreenGui")
+gui.Name = "ChilliHubUI"
+gui.ResetOnSpawn = false
+gui.IgnoreGuiInset = true
+gui.DisplayOrder = 999
+gui.Parent = playerGui
+
+local function make(class, props, parent)
+    local obj = Instance.new(class)
+    for k, v in pairs(props) do
+        obj[k] = v
     end
-    if options.Method == "GET" then
-        local success, body = pcall(function() return game:HttpGet(options.Url) end)
-        if success then return {StatusCode = 200, Body = body} end
-    end
-    return {StatusCode = 400, Body = "null"}
+    obj.Parent = parent
+    return obj
 end
 
-local function safeDecode(jsonStr)
-    if not jsonStr or jsonStr == "" or jsonStr == "null" then return nil end
-    local success, result = pcall(function() return HttpService:JSONDecode(jsonStr) end)
-    if success then return result end
-    return nil
+local function corner(obj, radius)
+    make("UICorner", {
+        CornerRadius = UDim.new(0, radius or 5)
+    }, obj)
 end
 
-local SOUND_CLICK = "rbxassetid://6895079853"
-local SOUND_BROADCAST = "rbxassetid://17208361335"
-local SOUND_EGG_ALERT = "rbxassetid://127213343505462"
+local function stroke(obj, color, thickness)
+    make("UIStroke", {
+        Color = color or Color3.fromRGB(35, 35, 35),
+        Thickness = thickness or 1
+    }, obj)
+end
 
-local function playUiSound(soundId, pitch)
-    task.spawn(function()
-        pcall(function()
-            local snd = Instance.new("Sound")
-            snd.SoundId = soundId
-            snd.Volume = 8
-            snd.Pitch = pitch or 1
-            snd.Parent = SoundService
-            if not snd.IsLoaded then snd.Loaded:Wait() end
-            snd:Play()
-            snd.Ended:Connect(function() snd:Destroy() end)
-        end)
+local function gradient(obj, c1, c2)
+    make("UIGradient", {
+        Color = ColorSequence.new(c1, c2),
+        Rotation = 90
+    }, obj)
+end
+
+local red = Color3.fromRGB(244, 66, 49)
+local redDark = Color3.fromRGB(179, 40, 29)
+local dark = Color3.fromRGB(27, 28, 27)
+local rowDark = Color3.fromRGB(22, 24, 23)
+local white = Color3.fromRGB(245, 245, 245)
+local green = Color3.fromRGB(0, 220, 83)
+
+local main = make("Frame", {
+    Name = "Main",
+    AnchorPoint = Vector2.new(0.5, 0.5),
+    Position = UDim2.fromScale(0.46, 0.48),
+    Size = UDim2.new(0.66, 0, 0.53, 0),
+    BackgroundColor3 = Color3.fromRGB(24, 25, 24),
+    BackgroundTransparency = 0.12,
+    BorderSizePixel = 0
+}, gui)
+corner(main, 5)
+stroke(main, Color3.fromRGB(14, 14, 14), 2)
+
+local sizeLimit = make("UISizeConstraint", {
+    MinSize = Vector2.new(320, 350),
+    MaxSize = Vector2.new(850, 650)
+}, main)
+
+local header = make("Frame", {
+    Name = "Header",
+    Size = UDim2.new(1, 0, 0, 56),
+    BackgroundColor3 = red,
+    BorderSizePixel = 0
+}, main)
+gradient(header, Color3.fromRGB(255, 91, 72), redDark)
+stroke(header, Color3.fromRGB(25, 25, 25), 2)
+
+local title = make("TextLabel", {
+    BackgroundTransparency = 1,
+    Position = UDim2.new(0, 18, 0, 0),
+    Size = UDim2.new(1, -75, 1, 0),
+    Font = Enum.Font.GothamBold,
+    Text = "Chilli Hub",
+    TextColor3 = white,
+    TextSize = 27,
+    TextXAlignment = Enum.TextXAlignment.Left,
+    TextStrokeTransparency = 0.65
+}, header)
+
+local close = make("TextButton", {
+    Name = "Close",
+    AnchorPoint = Vector2.new(1, 0.5),
+    Position = UDim2.new(1, -8, 0.5, 0),
+    Size = UDim2.new(0, 42, 0, 42),
+    BackgroundColor3 = red,
+    Text = "X",
+    TextColor3 = white,
+    TextSize = 27,
+    Font = Enum.Font.GothamBold,
+    BorderSizePixel = 0
+}, header)
+corner(close, 4)
+stroke(close, Color3.fromRGB(90, 28, 24), 2)
+
+local content = make("Frame", {
+    Name = "Content",
+    Position = UDim2.new(0, 12, 0, 63),
+    Size = UDim2.new(1, -24, 1, -116),
+    BackgroundTransparency = 1
+}, main)
+
+local list = make("ScrollingFrame", {
+    Name = "Options",
+    Size = UDim2.fromScale(1, 1),
+    BackgroundTransparency = 1,
+    BorderSizePixel = 0,
+    ScrollBarThickness = 5,
+    ScrollBarImageColor3 = red,
+    CanvasSize = UDim2.new(0, 0, 0, 0),
+    AutomaticCanvasSize = Enum.AutomaticSize.Y
+}, content)
+
+make("UIListLayout", {
+    Padding = UDim.new(0, 5),
+    SortOrder = Enum.SortOrder.LayoutOrder
+}, list)
+
+local function section(text, order)
+    local row = make("Frame", {
+        LayoutOrder = order,
+        Size = UDim2.new(1, -7, 0, 43),
+        BackgroundColor3 = dark,
+        BackgroundTransparency = 0.08,
+        BorderSizePixel = 0
+    }, list)
+    stroke(row, Color3.fromRGB(18, 18, 18), 1)
+
+    make("TextLabel", {
+        BackgroundTransparency = 1,
+        Position = UDim2.new(0, 14, 0, 0),
+        Size = UDim2.new(1, -175, 1, 0),
+        Font = Enum.Font.GothamBold,
+        Text = text,
+        TextColor3 = white,
+        TextSize = 18,
+        TextXAlignment = Enum.TextXAlignment.Left
+    }, row)
+    return row
+end
+
+local function actionButton(parent, text, callback, width)
+    local btn = make("TextButton", {
+        AnchorPoint = Vector2.new(1, 0.5),
+        Position = UDim2.new(1, -8, 0.5, 0),
+        Size = UDim2.new(0, width or 112, 0, 32),
+        BackgroundColor3 = red,
+        BorderSizePixel = 0,
+        Font = Enum.Font.GothamBold,
+        Text = text,
+        TextColor3 = white,
+        TextSize = 14,
+        AutoButtonColor = true
+    }, parent)
+    corner(btn, 3)
+    gradient(btn, Color3.fromRGB(255, 102, 78), redDark)
+    stroke(btn, Color3.fromRGB(92, 30, 24), 1)
+
+    btn.MouseButton1Click:Connect(function()
+        if callback then callback() end
     end)
-end
-
--- قاعدة البيانات t7b7
-local FIREBASE_BASE_URL = "https://t7b7-54245-default-rtdb.firebaseio.com"
-local FIREBASE_CHAT_URL = FIREBASE_BASE_URL .. "/global_chat.json"
-local FIREBASE_PRESENCE_URL = FIREBASE_BASE_URL .. "/presence"
-local FIREBASE_BROADCAST_URL = FIREBASE_BASE_URL .. "/broadcasts.json"
-
----------------------------------------------------------
--- الهيكل الرئيسي المطابق لـ Chilli Hub بنسبة 100% (v2.0.01)
----------------------------------------------------------
-local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "DFXPerfectChilliUI"
-ScreenGui.ResetOnSpawn = false
-ScreenGui.Parent = parent
-
-local Container = Instance.new("Frame")
-Container.Name = "Container"
-Container.Size = UDim2.new(0, 580, 0, 330)
-Container.Position = UDim2.new(0.5, -290, 0.5, -165)
-Container.BackgroundTransparency = 1
-Container.Active = true
-Container.Draggable = true
-Container.Parent = ScreenGui
-
--- 1. المربع الأوسط الرئيسي
-local Main = Instance.new("Frame")
-Main.Name = "Main"
-Main.Size = UDim2.new(0, 350, 1, 0)
-Main.Position = UDim2.new(0.5, -175, 0, 0)
-Main.BackgroundColor3 = Color3.fromRGB(16, 28, 20)
-Main.BorderSizePixel = 0
-Main.Parent = Container
-
-local mainStroke = Instance.new("UIStroke")
-mainStroke.Color = Color3.fromRGB(0, 0, 0)
-mainStroke.Thickness = 2
-mainStroke.Parent = Main
-
--- الهيدر الأحمر الرئيسي
-local Header = Instance.new("Frame")
-Header.Size = UDim2.new(1, 0, 0, 38)
-Header.BackgroundColor3 = Color3.fromRGB(235, 60, 55)
-Header.BorderSizePixel = 0
-Header.Parent = Main
-
-local Title = Instance.new("TextLabel")
-Title.Size = UDim2.new(1, -45, 1, 0)
-Title.Position = UDim2.new(0, 10, 0, 0)
-Title.BackgroundTransparency = 1
-Title.Text = "DFX Hub"
-Title.TextColor3 = Color3.fromRGB(255, 255, 255)
-Title.Font = Enum.Font.SourceSansBold
-Title.TextSize = 24
-Title.TextXAlignment = Enum.TextXAlignment.Center
-Title.Parent = Header
-
-local CloseBtn = Instance.new("TextButton")
-CloseBtn.Size = UDim2.new(0, 26, 0, 26)
-CloseBtn.Position = UDim2.new(1, -30, 0, 6)
-CloseBtn.BackgroundColor3 = Color3.fromRGB(220, 50, 50)
-CloseBtn.Text = "X"
-CloseBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-CloseBtn.Font = Enum.Font.SourceSansBold
-CloseBtn.TextSize = 16
-CloseBtn.Parent = Header
-Instance.new("UICorner", CloseBtn).CornerRadius = UDim.new(0, 4)
-
-local closeStroke = Instance.new("UIStroke")
-closeStroke.Color = Color3.fromRGB(100, 20, 20)
-closeStroke.Thickness = 1.5
-closeStroke.Parent = CloseBtn
-
--- 2. القائمة الجانبية اليسرى (خارج الصندوق الأوسط)
-local LeftSidebar = Instance.new("Frame")
-LeftSidebar.Size = UDim2.new(0, 105, 1, -40)
-LeftSidebar.Position = UDim2.new(0, 5, 0, 38)
-LeftSidebar.BackgroundTransparency = 1
-LeftSidebar.Parent = Container
-
-local LeftLayout = Instance.new("UIListLayout")
-LeftLayout.Padding = UDim.new(0, 6)
-LeftLayout.Parent = LeftSidebar
-
--- 3. القائمة الجانبية اليمنى (خارج الصندوق الأوسط)
-local RightSidebar = Instance.new("Frame")
-RightSidebar.Size = UDim2.new(0, 105, 1, -40)
-RightSidebar.Position = UDim2.new(1, -110, 0, 38)
-RightSidebar.BackgroundTransparency = 1
-RightSidebar.Parent = Container
-
-local RightLayout = Instance.new("UIListLayout")
-RightLayout.Padding = UDim.new(0, 6)
-RightLayout.Parent = RightSidebar
-
--- 4. المحتوى الداخلي للوسط
-local CenterScroll = Instance.new("ScrollingFrame")
-CenterScroll.Size = UDim2.new(1, -12, 1, -72)
-CenterScroll.Position = UDim2.new(0, 6, 0, 42)
-CenterScroll.BackgroundTransparency = 1
-CenterScroll.CanvasSize = UDim2.new(0, 0, 0, 0)
-CenterScroll.ScrollBarThickness = 3
-CenterScroll.Parent = Main
-
-local CenterLayout = Instance.new("UIListLayout")
-CenterLayout.SortOrder = Enum.SortOrder.LayoutOrder
-CenterLayout.Padding = UDim.new(0, 4)
-CenterLayout.Parent = CenterScroll
-
--- 5. شريط البحث والـ Filter بالأسفل
-local SearchFrame = Instance.new("Frame")
-SearchFrame.Size = UDim2.new(1, -12, 0, 22)
-SearchFrame.Position = UDim2.new(0, 6, 1, -26)
-SearchFrame.BackgroundColor3 = Color3.fromRGB(15, 30, 20)
-SearchFrame.BorderSizePixel = 0
-SearchFrame.Parent = Main
-
-local SearchLabel = Instance.new("TextLabel")
-SearchLabel.Size = UDim2.new(0, 55, 1, 0)
-SearchLabel.BackgroundTransparency = 1
-SearchLabel.Text = "Search"
-SearchLabel.TextColor3 = Color3.fromRGB(220, 220, 220)
-SearchLabel.Font = Enum.Font.SourceSansBold
-SearchLabel.TextSize = 13
-SearchLabel.Parent = SearchFrame
-
-local SearchBox = Instance.new("TextBox")
-SearchBox.Size = UDim2.new(1, -60, 1, -2)
-SearchBox.Position = UDim2.new(0, 58, 0, 1)
-SearchBox.BackgroundColor3 = Color3.fromRGB(10, 20, 15)
-SearchBox.PlaceholderText = "Filter features..."
-SearchBox.Text = ""
-SearchBox.TextColor3 = Color3.fromRGB(255, 255, 255)
-SearchBox.Font = Enum.Font.SourceSans
-SearchBox.TextSize = 12
-SearchBox.TextXAlignment = Enum.TextXAlignment.Left
-SearchBox.Parent = SearchFrame
-
----------------------------------------------------------
--- دالة تصاميم الأزرار المطابقة 100%
----------------------------------------------------------
-local function createRedBtn(text, side)
-    local btn = Instance.new("TextButton")
-    btn.Size = UDim2.new(1, 0, 0, 28)
-    btn.BackgroundColor3 = Color3.fromRGB(235, 75, 65)
-    btn.Text = text
-    btn.TextColor3 = Color3.fromRGB(255, 255, 255)
-    btn.Font = Enum.Font.SourceSansBold
-    btn.TextSize = 15
-    btn.Parent = (side == "left") and LeftSidebar or RightSidebar
-    Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 6)
-
-    local stroke = Instance.new("UIStroke")
-    stroke.Color = Color3.fromRGB(160, 30, 25)
-    stroke.Thickness = 1.8
-    stroke.Parent = btn
-
     return btn
 end
 
--- إضافة قسم قابل للفتح والإغلاق (Accordion Section)
-local function addAccordionSection(titleText, builderFunc)
-    local sectionFrame = Instance.new("Frame")
-    sectionFrame.Size = UDim2.new(1, 0, 0, 26)
-    sectionFrame.BackgroundTransparency = 1
-    sectionFrame.Parent = CenterScroll
+local function notify(text)
+    local oldNotice = gui:FindFirstChild("Notice")
+    if oldNotice then oldNotice:Destroy() end
 
-    local headBtn = Instance.new("TextButton")
-    headBtn.Size = UDim2.new(1, 0, 0, 26)
-    headBtn.BackgroundTransparency = 1
-    headBtn.Text = "  >  " .. titleText
-    headBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-    headBtn.Font = Enum.Font.SourceSansBold
-    headBtn.TextSize = 16
-    headBtn.TextXAlignment = Enum.TextXAlignment.Left
-    headBtn.Parent = sectionFrame
+    local box = make("TextLabel", {
+        Name = "Notice",
+        AnchorPoint = Vector2.new(0.5, 1),
+        Position = UDim2.new(0.5, 0, 1, -25),
+        Size = UDim2.new(0, 300, 0, 38),
+        BackgroundColor3 = Color3.fromRGB(25, 25, 25),
+        BackgroundTransparency = 0.05,
+        Text = text,
+        TextColor3 = white,
+        TextSize = 14,
+        Font = Enum.Font.GothamBold,
+        BorderSizePixel = 0,
+        ZIndex = 20
+    }, gui)
+    corner(box, 5)
+    stroke(box, red, 1)
 
-    local contentHolder = Instance.new("Frame")
-    contentHolder.Size = UDim2.new(1, 0, 0, 0)
-    contentHolder.Position = UDim2.new(0, 0, 0, 26)
-    contentHolder.BackgroundTransparency = 1
-    contentHolder.Visible = false
-    contentHolder.Parent = sectionFrame
-
-    local contentLayout = Instance.new("UIListLayout")
-    contentLayout.Padding = UDim.new(0, 4)
-    contentLayout.Parent = contentHolder
-
-    local isOpen = false
-
-    local function addToggleItem(nameText, descText, defaultState, onToggle)
-        local itemFrame = Instance.new("Frame")
-        itemFrame.Size = UDim2.new(1, 0, 0, descText ~= "" and 40 or 26)
-        itemFrame.BackgroundTransparency = 1
-        itemFrame.Parent = contentHolder
-
-        local nameLbl = Instance.new("TextLabel")
-        nameLbl.Size = UDim2.new(1, -45, 0, 18)
-        nameLbl.Position = UDim2.new(0, 12, 0, 2)
-        nameLbl.BackgroundTransparency = 1
-        nameLbl.Text = nameText
-        nameLbl.TextColor3 = Color3.fromRGB(255, 255, 255)
-        nameLbl.Font = Enum.Font.SourceSansBold
-        nameLbl.TextSize = 15
-        nameLbl.TextXAlignment = Enum.TextXAlignment.Left
-        nameLbl.Parent = itemFrame
-
-        if descText ~= "" then
-            local descLbl = Instance.new("TextLabel")
-            descLbl.Size = UDim2.new(1, -45, 0, 16)
-            descLbl.Position = UDim2.new(0, 12, 0, 20)
-            descLbl.BackgroundTransparency = 1
-            descLbl.Text = descText
-            descLbl.TextColor3 = Color3.fromRGB(160, 200, 180)
-            descLbl.Font = Enum.Font.SourceSans
-            descLbl.TextSize = 11
-            descLbl.TextXAlignment = Enum.TextXAlignment.Left
-            descLbl.Parent = itemFrame
-        end
-
-        local toggleBtn = Instance.new("TextButton")
-        toggleBtn.Size = UDim2.new(0, 36, 0, 20)
-        toggleBtn.Position = UDim2.new(1, -40, 0, 4)
-        toggleBtn.BackgroundColor3 = defaultState and Color3.fromRGB(45, 200, 80) or Color3.fromRGB(220, 220, 220)
-        toggleBtn.Text = ""
-        toggleBtn.Parent = itemFrame
-        Instance.new("UICorner", toggleBtn).CornerRadius = UDim.new(0, 3)
-
-        local innerBox = Instance.new("Frame")
-        innerBox.Size = UDim2.new(0, 14, 0, 16)
-        innerBox.Position = defaultState and UDim2.new(1, -16, 0.5, -8) or UDim2.new(0, 2, 0.5, -8)
-        innerBox.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-        innerBox.Parent = toggleBtn
-        Instance.new("UICorner", innerBox).CornerRadius = UDim.new(0, 2)
-
-        local state = defaultState
-        toggleBtn.MouseButton1Click:Connect(function()
-            playUiSound(SOUND_CLICK, 1)
-            state = not state
-            toggleBtn.BackgroundColor3 = state and Color3.fromRGB(45, 200, 80) or Color3.fromRGB(220, 220, 220)
-            innerBox.Position = state and UDim2.new(1, -16, 0.5, -8) or UDim2.new(0, 2, 0.5, -8)
-            if onToggle then onToggle(state) end
-        end)
-    end
-
-    local function addActionItem(nameText, onClick)
-        local btn = Instance.new("TextButton")
-        btn.Size = UDim2.new(1, 0, 0, 24)
-        btn.BackgroundTransparency = 1
-        btn.Text = "    ▶  " .. nameText
-        btn.TextColor3 = Color3.fromRGB(255, 255, 255)
-        btn.Font = Enum.Font.SourceSansBold
-        btn.TextSize = 14
-        btn.TextXAlignment = Enum.TextXAlignment.Left
-        btn.Parent = contentHolder
-
-        btn.MouseButton1Click:Connect(function()
-            playUiSound(SOUND_CLICK, 1)
-            if onClick then onClick() end
-        end)
-    end
-
-    builderFunc(addToggleItem, addActionItem)
-
-    headBtn.MouseButton1Click:Connect(function()
-        playUiSound(SOUND_CLICK, 1)
-        isOpen = not isOpen
-        headBtn.Text = (isOpen and "  ˅  " or "  >  ") .. titleText
-        contentHolder.Visible = isOpen
-        
-        if isOpen then
-            local totalHeight = contentLayout.AbsoluteContentSize.Y
-            contentHolder.Size = UDim2.new(1, 0, 0, totalHeight)
-            sectionFrame.Size = UDim2.new(1, 0, 0, totalHeight + 28)
-        else
-            sectionFrame.Size = UDim2.new(1, 0, 0, 26)
-        end
-        
-        task.wait(0.05)
-        CenterScroll.CanvasSize = UDim2.new(0, 0, 0, CenterLayout.AbsoluteContentSize.Y + 20)
+    task.delay(2, function()
+        if box.Parent then box:Destroy() end
     end)
 end
 
-local function clearCenter()
-    for _, child in ipairs(CenterScroll:GetChildren()) do
-        if not child:IsA("UIListLayout") then
-            child:Destroy()
+local mode = section("Server Hop Mode", 1)
+local modeBtn = actionButton(mode, "Least Players  v", function()
+    notify("Visual demo: Least Players")
+end, 165)
+
+local hop = section("Server Hop", 2)
+actionButton(hop, "Hop", function()
+    notify("Visual demo only - no server hop")
+end, 130)
+
+local job = section("Job ID", 3)
+local jobInput = make("TextBox", {
+    AnchorPoint = Vector2.new(1, 0.5),
+    Position = UDim2.new(1, -8, 0.5, 0),
+    Size = UDim2.new(0, 180, 0, 31),
+    BackgroundColor3 = Color3.fromRGB(15, 16, 15),
+    BorderSizePixel = 0,
+    PlaceholderText = "Paste a server Job ID...",
+    PlaceholderColor3 = Color3.fromRGB(190, 190, 190),
+    Text = "",
+    TextColor3 = white,
+    TextSize = 12,
+    Font = Enum.Font.Gotham,
+    ClearTextOnFocus = false
+}, job)
+corner(jobInput, 3)
+stroke(jobInput, Color3.fromRGB(50, 50, 50), 1)
+
+local join = section("Join Job ID", 4)
+actionButton(join, "Join", function()
+    notify("Visual demo only - join is disabled")
+end, 130)
+
+local copy = section("Copy Current Job ID", 5)
+actionButton(copy, "Copy", function()
+    notify("Visual demo only - copy is disabled")
+end, 130)
+
+local rejoin = section("Rejoin Server", 6)
+actionButton(rejoin, "Rejoin", function()
+    notify("Visual demo only - rejoin is disabled")
+end, 130)
+
+local auto = section("Auto Rejoin When Disconnect", 7)
+local enabled = false
+local toggle = make("TextButton", {
+    AnchorPoint = Vector2.new(1, 0.5),
+    Position = UDim2.new(1, -8, 0.5, 0),
+    Size = UDim2.new(0, 85, 0, 30),
+    BackgroundColor3 = green,
+    BorderSizePixel = 0,
+    Text = "",
+    AutoButtonColor = true
+}, auto)
+corner(toggle, 4)
+
+local knob = make("Frame", {
+    AnchorPoint = Vector2.new(1, 0.5),
+    Position = UDim2.new(1, -4, 0.5, 0),
+    Size = UDim2.new(0, 27, 0, 24),
+    BackgroundColor3 = Color3.fromRGB(230, 235, 235),
+    BorderSizePixel = 0
+}, toggle)
+corner(knob, 3)
+stroke(knob, Color3.fromRGB(70, 70, 70), 1)
+
+toggle.MouseButton1Click:Connect(function()
+    enabled = not enabled
+    toggle.BackgroundColor3 = enabled and green
+        or Color3.fromRGB(95, 95, 95)
+    knob.Position = enabled
+        and UDim2.new(1, -4, 0.5, 0)
+        or UDim2.new(0, 31, 0.5, 0)
+    notify("Auto Rejoin visual toggle: " ..
+        (enabled and "ON" or "OFF"))
+end)
+
+local searchBar = make("Frame", {
+    Name = "SearchBar",
+    Position = UDim2.new(0, 0, 1, -44),
+    Size = UDim2.new(1, 0, 0, 35),
+    BackgroundColor3 = Color3.fromRGB(21, 22, 21),
+    BorderSizePixel = 0
+}, main)
+corner(searchBar, 3)
+stroke(searchBar, Color3.fromRGB(12, 12, 12), 1)
+
+make("TextLabel", {
+    BackgroundTransparency = 1,
+    Position = UDim2.new(0, 10, 0, 0),
+    Size = UDim2.new(0, 75, 1, 0),
+    Text = "Search",
+    TextColor3 = white,
+    Font = Enum.Font.GothamBold,
+    TextSize = 13,
+    TextXAlignment = Enum.TextXAlignment.Left
+}, searchBar)
+
+local search = make("TextBox", {
+    Position = UDim2.new(0, 82, 0, 4),
+    Size = UDim2.new(1, -92, 1, -8),
+    BackgroundColor3 = Color3.fromRGB(35, 36, 34),
+    BorderSizePixel = 0,
+    PlaceholderText = "Filter features...",
+    PlaceholderColor3 = Color3.fromRGB(165, 165, 165),
+    Text = "",
+    TextColor3 = white,
+    TextSize = 13,
+    Font = Enum.Font.Gotham,
+    ClearTextOnFocus = false
+}, searchBar)
+corner(search, 3)
+
+search:GetPropertyChangedSignal("Text"):Connect(function()
+    local query = string.lower(search.Text)
+    for _, child in ipairs(list:GetChildren()) do
+        if child:IsA("Frame") then
+            child.Visible = string.find(
+                string.lower(
+                    child:FindFirstChildWhichIsA("TextLabel").Text
+                ),
+                query,
+                1,
+                true
+            ) ~= nil
         end
+    end
+end)
+
+-- Side buttons
+local function sideButtons(name, labels, side)
+    local frame = make("Frame", {
+        Name = name,
+        AnchorPoint = side == "Right"
+            and Vector2.new(0, 0.5)
+            or Vector2.new(1, 0.5),
+        Position = side == "Right"
+            and UDim2.new(1, -8, 0.5, 0)
+            or UDim2.new(0, 8, 0.5, 0),
+        Size = UDim2.new(0, 112, 0, 270),
+        BackgroundTransparency = 1
+    }, gui)
+
+    make("UIListLayout", {
+        Padding = UDim.new(0, 7),
+        SortOrder = Enum.SortOrder.LayoutOrder
+    }, frame)
+
+    for i, label in ipairs(labels) do
+        local b = make("TextButton", {
+            LayoutOrder = i,
+            Size = UDim2.new(1, 0, 0, 47),
+            BackgroundColor3 = red,
+            BorderSizePixel = 0,
+            Text = label,
+            TextColor3 = white,
+            TextSize = 16,
+            TextWrapped = true,
+            Font = Enum.Font.GothamBold,
+            AutoButtonColor = true
+        }, frame)
+        corner(b, 4)
+        gradient(b, Color3.fromRGB(255, 100, 77), redDark)
+        stroke(b, Color3.fromRGB(70, 30, 25), 1)
+
+        b.MouseButton1Click:Connect(function()
+            notify(label .. " - visual demo")
+        end)
     end
 end
 
----------------------------------------------------------
--- إعداد الميزات القوائم الجانبية
----------------------------------------------------------
+sideButtons("RightButtons", {
+    "Admin Abuse",
+    "Discord",
+    "Venyx",
+    "Quick & Keys",
+    "Settings",
+    "Config"
+}, "Right")
 
--- 1. Farm
-local BtnFarm = createRedBtn("Farm", "left")
-BtnFarm.MouseButton1Click:Connect(function()
-    playUiSound(SOUND_CLICK, 1)
-    clearCenter()
+sideButtons("LeftButtons", {
+    "Farm",
+    "Player",
+    "Predictor",
+    "Progress",
+    "Server",
+    "Misc",
+    "Auto Hop"
+}, "Left")
 
-    addAccordionSection("Halloween Dimension", function(addToggle, addAction)
-        addToggle("Auto Steal Halloween Eggs", "Steals all halloween eggs automatically", false, function(st)
-            if st then loadstring(game:HttpGet("https://raw.githubusercontent.com/tienkhanh1/spicy/main/Chilli.lua"))() end
-        end)
-        addToggle("Instant Steal Halloween Eggs", "Delivers the egg to safe zone in a few seconds", false, function(st) end)
-    end)
+-- Drag the window by its title bar
+local dragging = false
+local dragStart
+local startPos
 
-    addAccordionSection("Ghost Dog & Fishing", function(addToggle, addAction)
-        addToggle("Auto Fishing", "Automatically catches fish in zone", false, function(st) end)
-    end)
-
-    addAccordionSection("Auto Hatch & Equip", function(addToggle, addAction)
-        addToggle("Auto Hatch Eggs", "Automatically hatches nearby eggs", false, function(st) end)
-    end)
-
-    CenterScroll.CanvasSize = UDim2.new(0, 0, 0, CenterLayout.AbsoluteContentSize.Y + 10)
-end)
-
--- 2. Player
-local BtnPlayer = createRedBtn("Player", "left")
-BtnPlayer.MouseButton1Click:Connect(function()
-    playUiSound(SOUND_CLICK, 1)
-    clearCenter()
-
-    addAccordionSection("مابات عامة", function(addToggle, addAction)
-        addAction("بلوكس فروت - سكربت موز", function()
-            loadstring(game:HttpGet("https://raw.githubusercontent.com/bloxfruitsnokey/Banana/refs/heads/main/DB/script.luau"))()
-        end)
-        addAction("بلوكس فروت - ريدز V2", function()
-            loadstring(game:HttpGet("https://raw.githubusercontent.com/UCT-hub/main/refs/heads/main/redz-v2"))()
-        end)
-        addAction("ماب كيبورد - هوشي هوب", function()
-            loadstring(game:HttpGet("https://hoshihub.site/loader.lua"))()
-        end)
-    end)
-
-    CenterScroll.CanvasSize = UDim2.new(0, 0, 0, CenterLayout.AbsoluteContentSize.Y + 10)
-end)
-
--- 3. Predictor
-local BtnPredictor = createRedBtn("Predictor", "left")
-
--- 4. Progress
-local BtnProgress = createRedBtn("Progress", "left")
-
--- 5. Server
-local BtnServer = createRedBtn("Server", "left")
-BtnServer.MouseButton1Click:Connect(function()
-    playUiSound(SOUND_CLICK, 1)
-    clearCenter()
-
-    addAccordionSection("المتواجدون بالماب", function(addToggle, addAction)
-        pcall(function()
-            local res = customRequest({Url = FIREBASE_PRESENCE_URL .. ".json", Method = "GET"})
-            if res and res.StatusCode == 200 then
-                local data = safeDecode(res.Body)
-                if data then
-                    for _, usr in pairs(data) do
-                        if type(usr) == "table" and usr.displayName then
-                            addAction("🟢 " .. tostring(usr.displayName), function()
-                                if usr.jobId then
-                                    TeleportService:TeleportToPlaceInstance(usr.placeId or game.PlaceId, usr.jobId, LocalPlayer)
-                                end
-                            end)
-                        end
-                    end
-                end
-            end
-        end)
-    end)
-end)
-
--- 6. Misc
-local BtnMisc = createRedBtn("Misc", "left")
-
--- 7. Auto Hop
-local BtnAutoHop = createRedBtn("Auto Hop", "left")
-
----------------------------------------------------------
--- القائمة الجانبية اليمنى
----------------------------------------------------------
-local BtnAdmin = createRedBtn("Admin Abuse", "right")
-BtnAdmin.MouseButton1Click:Connect(function()
-    playUiSound(SOUND_CLICK, 1)
-    clearCenter()
-
-    if LocalPlayer.Name == "Dms921" or LocalPlayer.Name == "طحبح" then
-        addAccordionSection("لوحة الأدمن - طحبح", function(addToggle, addAction)
-            addAction("📢 بث مباشر للشاشات", function()
-                pcall(function()
-                    customRequest({
-                        Url = FIREBASE_BROADCAST_URL,
-                        Method = "POST",
-                        Headers = {["Content-Type"] = "application/json"},
-                        Body = HttpService:JSONEncode({
-                            senderName = "DFX | " .. LocalPlayer.Name,
-                            senderUserId = LocalPlayer.UserId,
-                            targetUserId = 0,
-                            text = "تنبيه مهم من طحبح!",
-                            time = os.time()
-                        })
-                    })
-                end)
-            end)
-        end)
+header.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1
+        or input.UserInputType == Enum.UserInputType.Touch then
+        dragging = true
+        dragStart = input.Position
+        startPos = main.Position
     end
 end)
 
-local BtnDiscord = createRedBtn("Discord", "right")
-BtnDiscord.MouseButton1Click:Connect(function()
-    playUiSound(SOUND_CLICK, 1)
-    if setclipboard then setclipboard("https://discord.gg/benhub") end
-end)
-
-local BtnVenyx = createRedBtn("Venyx", "right")
-local BtnKeys = createRedBtn("Quick & Keys", "right")
-local BtnSettings = createRedBtn("Settings", "right")
-local BtnConfig = createRedBtn("Config", "right")
-
----------------------------------------------------------
--- نظام البث وتحديث الحضور
----------------------------------------------------------
-local BroadcastGui = Instance.new("ScreenGui")
-BroadcastGui.Name = "DFXAdminBroadcastGui"
-BroadcastGui.ResetOnSpawn = false
-BroadcastGui.DisplayOrder = 999999
-BroadcastGui.Parent = parent
-
-local processedBroadcasts = {}
-task.spawn(function()
-    while true do
-        pcall(function()
-            local res = customRequest({Url = FIREBASE_BROADCAST_URL, Method = "GET"})
-            if res and res.StatusCode == 200 then
-                local data = safeDecode(res.Body)
-                if data then
-                    for bKey, bData in pairs(data) do
-                        if type(bData) == "table" and not processedBroadcasts[bKey] then
-                            processedBroadcasts[bKey] = true
-                            
-                            local popFrame = Instance.new("Frame")
-                            popFrame.Size = UDim2.new(0, 500, 0, 70)
-                            popFrame.Position = UDim2.new(0.5, -250, 0, 20)
-                            popFrame.BackgroundColor3 = Color3.fromRGB(18, 18, 18)
-                            popFrame.Parent = BroadcastGui
-                            Instance.new("UICorner", popFrame).CornerRadius = UDim.new(0, 8)
-
-                            local pStroke = Instance.new("UIStroke")
-                            pStroke.Color = Color3.fromRGB(235, 60, 55)
-                            pStroke.Thickness = 2
-                            pStroke.Parent = popFrame
-
-                            local pLbl = Instance.new("TextLabel")
-                            pLbl.Size = UDim2.new(1, -20, 1, 0)
-                            pLbl.Position = UDim2.new(0, 10, 0, 0)
-                            pLbl.BackgroundTransparency = 1
-                            pLbl.Text = "📢 " .. tostring(bData.senderName or "DFX") .. ": " .. tostring(bData.text or "")
-                            pLbl.TextColor3 = Color3.fromRGB(255, 255, 255)
-                            pLbl.Font = Enum.Font.SourceSansBold
-                            pLbl.TextSize = 18
-                            pLbl.TextWrapped = true
-                            pLbl.Parent = popFrame
-
-                            playUiSound(bData.eggType and SOUND_EGG_ALERT or SOUND_BROADCAST, 1)
-
-                            task.delay(7, function()
-                                if popFrame then popFrame:Destroy() end
-                            end)
-                        end
-                    end
-                end
-            end
-        end)
-        task.wait(2)
+UserInputService.InputChanged:Connect(function(input)
+    if dragging and (
+        input.UserInputType == Enum.UserInputType.MouseMovement
+        or input.UserInputType == Enum.UserInputType.Touch
+    ) then
+        local delta = input.Position - dragStart
+        main.Position = UDim2.new(
+            startPos.X.Scale,
+            startPos.X.Offset + delta.X,
+            startPos.Y.Scale,
+            startPos.Y.Offset + delta.Y
+        )
     end
 end)
 
--- تحديث الحضور
-task.spawn(function()
-    while true do
-        pcall(function()
-            customRequest({
-                Url = FIREBASE_PRESENCE_URL .. "/" .. tostring(LocalPlayer.UserId) .. ".json",
-                Method = "PUT",
-                Headers = {["Content-Type"] = "application/json"},
-                Body = HttpService:JSONEncode({
-                    userId = LocalPlayer.UserId,
-                    name = LocalPlayer.Name,
-                    displayName = LocalPlayer.DisplayName ~= "" and LocalPlayer.DisplayName or LocalPlayer.Name,
-                    jobId = game.JobId,
-                    placeId = game.PlaceId,
-                    time = os.time()
-                })
-            })
-        end)
-        task.wait(10)
+UserInputService.InputEnded:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1
+        or input.UserInputType == Enum.UserInputType.Touch then
+        dragging = false
     end
 end)
 
-CloseBtn.MouseButton1Click:Connect(function()
-    playUiSound(SOUND_CLICK, 1)
-    Container.Visible = false
+close.MouseButton1Click:Connect(function()
+    gui:Destroy()
 end)
 
--- تشغيل التبويب الأول تلقائياً
-BtnFarm.MouseButton1Click:Fire()
+print("Chilli Hub UI loaded successfully")
