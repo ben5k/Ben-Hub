@@ -1,5 +1,5 @@
 -- DFX Hub - Advanced Script Users Management (Mute/Ban/Kick System)
--- Version: v37.0.0 | Developer: Tahbah (Dms921)
+-- Version: v36.0.0 | Developer: Tahbah (Dms921)
 
 local CoreGui = game:GetService("CoreGui")
 local Players = game:GetService("Players")
