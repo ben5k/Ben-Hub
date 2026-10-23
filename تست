@@ -1,5 +1,5 @@
--- DFX Hub - Fixed Wallpaper Leak Bug, Enhanced Neon Controls & Webhook Suggestions
--- Version: v13.0.0 | Developer: Tahbah
+-- DFX Hub - Ultra Neon Flow, Dynamic Loading Screen Sync & Particle VFX
+-- Version: v14.0.0 | Developer: Tahbah
 
 local CoreGui = game:GetService("CoreGui")
 local Players = game:GetService("Players")
@@ -12,12 +12,12 @@ local MarketplaceService = game:GetService("MarketplaceService")
 local LocalPlayer = Players.LocalPlayer
 local parent = (gethui and gethui()) or CoreGui:FindFirstChild("RobloxGui") or LocalPlayer:WaitForChild("PlayerGui")
 
-if parent:FindFirstChild("DFXProV13UI") then parent.DFXProV13UI:Destroy() end
+if parent:FindFirstChild("DFXProV14UI") then parent.DFXProV14UI:Destroy() end
 if parent:FindFirstChild("DFXAdminBroadcastGui") then parent.DFXAdminBroadcastGui:Destroy() end
 if parent:FindFirstChild("DFXTopChatGui") then parent.DFXTopChatGui:Destroy() end
 if parent:FindFirstChild("DFXLoadingGui") then parent.DFXLoadingGui:Destroy() end
 
-local CONFIG_FILE = "DFX_Config_v13.json"
+local CONFIG_FILE = "DFX_Config_v14.json"
 local DISCORD_WEBHOOK_URL = "https://discord.com/api/webhooks/1563126439434391643/KPBO62mv7x_5ubaobKt3W-YjYACbTCsY-iefrPNQ7x99Q4tndOrxwQX6ts9zSU1csjcT"
 
 local function customRequest(options)
@@ -51,7 +51,6 @@ local function fetchAsset(url, fileName)
     return url
 end
 
--- روابط الخلفيات الـ 8
 local wallUrls = {
     fetchAsset("https://d.top4top.io/p_3947d1izj0.jpg", "bg_1"),
     fetchAsset("https://e.top4top.io/p_394715j211.jpg", "bg_2"),
@@ -66,9 +65,9 @@ local wallUrls = {
 local SOUND_OPEN = "rbxassetid://98797174600699"
 local SOUND_CLICK = "rbxassetid://6895079853"
 
-local enableShakeEffect = true
-local neonThickness = 2
-local enableNeonAnim = true
+local neonSpeed = 6
+local neonColorOverride = nil
+local activeParticleType = "none"
 
 local function playUiSound(soundId, pitch, volume)
     task.spawn(function()
@@ -91,7 +90,7 @@ local FIREBASE_BASE_URL = "https://t7b7-54245-default-rtdb.firebaseio.com"
 local FIREBASE_CHAT_URL = FIREBASE_BASE_URL .. "/global_chat.json"
 
 ---------------------------------------------------------
--- شاشة تسجيل الدخول
+-- شاشة تسجيل الدخول المزامنة بالألوان
 ---------------------------------------------------------
 local LoadingGui = Instance.new("ScreenGui")
 LoadingGui.Name = "DFXLoadingGui"
@@ -108,7 +107,7 @@ Instance.new("UICorner", LoadFrame).CornerRadius = UDim.new(0, 12)
 
 local loadStroke = Instance.new("UIStroke")
 loadStroke.Color = Color3.fromRGB(150, 40, 255)
-loadStroke.Thickness = 2
+loadStroke.Thickness = 2.5
 loadStroke.Parent = LoadFrame
 
 local LoadTitle = Instance.new("TextLabel")
@@ -125,7 +124,7 @@ local LoadSub = Instance.new("TextLabel")
 LoadSub.Size = UDim2.new(1, 0, 0, 25)
 LoadSub.Position = UDim2.new(0, 0, 0, 50)
 LoadSub.BackgroundTransparency = 1
-LoadSub.Text = "أهلاً بك! جاري تهيئة الواجهة..."
+LoadSub.Text = "أهلاً بك! جاري تهيئة الواجهة والمؤثرات..."
 LoadSub.TextColor3 = Color3.fromRGB(200, 200, 220)
 LoadSub.Font = Enum.Font.FredokaOne
 LoadSub.TextSize = 13
@@ -148,9 +147,16 @@ Instance.new("UICorner", BarFill).CornerRadius = UDim.new(0, 5)
 -- الهيكل الرئيسي للواجهة
 ---------------------------------------------------------
 local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "DFXProV13UI"
+ScreenGui.Name = "DFXProV14UI"
 ScreenGui.ResetOnSpawn = false
 ScreenGui.Parent = parent
+
+local ParticleContainer = Instance.new("Frame")
+ParticleContainer.Name = "ParticleContainer"
+ParticleContainer.Size = UDim2.new(1, 0, 1, 0)
+ParticleContainer.BackgroundTransparency = 1
+ParticleContainer.ZIndex = 0
+ParticleContainer.Parent = ScreenGui
 
 local MainFrame = Instance.new("Frame")
 MainFrame.Name = "MainFrame"
@@ -185,10 +191,9 @@ Instance.new("UICorner", BgImage).CornerRadius = UDim.new(0, 10)
 
 local centerStroke = Instance.new("UIStroke")
 centerStroke.Color = Color3.fromRGB(150, 40, 255)
-centerStroke.Thickness = 2
+centerStroke.Thickness = 3
 centerStroke.Parent = CenterBox
 
--- حركة النيون المتحركة حول الإطار
 local centerNeonGradient = Instance.new("UIGradient")
 centerNeonGradient.Color = ColorSequence.new({
     ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 255, 255)),
@@ -200,11 +205,9 @@ centerNeonGradient.Parent = centerStroke
 task.spawn(function()
     local rot = 0
     while true do
-        if enableNeonAnim then
-            rot = (rot + 3) % 360
-            centerNeonGradient.Rotation = rot
-        end
-        task.wait(0.02)
+        rot = (rot + neonSpeed) % 360
+        centerNeonGradient.Rotation = rot
+        task.wait(0.015)
     end
 end)
 
@@ -278,7 +281,7 @@ CenterLayout.Padding = UDim.new(0, 8)
 CenterLayout.Parent = CenterScroll
 
 ---------------------------------------------------------
--- نافذة الشات المباشرة مع النيون المتحرك
+-- نافذة الشات المباشرة مع النيون الفائق
 ---------------------------------------------------------
 local ChatScreenGui = Instance.new("ScreenGui")
 ChatScreenGui.Name = "DFXTopChatGui"
@@ -322,30 +325,24 @@ Instance.new("UICorner", ChatBgImage).CornerRadius = UDim.new(0, 12)
 
 local floatStroke = Instance.new("UIStroke")
 floatStroke.Color = Color3.fromRGB(150, 40, 255)
-floatStroke.Thickness = 1.8
+floatStroke.Thickness = 2
 floatStroke.Parent = FloatingChatBtn
 
 local chatStroke = Instance.new("UIStroke")
 chatStroke.Color = Color3.fromRGB(150, 40, 255)
-chatStroke.Thickness = 2
+chatStroke.Thickness = 3
 chatStroke.Parent = ChatWin
 
 local chatNeonGradient = Instance.new("UIGradient")
-chatNeonGradient.Color = ColorSequence.new({
-    ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 255, 255)),
-    ColorSequenceKeypoint.new(0.5, Color3.fromRGB(150, 40, 255)),
-    ColorSequenceKeypoint.new(1, Color3.fromRGB(255, 255, 255))
-})
+chatNeonGradient.Color = centerNeonGradient.Color
 chatNeonGradient.Parent = chatStroke
 
 task.spawn(function()
     local rot = 0
     while true do
-        if enableNeonAnim then
-            rot = (rot + 3) % 360
-            chatNeonGradient.Rotation = rot
-        end
-        task.wait(0.02)
+        rot = (rot + neonSpeed) % 360
+        chatNeonGradient.Rotation = rot
+        task.wait(0.015)
     end
 end)
 
@@ -386,7 +383,7 @@ SendBtn.Parent = ChatWin
 Instance.new("UICorner", SendBtn).CornerRadius = UDim.new(0, 6)
 
 ---------------------------------------------------------
--- إدارة الألوان وحفظ الإعدادات
+-- إدارة الألوان والمزامنة الذكية
 ---------------------------------------------------------
 local currentAccentColor = Color3.fromRGB(150, 40, 255)
 local currentHeaderColor = Color3.fromRGB(110, 25, 200)
@@ -401,9 +398,8 @@ local function saveCurrentConfig()
             accentR = currentAccentColor.R, accentG = currentAccentColor.G, accentB = currentAccentColor.B,
             headR = currentHeaderColor.R, headG = currentHeaderColor.G, headB = currentHeaderColor.B,
             bgIndex = selectedBgIndex,
-            shake = enableShakeEffect,
-            neonThick = neonThickness,
-            neonAnim = enableNeonAnim
+            neonSpd = neonSpeed,
+            particles = activeParticleType
         }
         pcall(function() writefile(CONFIG_FILE, HttpService:JSONEncode(cfg)) end)
     end
@@ -416,10 +412,13 @@ local function updateThemeColors(accent, headerCol, skipSave)
     Header.BackgroundColor3 = headerCol
     floatStroke.Color = accent
     chatStroke.Color = accent
+    loadStroke.Color = accent
+    BarFill.BackgroundColor3 = accent
 
+    local activeNeonColor = neonColorOverride or accent
     centerNeonGradient.Color = ColorSequence.new({
         ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 255, 255)),
-        ColorSequenceKeypoint.new(0.5, accent),
+        ColorSequenceKeypoint.new(0.5, activeNeonColor),
         ColorSequenceKeypoint.new(1, Color3.fromRGB(255, 255, 255))
     })
     chatNeonGradient.Color = centerNeonGradient.Color
@@ -468,63 +467,38 @@ local function loadSavedConfig()
                 if data.bgIndex then
                     applyBackgroundByIndex(data.bgIndex, true)
                 end
-                if data.shake ~= nil then enableShakeEffect = data.shake end
-                if data.neonThick then
-                    neonThickness = data.neonThick
-                    centerStroke.Thickness = neonThickness
-                    chatStroke.Thickness = neonThickness
-                end
-                if data.neonAnim ~= nil then enableNeonAnim = data.neonAnim end
+                if data.neonSpd then neonSpeed = data.neonSpd end
+                if data.particles then activeParticleType = data.particles end
             end
         end)
     end
 end
 
 ---------------------------------------------------------
--- المؤثرات التفاعلية
+-- نظام الجسيمات البصرية الخلفية (Particle VFX System)
 ---------------------------------------------------------
-local function addInteractiveAnimation(guiObject)
-    local originalPos = guiObject.Position
-    local isHolding = false
+task.spawn(function()
+    while true do
+        if activeParticleType ~= "none" and ScreenGui and ScreenGui.Parent then
+            local p = Instance.new("TextLabel")
+            p.Size = UDim2.new(0, 20, 0, 20)
+            p.Position = UDim2.new(math.random(), 0, -0.05, 0)
+            p.BackgroundTransparency = 1
+            p.Text = (activeParticleType == "stars" and "✨") or (activeParticleType == "fire" and "🔥") or (activeParticleType == "hearts" and "💖") or "🫧"
+            p.TextSize = math.random(14, 22)
+            p.ZIndex = 0
+            p.Parent = ParticleContainer
 
-    guiObject.MouseEnter:Connect(function()
-        if enableShakeEffect then
-            originalPos = guiObject.Position
-            TweenService:Create(guiObject, TweenInfo.new(0.1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-                Size = guiObject.Size + UDim2.new(0, 2, 0, 2)
+            TweenService:Create(p, TweenInfo.new(math.random(3, 6), Enum.EasingStyle.Linear), {
+                Position = UDim2.new(p.Position.X.Scale + (math.random(-10, 10)/100), 0, 1.05, 0),
+                TextTransparency = 1
             }):Play()
-        end
-    end)
 
-    guiObject.MouseLeave:Connect(function()
-        TweenService:Create(guiObject, TweenInfo.new(0.1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-            Size = guiObject.Size - UDim2.new(0, 2, 0, 2)
-        }):Play()
-    end)
-
-    guiObject.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-            isHolding = true
-            task.spawn(function()
-                local t = 0
-                while isHolding and enableShakeEffect do
-                    t = t + 0.1
-                    local offsetX = math.sin(t * 20) * 2
-                    guiObject.Position = UDim2.new(originalPos.X.Scale, originalPos.X.Offset + offsetX, originalPos.Y.Scale, originalPos.Y.Offset)
-                    task.wait(0.02)
-                end
-                guiObject.Position = originalPos
-            end)
+            task.delay(6, function() p:Destroy() end)
         end
-    end)
-
-    guiObject.InputEnded:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-            isHolding = false
-            guiObject.Position = originalPos
-        end
-    end)
-end
+        task.wait(0.35)
+    end
+end)
 
 ---------------------------------------------------------
 -- إنشاء الأزرار والقوائم المنسدلة
@@ -547,7 +521,6 @@ local function createProStyleBtn(text, side)
     stroke.Parent = btn
 
     table.insert(registeredWingStrokes, stroke)
-    addInteractiveAnimation(btn)
     return btn
 end
 
@@ -564,7 +537,7 @@ local function addChilliAccordion(titleText, builderFunc)
     headBtn.Text = "  >  " .. titleText
     headBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
     headBtn.Font = Enum.Font.FredokaOne
-    headBtn.TextSize = 20
+    headBtn.TextSize = 18
     headBtn.TextXAlignment = Enum.TextXAlignment.Center
     headBtn.ZIndex = 3
     headBtn.Parent = folderFrame
@@ -588,7 +561,7 @@ local function addChilliAccordion(titleText, builderFunc)
 
     local isOpen = false
 
-    local function addToggleRow(nameText, onToggle, initialVal)
+    local function addToggleRow(nameText, onToggle)
         local rowFrame = Instance.new("Frame")
         rowFrame.Size = UDim2.new(1, 0, 0, 36)
         rowFrame.BackgroundColor3 = Color3.fromRGB(22, 16, 36)
@@ -609,7 +582,7 @@ local function addChilliAccordion(titleText, builderFunc)
         nameLbl.Text = nameText
         nameLbl.TextColor3 = Color3.fromRGB(255, 255, 255)
         nameLbl.Font = Enum.Font.FredokaOne
-        nameLbl.TextSize = 15
+        nameLbl.TextSize = 14
         nameLbl.TextXAlignment = Enum.TextXAlignment.Left
         nameLbl.ZIndex = 4
         nameLbl.Parent = rowFrame
@@ -632,12 +605,12 @@ local function addChilliAccordion(titleText, builderFunc)
         innerBox.Size = UDim2.new(1, -6, 1, -6)
         innerBox.Position = UDim2.new(0, 3, 0, 3)
         innerBox.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-        innerBox.Visible = initialVal or false
+        innerBox.Visible = false
         innerBox.ZIndex = 5
         innerBox.Parent = toggleBtn
         Instance.new("UICorner", innerBox).CornerRadius = UDim.new(0, 2)
 
-        local state = initialVal or false
+        local state = false
         toggleBtn.MouseButton1Click:Connect(function()
             playUiSound(SOUND_CLICK, 1, 0.35)
             state = not state
@@ -666,7 +639,7 @@ local function addChilliAccordion(titleText, builderFunc)
         btn.Text = nameText
         btn.TextColor3 = Color3.fromRGB(240, 240, 255)
         btn.Font = Enum.Font.FredokaOne
-        btn.TextSize = 15
+        btn.TextSize = 14
         btn.TextXAlignment = Enum.TextXAlignment.Center
         btn.ZIndex = 4
         btn.Parent = rowFrame
@@ -677,7 +650,7 @@ local function addChilliAccordion(titleText, builderFunc)
         end)
     end
 
-    builderFunc(addToggleRow, addActionRow)
+    builderFunc(addToggleRow, addActionRow, contentHolder)
 
     headBtn.MouseButton1Click:Connect(function()
         playUiSound(SOUND_CLICK, 1, 0.35)
@@ -686,7 +659,7 @@ local function addChilliAccordion(titleText, builderFunc)
         contentHolder.Visible = isOpen
 
         if isOpen then
-            task.wait(0.01)
+            task.wait(0.02)
             local totalHeight = contentLayout.AbsoluteContentSize.Y + 15
             contentHolder.Size = UDim2.new(1, 0, 0, totalHeight)
             folderFrame.Size = UDim2.new(1, 0, 0, totalHeight + 40)
@@ -937,7 +910,7 @@ BtnMainHome.MouseButton1Click:Connect(function()
     updatesTitle.Size = UDim2.new(1, -10, 0, 22)
     updatesTitle.Position = UDim2.new(0, 5, 0, 4)
     updatesTitle.BackgroundTransparency = 1
-    updatesTitle.Text = "✨ آخر تحديثات السكربت (v13.0):"
+    updatesTitle.Text = "✨ آخر تحديثات السكربت (v14.0):"
     updatesTitle.TextColor3 = Color3.fromRGB(255, 200, 100)
     updatesTitle.Font = Enum.Font.FredokaOne
     updatesTitle.TextSize = 14
@@ -949,7 +922,7 @@ BtnMainHome.MouseButton1Click:Connect(function()
     updatesDesc.Size = UDim2.new(1, -10, 0, 80)
     updatesDesc.Position = UDim2.new(0, 5, 0, 26)
     updatesDesc.BackgroundTransparency = 1
-    updatesDesc.Text = "• حل نهائي لخطأ ظهور بطاقات الخلفيات بدون فتح القائمة.\n• تحكم كامل بنيون الإطار والدوران في قسم الإعدادات.\n• نظام إرسال الاقتراحات المباشر عبر Webhook للديسكورد."
+    updatesDesc.Text = "• نيون سريع وفائق الجودة مع خيارات تغيير لون النيون كلياً.\n• إعادة بناء شبكة خلفيات Pro لتفتح بمرونة تامة عند النقر.\n• إضافة تأثير الجسيمات البصرية الخلفية (Particle VFX System)."
     updatesDesc.TextColor3 = Color3.fromRGB(220, 220, 240)
     updatesDesc.Font = Enum.Font.FredokaOne
     updatesDesc.TextSize = 11.5
@@ -962,7 +935,7 @@ BtnMainHome.MouseButton1Click:Connect(function()
 end)
 
 ---------------------------------------------------------
--- قسم اقتراحات المباشر المربوط بـ Discord Webhook
+-- قسم اقتراحات المباشر
 ---------------------------------------------------------
 local BtnSuggestions = createProStyleBtn("اقتراحات", "left")
 BtnSuggestions.MouseButton1Click:Connect(function()
@@ -989,7 +962,7 @@ BtnSuggestions.MouseButton1Click:Connect(function()
     local sugBox = Instance.new("TextBox")
     sugBox.Size = UDim2.new(1, 0, 0, 120)
     sugBox.BackgroundColor3 = Color3.fromRGB(20, 15, 30)
-    sugBox.PlaceholderText = "اكتب اقتراحك أو البلاغ هنا وسوف يصل مباشرة لسيرفر الديسكورد الخاص بالمطور..."
+    sugBox.PlaceholderText = "اكتب اقتراحك هنا وسوف يصل مباشرة لسيرفر الديسكورد..."
     sugBox.Text = ""
     sugBox.TextColor3 = Color3.fromRGB(255, 255, 255)
     sugBox.Font = Enum.Font.FredokaOne
@@ -1103,7 +1076,7 @@ if LocalPlayer.Name == "Dms921" then
 end
 
 ---------------------------------------------------------
--- الإعدادات والتحكم بنيون الإطار (مصلحة بالكامل)
+-- الإعدادات (مع تحكم النيون والجسيمات وتصحيح معرض الخلفيات)
 ---------------------------------------------------------
 local BtnSettings = createProStyleBtn("الإعدادات", "right")
 BtnSettings.MouseButton1Click:Connect(function()
@@ -1112,42 +1085,49 @@ BtnSettings.MouseButton1Click:Connect(function()
 
     addChilliAccordion("تخصيص ثيمات وألوان الواجهة", function(addToggle, addAction)
         addAction("الثيم البنفسجي الافتراضي", function()
+            neonColorOverride = nil
             updateThemeColors(Color3.fromRGB(150, 40, 255), Color3.fromRGB(110, 25, 200))
         end)
         addAction("الثيم الأسود الفحم (Charcoal Black)", function()
+            neonColorOverride = nil
             updateThemeColors(Color3.fromRGB(35, 35, 45), Color3.fromRGB(20, 20, 25))
         end)
         addAction("الثيم الأبيض النقي (Pure Light White)", function()
+            neonColorOverride = nil
             updateThemeColors(Color3.fromRGB(240, 240, 250), Color3.fromRGB(180, 180, 200))
         end)
         addAction("الثيم الأبيض والأسود (Monochrome)", function()
+            neonColorOverride = nil
             updateThemeColors(Color3.fromRGB(255, 255, 255), Color3.fromRGB(0, 0, 0))
         end)
         addAction("الثيم الأحمر", function()
+            neonColorOverride = nil
             updateThemeColors(Color3.fromRGB(235, 75, 65), Color3.fromRGB(210, 45, 45))
         end)
         addAction("الثيم الأزرق", function()
+            neonColorOverride = nil
             updateThemeColors(Color3.fromRGB(50, 150, 255), Color3.fromRGB(30, 100, 220))
         end)
         addAction("الثيم الأخضر", function()
+            neonColorOverride = nil
             updateThemeColors(Color3.fromRGB(50, 200, 100), Color3.fromRGB(30, 150, 70))
         end)
         addAction("الثيم الذهبي", function()
+            neonColorOverride = nil
             updateThemeColors(Color3.fromRGB(255, 200, 50), Color3.fromRGB(210, 150, 20))
         end)
     end)
 
-    -- القائمة الحصرية المخفية تماماً حتى يتم الضغط عليها
-    addChilliAccordion("تخصيص خلفيات الواجهة Pro", function(addToggle, addAction)
+    -- إعادة تصحيح قائمة معرض الخلفيات Pro لتظهر بوضوح فور الضغط عليها
+    addChilliAccordion("تخصيص خلفيات الواجهة Pro", function(addToggle, addAction, contentHolder)
         addAction("❌ إغلاق الخلفية", function()
             applyBackgroundByIndex(0)
         end)
 
         local gridHolder = Instance.new("Frame")
-        gridHolder.Size = UDim2.new(1, 0, 0, 220)
+        gridHolder.Size = UDim2.new(1, 0, 0, 210)
         gridHolder.BackgroundTransparency = 1
         gridHolder.ZIndex = 3
-        -- تم إصلاح الخطأ بربطها بـ contentHolder الخاص بالقائمة المنسدلة
         gridHolder.Parent = contentHolder
 
         local gridLayout = Instance.new("UIGridLayout")
@@ -1191,30 +1171,38 @@ BtnSettings.MouseButton1Click:Connect(function()
         end
     end)
 
-    addChilliAccordion("تحكم بنيون الإطار والدوران", function(addToggle, addAction)
-        addToggle("تشغيل/إيقاف دوران النيون المتحرك", function(st)
-            enableNeonAnim = st
+    addChilliAccordion("التحكم بلون وسرعة النيون المتحرك", function(addToggle, addAction)
+        addAction("سرعة الحركة: سريعة جداً (Ultra)", function()
+            neonSpeed = 10
             saveCurrentConfig()
-        end, enableNeonAnim)
+        end)
+        addAction("سرعة الحركة: متوسطة (Medium)", function()
+            neonSpeed = 5
+            saveCurrentConfig()
+        end)
+        addAction("لون نيون خاص: أحمر متوهج 🔴", function()
+            neonColorOverride = Color3.fromRGB(255, 0, 50)
+            updateThemeColors(currentAccentColor, currentHeaderColor)
+        end)
+        addAction("لون نيون خاص: أزرق سماوي 🔵", function()
+            neonColorOverride = Color3.fromRGB(0, 200, 255)
+            updateThemeColors(currentAccentColor, currentHeaderColor)
+        end)
+        addAction("لون نيون خاص: أخضر ليموني 🟢", function()
+            neonColorOverride = Color3.fromRGB(50, 255, 100)
+            updateThemeColors(currentAccentColor, currentHeaderColor)
+        end)
+        addAction("لون نيون خاص: وردي نيون 💗", function()
+            neonColorOverride = Color3.fromRGB(255, 50, 200)
+            updateThemeColors(currentAccentColor, currentHeaderColor)
+        end)
+    end)
 
-        addAction("سماكة النيون: خفيف (1px)", function()
-            neonThickness = 1
-            centerStroke.Thickness = 1
-            chatStroke.Thickness = 1
-            saveCurrentConfig()
-        end)
-        addAction("سماكة النيون: متوسط (2px)", function()
-            neonThickness = 2
-            centerStroke.Thickness = 2
-            chatStroke.Thickness = 2
-            saveCurrentConfig()
-        end)
-        addAction("سماكة النيون: قوي (3.5px)", function()
-            neonThickness = 3.5
-            centerStroke.Thickness = 3.5
-            chatStroke.Thickness = 3.5
-            saveCurrentConfig()
-        end)
+    addChilliAccordion("مؤثرات الجسيمات البصرية (Particles)", function(addToggle, addAction)
+        addAction("❌ إيقاف المؤثرات", function() activeParticleType = "none"; saveCurrentConfig() end)
+        addAction("✨ تساقط نجوم مضيئة", function() activeParticleType = "stars"; saveCurrentConfig() end)
+        addAction("🔥 تساقط شرارات نار", function() activeParticleType = "fire"; saveCurrentConfig() end)
+        addAction("💖 تساقط قلوب متوهجة", function() activeParticleType = "hearts"; saveCurrentConfig() end)
     end)
 
     addChilliAccordion("حفظ الإعدادات والتحكم", function(addToggle, addAction)
@@ -1222,10 +1210,6 @@ BtnSettings.MouseButton1Click:Connect(function()
             saveCurrentConfig()
             playUiSound(SOUND_CLICK, 1.2, 0.5)
         end)
-        addToggle("تفعيل/إيقاف أنيميشن الاهتزاز", function(st)
-            enableShakeEffect = st
-            saveCurrentConfig()
-        end, enableShakeEffect)
         addAction("إعادة دخول السيرفر Rejoin", function()
             TeleportService:Teleport(game.PlaceId, LocalPlayer)
         end)
@@ -1234,7 +1218,7 @@ BtnSettings.MouseButton1Click:Connect(function()
     CenterScroll.CanvasSize = UDim2.new(0, 0, 0, CenterLayout.AbsoluteContentSize.Y + 280)
 end)
 
--- شاشة التحميل
+-- شاشة التحميل الانسيابية
 task.spawn(function()
     for i = 1, 100 do
         BarFill.Size = UDim2.new(i / 100, 0, 1, 0)
