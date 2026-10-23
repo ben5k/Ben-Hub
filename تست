@@ -1,5 +1,5 @@
--- DFX Hub - Transparent Pro Broadcast, Red Bold Text, Strict Admin Lock
--- Version: v30.0.0 | Developer: Tahbah (Dms921)
+-- DFX Hub - Fixed Broadcast Layout, Crimson/Black Theme & Multi-Colors
+-- Version: v31.0.0 | Developer: Tahbah (Dms921)
 
 local CoreGui = game:GetService("CoreGui")
 local Players = game:GetService("Players")
@@ -12,12 +12,12 @@ local MarketplaceService = game:GetService("MarketplaceService")
 local LocalPlayer = Players.LocalPlayer
 local parent = (gethui and gethui()) or CoreGui:FindFirstChild("RobloxGui") or LocalPlayer:WaitForChild("PlayerGui")
 
-if parent:FindFirstChild("DFXProV30UI") then parent.DFXProV30UI:Destroy() end
+if parent:FindFirstChild("DFXProV31UI") then parent.DFXProV31UI:Destroy() end
 if parent:FindFirstChild("DFXAdminBroadcastGui") then parent.DFXAdminBroadcastGui:Destroy() end
 if parent:FindFirstChild("DFXTopChatGui") then parent.DFXTopChatGui:Destroy() end
 if parent:FindFirstChild("DFXLoadingGui") then parent.DFXLoadingGui:Destroy() end
 
-local CONFIG_FILE = "DFX_Config_v30.json"
+local CONFIG_FILE = "DFX_Config_v31.json"
 local DISCORD_WEBHOOK_URL = "https://discord.com/api/webhooks/1563126439434391643/KPBO62mv7x_5ubaobKt3W-YjYACbTCsY-iefrPNQ7x99Q4tndOrxwQX6ts9zSU1csjcT"
 
 local FIREBASE_BASE_URL = "https://arad-hun-default-rtdb.firebaseio.com"
@@ -173,7 +173,7 @@ local function loadAvatarThumbnail(userId, imageLabel)
 end
 
 ---------------------------------------------------------
--- نظام عرض البرودكاست (عائم بدون خلفية، بخط أحمر عريض وكبير)
+-- نظام عرض البرودكاست (معدل تماماً لمنع أي تداخل في النصوص)
 ---------------------------------------------------------
 local BroadcastGui = Instance.new("ScreenGui")
 BroadcastGui.Name = "DFXAdminBroadcastGui"
@@ -181,21 +181,19 @@ BroadcastGui.ResetOnSpawn = false
 BroadcastGui.Parent = parent
 
 local function showBroadcastBanner(senderName, text, userId)
-    -- تشغيل الصوت العالي المطلوب
     playUiSound(BROADCAST_SOUND_ID, 1, 2.0)
 
-    -- إطار شفاف بالكامل (بدون خلفية ورا الكتابة)
     local banner = Instance.new("Frame")
-    banner.Size = UDim2.new(0, 520, 0, 80)
-    banner.Position = UDim2.new(0.5, -260, 0, -90)
-    banner.BackgroundTransparency = 1 -- بدون خلفية تماماً!
+    banner.Size = UDim2.new(0, 500, 0, 75)
+    banner.Position = UDim2.new(0.5, -250, 0, -90)
+    banner.BackgroundTransparency = 1
     banner.BorderSizePixel = 0
     banner.ZIndex = 500
     banner.Parent = BroadcastGui
 
     local avImg = Instance.new("ImageLabel")
     avImg.Size = UDim2.new(0, 48, 0, 48)
-    avImg.Position = UDim2.new(0, 10, 0, 5)
+    avImg.Position = UDim2.new(0, 10, 0.5, -24)
     avImg.BackgroundColor3 = Color3.fromRGB(20, 15, 25)
     avImg.ZIndex = 501
     avImg.Parent = banner
@@ -207,17 +205,25 @@ local function showBroadcastBanner(senderName, text, userId)
     avStroke.Thickness = 2
     avStroke.Parent = avImg
 
+    -- صندوق النصوص لمنع أي تداخل نهائياً
+    local textContainer = Instance.new("Frame")
+    textContainer.Size = UDim2.new(1, -70, 1, 0)
+    textContainer.Position = UDim2.new(0, 68, 0, 0)
+    textContainer.BackgroundTransparency = 1
+    textContainer.ZIndex = 501
+    textContainer.Parent = banner
+
     local nameLbl = Instance.new("TextLabel")
-    nameLbl.Size = UDim2.new(1, -70, 0, 26)
-    nameLbl.Position = UDim2.new(0, 68, 0, 2)
+    nameLbl.Size = UDim2.new(1, 0, 0, 24)
+    nameLbl.Position = UDim2.new(0, 0, 0, 6)
     nameLbl.BackgroundTransparency = 1
-    nameLbl.Text = senderName .. " 👑:"
-    nameLbl.TextColor3 = Color3.fromRGB(255, 40, 80) -- أحمر فخم
+    nameLbl.Text = senderName .. " 👑 :"
+    nameLbl.TextColor3 = Color3.fromRGB(255, 50, 90)
     nameLbl.Font = Enum.Font.FredokaOne
-    nameLbl.TextSize = 17 -- خط كبير
-    nameLbl.TextXAlignment = Enum.TextXAlignment.Right
-    nameLbl.ZIndex = 501
-    nameLbl.Parent = banner
+    nameLbl.TextSize = 16
+    nameLbl.TextXAlignment = Enum.TextXAlignment.Left
+    nameLbl.ZIndex = 502
+    nameLbl.Parent = textContainer
 
     local nameStroke = Instance.new("UIStroke")
     nameStroke.Color = Color3.fromRGB(0, 0, 0)
@@ -225,32 +231,31 @@ local function showBroadcastBanner(senderName, text, userId)
     nameStroke.Parent = nameLbl
 
     local textLbl = Instance.new("TextLabel")
-    textLbl.Size = UDim2.new(1, -70, 0, 45)
-    textLbl.Position = UDim2.new(0, 68, 0, 30)
+    textLbl.Size = UDim2.new(1, 0, 0, 40)
+    textLbl.Position = UDim2.new(0, 0, 0, 28)
     textLbl.BackgroundTransparency = 1
     textLbl.Text = text
-    textLbl.TextColor3 = Color3.fromRGB(255, 60, 90) -- أحمر عريض وواضح
+    textLbl.TextColor3 = Color3.fromRGB(255, 255, 255)
     textLbl.Font = Enum.Font.FredokaOne
-    textLbl.TextSize = 16.5 -- خط عريض وكبير
-    textLbl.TextXAlignment = Enum.TextXAlignment.Right
+    textLbl.TextSize = 15
+    textLbl.TextXAlignment = Enum.TextXAlignment.Left
     textLbl.TextWrapped = true
-    textLbl.ZIndex = 501
-    textLbl.Parent = banner
+    textLbl.ZIndex = 502
+    textLbl.Parent = textContainer
 
     local textStroke = Instance.new("UIStroke")
     textStroke.Color = Color3.fromRGB(0, 0, 0)
     textStroke.Thickness = 3
     textStroke.Parent = textLbl
 
-    -- أنيميشن ظهور ودخول سلس
     TweenService:Create(banner, TweenInfo.new(0.5, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
-        Position = UDim2.new(0.5, -260, 0, 25)
+        Position = UDim2.new(0.5, -250, 0, 25)
     }):Play()
 
     task.delay(6, function()
         if banner and banner.Parent then
             TweenService:Create(banner, TweenInfo.new(0.4, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {
-                Position = UDim2.new(0.5, -260, 0, -100)
+                Position = UDim2.new(0.5, -250, 0, -100)
             }):Play()
             task.wait(0.4)
             banner:Destroy()
@@ -325,7 +330,7 @@ Instance.new("UICorner", BarFill).CornerRadius = UDim.new(0, 5)
 -- الهيكل الرئيسي للواجهة
 ---------------------------------------------------------
 local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "DFXProV30UI"
+ScreenGui.Name = "DFXProV31UI"
 ScreenGui.ResetOnSpawn = false
 ScreenGui.Parent = parent
 
@@ -515,7 +520,7 @@ CenterLayout.Padding = UDim.new(0, 8)
 CenterLayout.Parent = CenterScroll
 
 ---------------------------------------------------------
--- نافذة الشات المباشرة
+-- نافذة الشات المباشرة (تصميم محسن واحترافي)
 ---------------------------------------------------------
 local ChatScreenGui = Instance.new("ScreenGui")
 ChatScreenGui.Name = "DFXTopChatGui"
@@ -1361,7 +1366,7 @@ BtnMainHome.MouseButton1Click:Connect(function()
     updatesTitle.Size = UDim2.new(1, -10, 0, 22)
     updatesTitle.Position = UDim2.new(0, 5, 0, 4)
     updatesTitle.BackgroundTransparency = 1
-    updatesTitle.Text = "✨ آخر تحديثات السكربت (v30.0):"
+    updatesTitle.Text = "✨ آخر تحديثات السكربت (v31.0):"
     updatesTitle.TextColor3 = currentAccentColor
     updatesTitle.Font = Enum.Font.FredokaOne
     updatesTitle.TextSize = 14
@@ -1374,7 +1379,7 @@ BtnMainHome.MouseButton1Click:Connect(function()
     updatesDesc.Size = UDim2.new(1, -10, 0, 90)
     updatesDesc.Position = UDim2.new(0, 5, 0, 26)
     updatesDesc.BackgroundTransparency = 1
-    updatesDesc.Text = "• تعديل نظام البرودكاست ليصبح عائماً وبدون خلفية (مطابق لصورة Ben).\n• إرسال النص باللون الأحمر الفخم، بخط عريض وكبير مع حدود سوداء.\n• حماية تصرية للوحة الأدمن ونظام شات متطور."
+    updatesDesc.Text = "• إصلاح تداخل وتخربط النصوص في نظام البرودكاست نهائياً.\n• إضافة العديد من الثيمات والألوان الفخمة الجديدة.\n• حماية صارمة للوحة الأدمن وتحديث واجهة الشات."
     updatesDesc.TextColor3 = Color3.fromRGB(240, 220, 230)
     updatesDesc.Font = Enum.Font.FredokaOne
     updatesDesc.TextSize = 11.5
@@ -1854,7 +1859,7 @@ BtnSettings.MouseButton1Click:Connect(function()
     playUiSound(SOUND_CLICK, 1, 0.35)
     clearCenter()
 
-    addChilliAccordion("تخصيص الثيمات (قرمزي، أسود، أبيض)", function(addToggle, addAction)
+    addChilliAccordion("تخصيص الثيمات والألوان الكثيرة 🎨", function(addToggle, addAction)
         local function updateTheme(accent, headerCol)
             currentAccentColor = accent
             currentHeaderColor = headerCol
@@ -1885,10 +1890,14 @@ BtnSettings.MouseButton1Click:Connect(function()
         end
 
         addAction("الثيم القرمزي الفاخر 🔴", function() updateTheme(Color3.fromRGB(200, 20, 60), Color3.fromRGB(140, 10, 40)) end)
-        addAction("الثيم الأسود النقي 🖤", function() updateTheme(Color3.fromRGB(240, 240, 240), Color3.fromRGB(40, 40, 45)) end)
-        addAction("الثيم الأزرق السماوي 🩵", function() updateTheme(Color3.fromRGB(0, 170, 255), Color3.fromRGB(0, 100, 200)) end)
-        addAction("الثيم الأرجواني 💜", function() updateTheme(Color3.fromRGB(150, 40, 255), Color3.fromRGB(110, 25, 200)) end)
-        addAction("الثيم الذهبي 🟡", function() updateTheme(Color3.fromRGB(255, 200, 50), Color3.fromRGB(210, 150, 20)) end)
+        addAction("الثيم الأسود والأبيض الملكي 🖤", function() updateTheme(Color3.fromRGB(255, 255, 255), Color3.fromRGB(30, 30, 35)) end)
+        addAction("الثيم الدموي المرعب 🩸", function() updateTheme(Color3.fromRGB(220, 0, 0), Color3.fromRGB(100, 0, 0)) end)
+        addAction("الثيم الذهبي الفاخر 🟡", function() updateTheme(Color3.fromRGB(255, 200, 50), Color3.fromRGB(180, 130, 10)) end)
+        addAction("الثيم الأزرق نيون 🩵", function() updateTheme(Color3.fromRGB(0, 170, 255), Color3.fromRGB(0, 90, 180)) end)
+        addAction("الثيم الأرجواني الملكي 💜", function() updateTheme(Color3.fromRGB(160, 40, 255), Color3.fromRGB(100, 20, 180)) end)
+        addAction("الثيم الأخضر الزمردي 🟢", function() updateTheme(Color3.fromRGB(40, 230, 100), Color3.fromRGB(20, 130, 50)) end)
+        addAction("الثيم البرتقالي الناري 🟠", function() updateTheme(Color3.fromRGB(255, 120, 20), Color3.fromRGB(180, 70, 10)) end)
+        addAction("الثيم الوردي الساطع 🩷", function() updateTheme(Color3.fromRGB(255, 80, 180), Color3.fromRGB(180, 40, 120)) end)
     end)
 
     addChilliAccordion("تخصيص خلفيات واجهة السكربت Pro", function(addToggle, addAction, contentHolder)
