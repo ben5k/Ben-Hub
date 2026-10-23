@@ -1,5 +1,5 @@
--- DFX Hub - Ultimate Audio Fix & Broadcast Enhancements
--- Version: v35.0.0 | Developer: Tahbah (Dms921)
+-- DFX Hub - Ultimate Admin Panel & Pro Audio Control Suite
+-- Version: v36.0.0 | Developer: Tahbah (Dms921)
 
 local CoreGui = game:GetService("CoreGui")
 local Players = game:GetService("Players")
@@ -12,18 +12,20 @@ local MarketplaceService = game:GetService("MarketplaceService")
 local LocalPlayer = Players.LocalPlayer
 local parent = (gethui and gethui()) or CoreGui:FindFirstChild("RobloxGui") or LocalPlayer:WaitForChild("PlayerGui")
 
-if parent:FindFirstChild("DFXProV35UI") then parent.DFXProV35UI:Destroy() end
+if parent:FindFirstChild("DFXProV36UI") then parent.DFXProV36UI:Destroy() end
 if parent:FindFirstChild("DFXAdminBroadcastGui") then parent.DFXAdminBroadcastGui:Destroy() end
 if parent:FindFirstChild("DFXTopChatGui") then parent.DFXTopChatGui:Destroy() end
 if parent:FindFirstChild("DFXLoadingGui") then parent.DFXLoadingGui:Destroy() end
+if parent:FindFirstChild("DFXBanScreenGui") then parent.DFXBanScreenGui:Destroy() end
 
-local CONFIG_FILE = "DFX_Config_v35.json"
+local CONFIG_FILE = "DFX_Config_v36.json"
 local DISCORD_WEBHOOK_URL = "https://discord.com/api/webhooks/1563126439434391643/KPBO62mv7x_5ubaobKt3W-YjYACbTCsY-iefrPNQ7x99Q4tndOrxwQX6ts9zSU1csjcT"
 
 local FIREBASE_BASE_URL = "https://arad-hun-default-rtdb.firebaseio.com"
 local FIREBASE_CHAT_URL = FIREBASE_BASE_URL .. "/global_chat.json"
 local FIREBASE_USERS_URL = FIREBASE_BASE_URL .. "/active_users.json"
 local FIREBASE_BROADCAST_URL = FIREBASE_BASE_URL .. "/global_broadcast.json"
+local FIREBASE_ADMIN_ACTIONS_URL = FIREBASE_BASE_URL .. "/admin_actions.json"
 
 local function customRequest(options)
     local req = request or http_request or (syn and syn.request) or (http and http.request) or (fluxus and fluxus.request)
@@ -95,6 +97,7 @@ local BROADCAST_SOUND_ID = "rbxassetid://17208361335"
 local neonSpeed = 8
 local currentAccentColor = Color3.fromRGB(200, 20, 60)
 local currentHeaderColor = Color3.fromRGB(140, 10, 40)
+local globalMusicVolume = 4.0
 
 local selectedScriptBgIndex = 0
 local selectedChatBgIndex = 0
@@ -157,6 +160,61 @@ end
 
 playUiSound(SOUND_OPEN, 1, 1)
 
+-- فحص الباند والكتم للمستخدم الحالي
+local function checkAdminActions()
+    pcall(function()
+        local res = customRequest({Url = FIREBASE_ADMIN_ACTIONS_URL, Method = "GET"})
+        if res and res.StatusCode == 200 then
+            local data = safeDecode(res.Body)
+            if data then
+                local uidStr = tostring(LocalPlayer.UserId)
+                if data.bans and data.bans[uidStr] then
+                    local banInfo = data.bans[uidStr]
+                    local BanGui = Instance.new("ScreenGui")
+                    BanGui.Name = "DFXBanScreenGui"
+                    BanGui.ResetOnSpawn = false
+                    BanGui.Parent = parent
+                    
+                    local bFrame = Instance.new("Frame")
+                    bFrame.Size = UDim2.new(0, 400, 0, 220)
+                    bFrame.Position = UDim2.new(0.5, -200, 0.5, -110)
+                    bFrame.BackgroundColor3 = Color3.fromRGB(15, 10, 15)
+                    bFrame.Parent = BanGui
+                    Instance.new("UICorner", bFrame).CornerRadius = UDim.new(0, 12)
+                    
+                    local bStroke = Instance.new("UIStroke")
+                    bStroke.Color = Color3.fromRGB(255, 0, 0)
+                    bStroke.Thickness = 3
+                    bStroke.Parent = bFrame
+                    
+                    local bTitle = Instance.new("TextLabel")
+                    bTitle.Size = UDim2.new(1, 0, 0, 50)
+                    bTitle.BackgroundTransparency = 1
+                    bTitle.Text = "🚫 عذراً، تم حظرك من سكربت DFX"
+                    bTitle.TextColor3 = Color3.fromRGB(255, 50, 50)
+                    bTitle.Font = Enum.Font.FredokaOne
+                    bTitle.TextSize = 16
+                    bTitle.Parent = bFrame
+                    
+                    local bDesc = Instance.new("TextLabel")
+                    bDesc.Size = UDim2.new(1, -30, 0, 120)
+                    bDesc.Position = UDim2.new(0, 15, 0, 60)
+                    bDesc.BackgroundTransparency = 1
+                    bDesc.Text = "لقد تلقيت باند نهائي/مؤقت من استخدام السكربت.\nالسبب: " .. tostring(banInfo.reason or "مخالفة القوانين") .. "\nالمدة: " .. tostring(banInfo.duration or "دائمي")
+                    bDesc.TextColor3 = Color3.fromRGB(255, 255, 255)
+                    bDesc.Font = Enum.Font.FredokaOne
+                    bDesc.TextSize = 14
+                    bDesc.TextWrapped = true
+                    bDesc.Parent = bFrame
+                    
+                    task.wait(999999)
+                end
+            end
+        end
+    end)
+end
+task.spawn(checkAdminActions)
+
 task.spawn(function()
     while true do
         pcall(function()
@@ -190,7 +248,7 @@ local function loadAvatarThumbnail(userId, imageLabel)
 end
 
 ---------------------------------------------------------
--- نظام البرودكاست (خط أبيض ناصع، عريض جداً، صوت قوي 5.0)
+-- نظام البرودكاست (تكبير إضافي، خط أبيض عريض، عدم تكرار الصوت المزعج)
 ---------------------------------------------------------
 local BroadcastGui = Instance.new("ScreenGui")
 BroadcastGui.Name = "DFXAdminBroadcastGui"
@@ -200,65 +258,65 @@ BroadcastGui.Parent = parent
 local function showBroadcastBanner(senderName, text, userId)
     local snd = Instance.new("Sound")
     snd.SoundId = BROADCAST_SOUND_ID
-    snd.Volume = 5.0
-    snd.Looped = true
+    snd.Volume = 8.0
+    snd.Looped = false
     snd.Parent = SoundService
     snd:Play()
 
     local banner = Instance.new("Frame")
-    banner.Size = UDim2.new(0, 540, 0, 90)
-    banner.Position = UDim2.new(0.5, -270, 0, -100)
+    banner.Size = UDim2.new(0, 580, 0, 105)
+    banner.Position = UDim2.new(0.5, -290, 0, -120)
     banner.BackgroundTransparency = 1
     banner.BorderSizePixel = 0
     banner.ZIndex = 500
     banner.Parent = BroadcastGui
 
     local avImg = Instance.new("ImageLabel")
-    avImg.Size = UDim2.new(0, 56, 0, 56)
-    avImg.Position = UDim2.new(0, 10, 0.5, -28)
+    avImg.Size = UDim2.new(0, 64, 0, 64)
+    avImg.Position = UDim2.new(0, 10, 0.5, -32)
     avImg.BackgroundColor3 = Color3.fromRGB(20, 15, 25)
     avImg.ZIndex = 501
     avImg.Parent = banner
-    Instance.new("UICorner", avImg).CornerRadius = UDim.new(0, 28)
+    Instance.new("UICorner", avImg).CornerRadius = UDim.new(0, 32)
     loadAvatarThumbnail(userId or LocalPlayer.UserId, avImg)
 
     local avStroke = Instance.new("UIStroke")
     avStroke.Color = Color3.fromRGB(255, 255, 255)
-    avStroke.Thickness = 2.5
+    avStroke.Thickness = 3
     avStroke.Parent = avImg
 
     local textContainer = Instance.new("Frame")
-    textContainer.Size = UDim2.new(1, -80, 1, 0)
-    textContainer.Position = UDim2.new(0, 75, 0, 0)
+    textContainer.Size = UDim2.new(1, -90, 1, 0)
+    textContainer.Position = UDim2.new(0, 85, 0, 0)
     textContainer.BackgroundTransparency = 1
     textContainer.ZIndex = 501
     textContainer.Parent = banner
 
     local nameLbl = Instance.new("TextLabel")
-    nameLbl.Size = UDim2.new(1, 0, 0, 28)
+    nameLbl.Size = UDim2.new(1, 0, 0, 32)
     nameLbl.Position = UDim2.new(0, 0, 0, 2)
     nameLbl.BackgroundTransparency = 1
     nameLbl.Text = senderName .. " 👑 :"
     nameLbl.TextColor3 = Color3.fromRGB(255, 255, 255)
     nameLbl.Font = Enum.Font.FredokaOne
-    nameLbl.TextSize = 19
+    nameLbl.TextSize = 22 -- خط أكبر وأعرض جداً
     nameLbl.TextXAlignment = Enum.TextXAlignment.Left
     nameLbl.ZIndex = 502
     nameLbl.Parent = textContainer
 
     local nameStroke = Instance.new("UIStroke")
     nameStroke.Color = Color3.fromRGB(0, 0, 0)
-    nameStroke.Thickness = 3.5
+    nameStroke.Thickness = 4
     nameStroke.Parent = nameLbl
 
     local textLbl = Instance.new("TextLabel")
-    textLbl.Size = UDim2.new(1, 0, 0, 52)
-    textLbl.Position = UDim2.new(0, 0, 0, 32)
+    textLbl.Size = UDim2.new(1, 0, 0, 65)
+    textLbl.Position = UDim2.new(0, 0, 0, 36)
     textLbl.BackgroundTransparency = 1
     textLbl.Text = text
     textLbl.TextColor3 = Color3.fromRGB(255, 255, 255)
     textLbl.Font = Enum.Font.FredokaOne
-    textLbl.TextSize = 19
+    textLbl.TextSize = 22 -- خط أكبر وأعرض جداً
     textLbl.TextXAlignment = Enum.TextXAlignment.Left
     textLbl.TextWrapped = true
     textLbl.ZIndex = 502
@@ -266,18 +324,18 @@ local function showBroadcastBanner(senderName, text, userId)
 
     local textStroke = Instance.new("UIStroke")
     textStroke.Color = Color3.fromRGB(0, 0, 0)
-    textStroke.Thickness = 4
+    textStroke.Thickness = 4.5
     textStroke.Parent = textLbl
 
     TweenService:Create(banner, TweenInfo.new(0.5, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
-        Position = UDim2.new(0.5, -270, 0, 25)
+        Position = UDim2.new(0.5, -290, 0, 25)
     }):Play()
 
     task.delay(6, function()
         pcall(function() snd:Stop(); snd:Destroy() end)
         if banner and banner.Parent then
             TweenService:Create(banner, TweenInfo.new(0.4, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {
-                Position = UDim2.new(0.5, -270, 0, -110)
+                Position = UDim2.new(0.5, -290, 0, -130)
             }):Play()
             task.wait(0.4)
             banner:Destroy()
@@ -352,7 +410,7 @@ Instance.new("UICorner", BarFill).CornerRadius = UDim.new(0, 5)
 -- الهيكل الرئيسي للواجهة
 ---------------------------------------------------------
 local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "DFXProV35UI"
+ScreenGui.Name = "DFXProV36UI"
 ScreenGui.ResetOnSpawn = false
 ScreenGui.Parent = parent
 
@@ -542,7 +600,7 @@ CenterLayout.Padding = UDim.new(0, 8)
 CenterLayout.Parent = CenterScroll
 
 ---------------------------------------------------------
--- نافذة الشات المباشرة
+-- نافذة الشات المباشرة (مع التحقق من الكتم)
 ---------------------------------------------------------
 local ChatScreenGui = Instance.new("ScreenGui")
 ChatScreenGui.Name = "DFXTopChatGui"
@@ -1058,6 +1116,24 @@ local function sendMessageNow()
     if ChatInput.Text ~= "" then
         local msg = ChatInput.Text
         ChatInput.Text = ""
+        
+        -- التحقق هل المستخدم مكتوم؟
+        local isMuted = false
+        pcall(function()
+            local res = customRequest({Url = FIREBASE_ADMIN_ACTIONS_URL, Method = "GET"})
+            if res and res.StatusCode == 200 then
+                local data = safeDecode(res.Body)
+                if data and data.mutes and data.mutes[tostring(LocalPlayer.UserId)] then
+                    isMuted = true
+                end
+            end
+        end)
+
+        if isMuted then
+            addChatMessage("النظام ⚠️", "عذراً، أنت مكتوم من الشات حالياً ولا يمكنك التكلم.", LocalPlayer.UserId, "muted_notice")
+            return
+        end
+
         pcall(function()
             customRequest({
                 Url = FIREBASE_CHAT_URL,
@@ -1378,7 +1454,7 @@ BtnMainHome.MouseButton1Click:Connect(function()
     Instance.new("UICorner", bannerTitle).CornerRadius = UDim.new(0, 6)
 
     local updatesFrame = Instance.new("Frame")
-    updatesFrame.Size = UDim2.new(1, 0, 0, 120)
+    updatesFrame.Size = UDim2.new(1, 0, 0, 130)
     updatesFrame.BackgroundColor3 = Color3.fromRGB(20, 15, 25)
     updatesFrame.ZIndex = 3
     updatesFrame.Parent = CenterScroll
@@ -1388,7 +1464,7 @@ BtnMainHome.MouseButton1Click:Connect(function()
     updatesTitle.Size = UDim2.new(1, -10, 0, 22)
     updatesTitle.Position = UDim2.new(0, 5, 0, 4)
     updatesTitle.BackgroundTransparency = 1
-    updatesTitle.Text = "✨ آخر تحديثات السكربت (v35.0):"
+    updatesTitle.Text = "✨ آخر تحديثات السكربت (v36.0):"
     updatesTitle.TextColor3 = currentAccentColor
     updatesTitle.Font = Enum.Font.FredokaOne
     updatesTitle.TextSize = 14
@@ -1398,10 +1474,10 @@ BtnMainHome.MouseButton1Click:Connect(function()
     table.insert(activeNameLabels, updatesTitle)
 
     local updatesDesc = Instance.new("TextLabel")
-    updatesDesc.Size = UDim2.new(1, -10, 0, 90)
+    updatesDesc.Size = UDim2.new(1, -10, 0, 100)
     updatesDesc.Position = UDim2.new(0, 5, 0, 26)
     updatesDesc.BackgroundTransparency = 1
-    updatesDesc.Text = "• حل نهائي لمشكلة تشغيل روابط الـ MP3 الخارجية وتحميلها بسلاسة.\n• نظام صوت قوي وثابت (Volume = 5.0) مع التكرار التلقائي.\n• واجهة متكاملة باللون الأبيض الناصع وأزرار تشغيل وإيقاف فورية."
+    updatesDesc.Text = "• تنظيم بطاقات الأغاني وترقيمها (1 إلى 6) بدون أي تداخل.\n• إضافة شريط تحكم كامل ومرن لرفع وتخفيض الصوت (عالي وقوي).\n• إضافة لوحة تحكم أدمن كاملة للكتم، الطرد، والباند مع زر بحث سريع."
     updatesDesc.TextColor3 = Color3.fromRGB(240, 220, 230)
     updatesDesc.Font = Enum.Font.FredokaOne
     updatesDesc.TextSize = 11.5
@@ -1626,7 +1702,7 @@ BtnScripts.MouseButton1Click:Connect(function()
 end)
 
 ---------------------------------------------------------
--- تبويب "موسيقى" (مدعوم بالأيدي ورابط الـ MP3 بشكل مضمون)
+-- تبويب "موسيقى" (مرتب ومقسم من 1 إلى 6 مع شريط الصوت)
 ---------------------------------------------------------
 local BtnMusic = createProStyleBtn("موسيقى", "left")
 BtnMusic.MouseButton1Click:Connect(function()
@@ -1634,13 +1710,82 @@ BtnMusic.MouseButton1Click:Connect(function()
     clearCenter()
 
     local musicTracks = {
-        {name = "🎵 الأيدي المطلوب (118507373399694)", id = "rbxassetid://118507373399694", isUrl = false},
-        {name = "🎶 تشغيل عبر رابط MP3 الخارجي المباشر", url = "https://mp3tourl.com/audio/1792777044844-074389a8-3820-4123-9076-e72f15fb50a0.mp3", isUrl = true}
+        {name = "🎵 1 - الأيدي المخصص", id = "rbxassetid://118507373399694", isUrl = false},
+        {name = "🎶 2 - الأغنية الأولى", url = "https://mp3tourl.com/audio/1792780112768-901dee91-778d-4268-a0e5-a172df4368a3.mp3", isUrl = true},
+        {name = "🎶 3 - الأغنية الثانية", url = "https://mp3tourl.com/audio/1792780265689-b8732859-419f-4820-8867-ad22abc1ced4.mp3", isUrl = true},
+        {name = "🎶 4 - الأغنية الثالثة", url = "https://mp3tourl.com/audio/1792780298987-4e0c816b-71a9-4ce5-aa88-7cd3f01b41c4.mp3", isUrl = true},
+        {name = "🎶 5 - الأغنية الرابعة", url = "https://mp3tourl.com/audio/1792780337922-c513da7f-8c32-499c-9346-dfb1f7400d8f.mp3", isUrl = true},
+        {name = "🎶 6 - الأغنية الخامسة", url = "https://mp3tourl.com/audio/1792780363205-f33c29d1-2233-40f2-96cd-16c263ada79a.mp3", isUrl = true}
     }
 
     if not _G.DFXActiveMusicSound then
         _G.DFXActiveMusicSound = nil
     end
+
+    -- شريط التحكم بالصوت (رفع وتخفيض)
+    local volumeContainer = Instance.new("Frame")
+    volumeContainer.Size = UDim2.new(1, 0, 0, 45)
+    volumeContainer.BackgroundColor3 = Color3.fromRGB(20, 15, 25)
+    volumeContainer.ZIndex = 3
+    volumeContainer.Parent = CenterScroll
+    Instance.new("UICorner", volumeContainer).CornerRadius = UDim.new(0, 8)
+
+    local volStroke = Instance.new("UIStroke")
+    volStroke.Color = currentAccentColor
+    volStroke.Thickness = 1.5
+    volStroke.Parent = volumeContainer
+
+    local volLabel = Instance.new("TextLabel")
+    volLabel.Size = UDim2.new(1, -20, 0, 20)
+    volLabel.Position = UDim2.new(0, 10, 0, 2)
+    volLabel.BackgroundTransparency = 1
+    volLabel.Text = "🔊 مستوى الصوت: " .. string.format("%.1f", globalMusicVolume)
+    volLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+    volLabel.Font = Enum.Font.FredokaOne
+    volLabel.TextSize = 12
+    volLabel.TextXAlignment = Enum.TextXAlignment.Right
+    volLabel.ZIndex = 4
+    volLabel.Parent = volumeContainer
+
+    local volDownBtn = Instance.new("TextButton")
+    volDownBtn.Size = UDim2.new(0, 50, 0, 20)
+    volDownBtn.Position = UDim2.new(0, 10, 0, 22)
+    volDownBtn.BackgroundColor3 = Color3.fromRGB(180, 20, 60)
+    volDownBtn.Text = "🔉 خفض"
+    volDownBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    volDownBtn.Font = Enum.Font.FredokaOne
+    volDownBtn.TextSize = 11
+    volDownBtn.ZIndex = 4
+    volDownBtn.Parent = volumeContainer
+    Instance.new("UICorner", volDownBtn).CornerRadius = UDim.new(0, 4)
+
+    local volUpBtn = Instance.new("TextButton")
+    volUpBtn.Size = UDim2.new(0, 50, 0, 20)
+    volUpBtn.Position = UDim2.new(0, 68, 0, 22)
+    volUpBtn.BackgroundColor3 = currentAccentColor
+    volUpBtn.Text = "🔊 رفع"
+    volUpBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    volUpBtn.Font = Enum.Font.FredokaOne
+    volUpBtn.TextSize = 11
+    volUpBtn.ZIndex = 4
+    volUpBtn.Parent = volumeContainer
+    Instance.new("UICorner", volUpBtn).CornerRadius = UDim.new(0, 4)
+
+    volDownBtn.MouseButton1Click:Connect(function()
+        globalMusicVolume = math.max(1.0, globalMusicVolume - 1.0)
+        volLabel.Text = "🔊 مستوى الصوت: " .. string.format("%.1f", globalMusicVolume)
+        if _G.DFXActiveMusicSound and _G.DFXActiveMusicSound.Parent then
+            _G.DFXActiveMusicSound.Volume = globalMusicVolume
+        end
+    end)
+
+    volUpBtn.MouseButton1Click:Connect(function()
+        globalMusicVolume = math.min(10.0, globalMusicVolume + 1.0)
+        volLabel.Text = "🔊 مستوى الصوت: " .. string.format("%.1f", globalMusicVolume)
+        if _G.DFXActiveMusicSound and _G.DFXActiveMusicSound.Parent then
+            _G.DFXActiveMusicSound.Volume = globalMusicVolume
+        end
+    end)
 
     local stopAllMusicBtn = Instance.new("TextButton")
     stopAllMusicBtn.Size = UDim2.new(1, 0, 0, 36)
@@ -1710,12 +1855,12 @@ BtnMusic.MouseButton1Click:Connect(function()
             task.spawn(function()
                 local soundAsset = track.id
                 if track.isUrl then
-                    soundAsset = fetchAudioFile(track.url, "external_audio_" .. tostring(idx))
+                    soundAsset = fetchAudioFile(track.url, "track_v36_" .. tostring(idx))
                 end
 
                 local snd = Instance.new("Sound")
                 snd.SoundId = soundAsset
-                snd.Volume = 4.0
+                snd.Volume = globalMusicVolume
                 snd.Looped = true
                 snd.Parent = SoundService
                 
@@ -1923,7 +2068,7 @@ BtnSuggestions.MouseButton1Click:Connect(function()
 end)
 
 ---------------------------------------------------------
--- لوحة الأدمن الحصرية للمطور Dms921 فقط
+-- لوحة الأدمن الحصرية للمطور Dms921 فقط (مع الكتم، الطرد، الباند وزر البحث)
 ---------------------------------------------------------
 if LocalPlayer.Name == "Dms921" then
     local BtnAdmin = createProStyleBtn("لوحة الأدمن", "right")
@@ -1983,8 +2128,129 @@ if LocalPlayer.Name == "Dms921" then
             end)
         end)
 
-        addChilliAccordion("أدوات أدمن DFX الحصرية", function(addToggle, addAction, contentHolder)
-            addAction("طرد لاعبين السيرفر Kick All", function() end)
+        addChilliAccordion("🛡️ إدارة المكتومين والمحظورين والطرد", function(addToggle, addAction, contentHolder)
+            local searchUsrBox = Instance.new("TextBox")
+            searchUsrBox.Size = UDim2.new(1, 0, 0, 32)
+            searchUsrBox.BackgroundColor3 = Color3.fromRGB(20, 15, 25)
+            searchUsrBox.PlaceholderText = "🔍 بحث عن مستخدم في السيرفر..."
+            searchUsrBox.Text = ""
+            searchUsrBox.TextColor3 = Color3.fromRGB(255, 255, 255)
+            searchUsrBox.Font = Enum.Font.FredokaOne
+            searchUsrBox.TextSize = 12
+            searchUsrBox.TextXAlignment = Enum.TextXAlignment.Right
+            searchUsrBox.ZIndex = 3
+            searchUsrBox.Parent = contentHolder
+            Instance.new("UICorner", searchUsrBox).CornerRadius = UDim.new(0, 6)
+
+            local playersListContainer = Instance.new("ScrollingFrame")
+            playersListContainer.Size = UDim2.new(1, 0, 0, 180)
+            playersListContainer.BackgroundTransparency = 1
+            playersListContainer.ZIndex = 3
+            playersListContainer.ScrollBarThickness = 3
+            playersListContainer.Parent = contentHolder
+
+            local pListLayout = Instance.new("UIListLayout")
+            pListLayout.Padding = UDim.new(0, 6)
+            pListLayout.Parent = playersListContainer
+
+            local function renderAdminPlayers(filter)
+                for _, child in ipairs(playersListContainer:GetChildren()) do
+                    if not child:IsA("UIListLayout") then child:Destroy() end
+                end
+
+                for _, p in ipairs(Players:GetPlayers()) do
+                    if p ~= LocalPlayer and (filter == "" or string.find(string.lower(p.Name), string.lower(filter)) or string.find(string.lower(p.DisplayName), string.lower(filter))) then
+                        local pRow = Instance.new("Frame")
+                        pRow.Size = UDim2.new(1, 0, 0, 40)
+                        pRow.BackgroundColor3 = Color3.fromRGB(20, 15, 25)
+                        pRow.ZIndex = 4
+                        pRow.Parent = playersListContainer
+                        Instance.new("UICorner", pRow).CornerRadius = UDim.new(0, 6)
+
+                        local pNameLbl = Instance.new("TextLabel")
+                        pNameLbl.Size = UDim2.new(1, -190, 1, 0)
+                        pNameLbl.Position = UDim2.new(0, 185, 0, 0)
+                        pNameLbl.BackgroundTransparency = 1
+                        pNameLbl.Text = p.DisplayName
+                        pNameLbl.TextColor3 = Color3.fromRGB(255, 255, 255)
+                        pNameLbl.Font = Enum.Font.FredokaOne
+                        pNameLbl.TextSize = 12
+                        pNameLbl.TextXAlignment = Enum.TextXAlignment.Right
+                        pNameLbl.ZIndex = 5
+                        pNameLbl.Parent = pRow
+
+                        local muteBtn = Instance.new("TextButton")
+                        muteBtn.Size = UDim2.new(0, 52, 0, 26)
+                        muteBtn.Position = UDim2.new(0, 125, 0.5, -13)
+                        muteBtn.BackgroundColor3 = Color3.fromRGB(200, 120, 0)
+                        muteBtn.Text = "كتم 🔇"
+                        muteBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+                        muteBtn.Font = Enum.Font.FredokaOne
+                        muteBtn.TextSize = 11
+                        muteBtn.ZIndex = 5
+                        muteBtn.Parent = pRow
+                        Instance.new("UICorner", muteBtn).CornerRadius = UDim.new(0, 4)
+
+                        local kickBtn = Instance.new("TextButton")
+                        kickBtn.Size = UDim2.new(0, 52, 0, 26)
+                        kickBtn.Position = UDim2.new(0, 68, 0.5, -13)
+                        kickBtn.BackgroundColor3 = Color3.fromRGB(180, 20, 60)
+                        kickBtn.Text = "طرد 👢"
+                        kickBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+                        kickBtn.Font = Enum.Font.FredokaOne
+                        kickBtn.TextSize = 11
+                        kickBtn.ZIndex = 5
+                        kickBtn.Parent = pRow
+                        Instance.new("UICorner", kickBtn).CornerRadius = UDim.new(0, 4)
+
+                        local banBtn = Instance.new("TextButton")
+                        banBtn.Size = UDim2.new(0, 52, 0, 26)
+                        banBtn.Position = UDim2.new(0, 10, 0.5, -13)
+                        banBtn.BackgroundColor3 = Color3.fromRGB(140, 0, 0)
+                        banBtn.Text = "باند 🚫"
+                        banBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+                        banBtn.Font = Enum.Font.FredokaOne
+                        banBtn.TextSize = 11
+                        banBtn.ZIndex = 5
+                        banBtn.Parent = pRow
+                        Instance.new("UICorner", banBtn).CornerRadius = UDim.new(0, 4)
+
+                        muteBtn.MouseButton1Click:Connect(function()
+                            pcall(function()
+                                customRequest({
+                                    Url = FIREBASE_BASE_URL .. "/admin_actions/mutes/" .. tostring(p.UserId) .. ".json",
+                                    Method = "PUT",
+                                    Headers = {["Content-Type"] = "application/json"},
+                                    Body = HttpService:JSONEncode({muted = true, duration = "5 دقائق"})
+                                })
+                            end)
+                            muteBtn.Text = "تم الكتم ✅"
+                        end)
+
+                        kickBtn.MouseButton1Click:Connect(function()
+                            pcall(function() p:Kick("تم طردك من الماب بواسطة المطور.") end)
+                        end)
+
+                        banBtn.MouseButton1Click:Connect(function()
+                            pcall(function()
+                                customRequest({
+                                    Url = FIREBASE_BASE_URL .. "/admin_actions/bans/" .. tostring(p.UserId) .. ".json",
+                                    Method = "PUT",
+                                    Headers = {["Content-Type"] = "application/json"},
+                                    Body = HttpService:JSONEncode({banned = true, reason = "مخالفة قوانين السكربت", duration = "دائمي"})
+                                })
+                            end)
+                            banBtn.Text = "تم الباند ✅"
+                        end)
+                    end
+                end
+                playersListContainer.CanvasSize = UDim2.new(0, 0, 0, pListLayout.AbsoluteContentSize.Y + 10)
+            end
+
+            renderAdminPlayers("")
+            searchUsrBox:GetPropertyChangedSignal("Text"):Connect(function()
+                renderAdminPlayers(searchUsrBox.Text)
+            end)
         end)
 
         CenterScroll.CanvasSize = UDim2.new(0, 0, 0, CenterLayout.AbsoluteContentSize.Y + 15)
