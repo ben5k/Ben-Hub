@@ -1,5 +1,5 @@
--- DFX Hub - Egg White Broadcast, Loop Audio & Music Tab
--- Version: v32.0.0 | Developer: Tahbah (Dms921)
+-- DFX Hub - Pro Broadcast UI, High Volume & Custom URL Audio Support
+-- Version: v33.0.0 | Developer: Tahbah (Dms921)
 
 local CoreGui = game:GetService("CoreGui")
 local Players = game:GetService("Players")
@@ -12,12 +12,12 @@ local MarketplaceService = game:GetService("MarketplaceService")
 local LocalPlayer = Players.LocalPlayer
 local parent = (gethui and gethui()) or CoreGui:FindFirstChild("RobloxGui") or LocalPlayer:WaitForChild("PlayerGui")
 
-if parent:FindFirstChild("DFXProV32UI") then parent.DFXProV32UI:Destroy() end
+if parent:FindFirstChild("DFXProV33UI") then parent.DFXProV33UI:Destroy() end
 if parent:FindFirstChild("DFXAdminBroadcastGui") then parent.DFXAdminBroadcastGui:Destroy() end
 if parent:FindFirstChild("DFXTopChatGui") then parent.DFXTopChatGui:Destroy() end
 if parent:FindFirstChild("DFXLoadingGui") then parent.DFXLoadingGui:Destroy() end
 
-local CONFIG_FILE = "DFX_Config_v32.json"
+local CONFIG_FILE = "DFX_Config_v33.json"
 local DISCORD_WEBHOOK_URL = "https://discord.com/api/webhooks/1563126439434391643/KPBO62mv7x_5ubaobKt3W-YjYACbTCsY-iefrPNQ7x99Q4tndOrxwQX6ts9zSU1csjcT"
 
 local FIREBASE_BASE_URL = "https://arad-hun-default-rtdb.firebaseio.com"
@@ -173,7 +173,7 @@ local function loadAvatarThumbnail(userId, imageLabel)
 end
 
 ---------------------------------------------------------
--- نظام عرض البرودكاست (نص كبير، لون البيض، وتكرار الصوت)
+-- نظام البرودكاست (خط كبير جداً، أبيض بحدود سوداء قوية، صوت عالي جداً 5.0)
 ---------------------------------------------------------
 local BroadcastGui = Instance.new("ScreenGui")
 BroadcastGui.Name = "DFXAdminBroadcastGui"
@@ -181,68 +181,67 @@ BroadcastGui.ResetOnSpawn = false
 BroadcastGui.Parent = parent
 
 local function showBroadcastBanner(senderName, text, userId)
-    -- تشغيل الصوت المتكرر (Looped) وبصوت عالٍ
     local snd = Instance.new("Sound")
     snd.SoundId = BROADCAST_SOUND_ID
-    snd.Volume = 2.0
-    snd.Looped = true -- تكرار الصوت حل المشكلة
+    snd.Volume = 5.0 -- صوت عالي وقوي جداً كما طلبت
+    snd.Looped = true
     snd.Parent = SoundService
     snd:Play()
 
     local banner = Instance.new("Frame")
-    banner.Size = UDim2.new(0, 520, 0, 85)
-    banner.Position = UDim2.new(0.5, -260, 0, -90)
+    banner.Size = UDim2.new(0, 540, 0, 90)
+    banner.Position = UDim2.new(0.5, -270, 0, -100)
     banner.BackgroundTransparency = 1
     banner.BorderSizePixel = 0
     banner.ZIndex = 500
     banner.Parent = BroadcastGui
 
     local avImg = Instance.new("ImageLabel")
-    avImg.Size = UDim2.new(0, 52, 0, 52)
-    avImg.Position = UDim2.new(0, 10, 0.5, -26)
+    avImg.Size = UDim2.new(0, 56, 0, 56)
+    avImg.Position = UDim2.new(0, 10, 0.5, -28)
     avImg.BackgroundColor3 = Color3.fromRGB(20, 15, 25)
     avImg.ZIndex = 501
     avImg.Parent = banner
-    Instance.new("UICorner", avImg).CornerRadius = UDim.new(0, 26)
+    Instance.new("UICorner", avImg).CornerRadius = UDim.new(0, 28)
     loadAvatarThumbnail(userId or LocalPlayer.UserId, avImg)
 
     local avStroke = Instance.new("UIStroke")
-    avStroke.Color = Color3.fromRGB(255, 253, 240) -- لون البيض
-    avStroke.Thickness = 2
+    avStroke.Color = Color3.fromRGB(255, 255, 255)
+    avStroke.Thickness = 2.5
     avStroke.Parent = avImg
 
     local textContainer = Instance.new("Frame")
-    textContainer.Size = UDim2.new(1, -75, 1, 0)
-    textContainer.Position = UDim2.new(0, 72, 0, 0)
+    textContainer.Size = UDim2.new(1, -80, 1, 0)
+    textContainer.Position = UDim2.new(0, 75, 0, 0)
     textContainer.BackgroundTransparency = 1
     textContainer.ZIndex = 501
     textContainer.Parent = banner
 
     local nameLbl = Instance.new("TextLabel")
-    nameLbl.Size = UDim2.new(1, 0, 0, 26)
-    nameLbl.Position = UDim2.new(0, 0, 0, 4)
+    nameLbl.Size = UDim2.new(1, 0, 0, 28)
+    nameLbl.Position = UDim2.new(0, 0, 0, 2)
     nameLbl.BackgroundTransparency = 1
     nameLbl.Text = senderName .. " 👑 :"
-    nameLbl.TextColor3 = Color3.fromRGB(255, 253, 240) -- لون البيض دائماً
+    nameLbl.TextColor3 = Color3.fromRGB(255, 255, 255) -- أبيض ناصع واضح جداً
     nameLbl.Font = Enum.Font.FredokaOne
-    nameLbl.TextSize = 17
+    nameLbl.TextSize = 19 -- خط كبير جداً
     nameLbl.TextXAlignment = Enum.TextXAlignment.Left
     nameLbl.ZIndex = 502
     nameLbl.Parent = textContainer
 
     local nameStroke = Instance.new("UIStroke")
     nameStroke.Color = Color3.fromRGB(0, 0, 0)
-    nameStroke.Thickness = 2.5
+    nameStroke.Thickness = 3.5 -- حدود سوداء سميكة وواضحة
     nameStroke.Parent = nameLbl
 
     local textLbl = Instance.new("TextLabel")
-    textLbl.Size = UDim2.new(1, 0, 0, 48)
-    textLbl.Position = UDim2.new(0, 0, 0, 30)
+    textLbl.Size = UDim2.new(1, 0, 0, 52)
+    textLbl.Position = UDim2.new(0, 0, 0, 32)
     textLbl.BackgroundTransparency = 1
     textLbl.Text = text
-    textLbl.TextColor3 = Color3.fromRGB(255, 253, 240) -- لون البيض دائماً وبخط كبير جداً
+    textLbl.TextColor3 = Color3.fromRGB(255, 255, 255) -- أبيض ناصع وكبير وعريض
     textLbl.Font = Enum.Font.FredokaOne
-    textLbl.TextSize = 17.5 -- خط كبير وواضح
+    textLbl.TextSize = 19 -- خط كبير وعريض جداً
     textLbl.TextXAlignment = Enum.TextXAlignment.Left
     textLbl.TextWrapped = true
     textLbl.ZIndex = 502
@@ -250,18 +249,18 @@ local function showBroadcastBanner(senderName, text, userId)
 
     local textStroke = Instance.new("UIStroke")
     textStroke.Color = Color3.fromRGB(0, 0, 0)
-    textStroke.Thickness = 3
+    textStroke.Thickness = 4 -- حدود سوداء قوية جداً لضمان عدم اختفاء الحروف
     textStroke.Parent = textLbl
 
     TweenService:Create(banner, TweenInfo.new(0.5, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
-        Position = UDim2.new(0.5, -260, 0, 25)
+        Position = UDim2.new(0.5, -270, 0, 25)
     }):Play()
 
     task.delay(6, function()
         pcall(function() snd:Stop(); snd:Destroy() end)
         if banner and banner.Parent then
             TweenService:Create(banner, TweenInfo.new(0.4, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {
-                Position = UDim2.new(0.5, -260, 0, -100)
+                Position = UDim2.new(0.5, -270, 0, -110)
             }):Play()
             task.wait(0.4)
             banner:Destroy()
@@ -336,7 +335,7 @@ Instance.new("UICorner", BarFill).CornerRadius = UDim.new(0, 5)
 -- الهيكل الرئيسي للواجهة
 ---------------------------------------------------------
 local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "DFXProV32UI"
+ScreenGui.Name = "DFXProV33UI"
 ScreenGui.ResetOnSpawn = false
 ScreenGui.Parent = parent
 
@@ -1372,7 +1371,7 @@ BtnMainHome.MouseButton1Click:Connect(function()
     updatesTitle.Size = UDim2.new(1, -10, 0, 22)
     updatesTitle.Position = UDim2.new(0, 5, 0, 4)
     updatesTitle.BackgroundTransparency = 1
-    updatesTitle.Text = "✨ آخر تحديثات السكربت (v32.0):"
+    updatesTitle.Text = "✨ آخر تحديثات السكربت (v33.0):"
     updatesTitle.TextColor3 = currentAccentColor
     updatesTitle.Font = Enum.Font.FredokaOne
     updatesTitle.TextSize = 14
@@ -1385,7 +1384,7 @@ BtnMainHome.MouseButton1Click:Connect(function()
     updatesDesc.Size = UDim2.new(1, -10, 0, 90)
     updatesDesc.Position = UDim2.new(0, 5, 0, 26)
     updatesDesc.BackgroundTransparency = 1
-    updatesDesc.Text = "• تكبير نص البرودكاست وتثبيته بلون البيض الدائم دون أي تداخل.\n• إضافة تكرار الصوت تلقائياً.\n• إضافة قسم الموسيقى الجديد لتشغيل الأغاني وإيقافها بحرية."
+    updatesDesc.Text = "• تكبير وتضخيم نص البرودكاست وجعله أبيض ناصع بحدود سوداء قوية جداً.\n• رفع صوت تنبيه البرودكاست إلى 5.0 (صوت قوي وعالٍ).\n• تحديث قسم الموسيقى بالأيدي الجديد ودعم تشغيل الصوت عبر رابط MP3 خارجي."
     updatesDesc.TextColor3 = Color3.fromRGB(240, 220, 230)
     updatesDesc.Font = Enum.Font.FredokaOne
     updatesDesc.TextSize = 11.5
@@ -1610,7 +1609,7 @@ BtnScripts.MouseButton1Click:Connect(function()
 end)
 
 ---------------------------------------------------------
--- تبويب "موسيقى" الجديد
+-- تبويب "موسيقى" المحدث بالأيدي الجديد ورابط الـ MP3
 ---------------------------------------------------------
 local BtnMusic = createProStyleBtn("موسيقى", "left")
 BtnMusic.MouseButton1Click:Connect(function()
@@ -1618,10 +1617,8 @@ BtnMusic.MouseButton1Click:Connect(function()
     clearCenter()
 
     local musicTracks = {
-        {name = "🎵 موسيقى تشغيل 1", id = "rbxassetid://122268584750241"},
-        {name = "🎵 موسيقى تشغيل 2", id = "rbxassetid://90390662535933"},
-        {name = "🎵 موسيقى تشغيل 3", id = "rbxassetid://82746224492420"},
-        {name = "🎵 موسيقى تشغيل 4", id = "rbxassetid://74895850882339"}
+        {name = "🎵 الأيدي الجديد المطلوبة", id = "rbxassetid://118507373399694"},
+        {name = "🎶 تشغيل عبر رابط MP3 الخارجي", id = "https://mp3tourl.com/audio/1792777044844-074389a8-3820-4123-9076-e72f15fb50a0.mp3"}
     }
 
     if not _G.DFXActiveMusicSound then
@@ -1631,7 +1628,7 @@ BtnMusic.MouseButton1Click:Connect(function()
     local stopAllMusicBtn = Instance.new("TextButton")
     stopAllMusicBtn.Size = UDim2.new(1, 0, 0, 36)
     stopAllMusicBtn.BackgroundColor3 = Color3.fromRGB(180, 20, 60)
-    stopAllMusicBtn.Text = "⏹️ إيقاف جميع الأغاني"
+    stopAllMusicBtn.Text = "⏹️ إيقاف جميع الأغاني والموسيقى"
     stopAllMusicBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
     stopAllMusicBtn.Font = Enum.Font.FredokaOne
     stopAllMusicBtn.TextSize = 14
@@ -1666,9 +1663,9 @@ BtnMusic.MouseButton1Click:Connect(function()
         mTitle.Position = UDim2.new(0, 10, 0, 0)
         mTitle.BackgroundTransparency = 1
         mTitle.Text = track.name
-        mTitle.TextColor3 = Color3.fromRGB(255, 253, 240)
+        mTitle.TextColor3 = Color3.fromRGB(255, 255, 255)
         mTitle.Font = Enum.Font.FredokaOne
-        mTitle.TextSize = 13.5
+        mTitle.TextSize = 13
         mTitle.TextXAlignment = Enum.TextXAlignment.Right
         mTitle.ZIndex = 4
         mTitle.Parent = mCard
@@ -1692,7 +1689,7 @@ BtnMusic.MouseButton1Click:Connect(function()
             end
             local snd = Instance.new("Sound")
             snd.SoundId = track.id
-            snd.Volume = 1.0
+            snd.Volume = 2.0
             snd.Looped = true -- تكرار الموسيقى تلقائياً
             snd.Parent = SoundService
             snd:Play()
