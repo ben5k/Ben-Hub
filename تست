@@ -1,5 +1,5 @@
--- DFX Hub - Complete Fix: Restored Themes, Non-Overlapping UI, Reversed Chat & Advanced 10-Min Reset Radar
--- Version: v22.0.0 | Developer: Tahbah
+-- DFX Hub - Fixed Message Layout (Green/Red Split), Unified Theme Colors, Smart Auto-Reset Chat & Dynamic Head Bubbles
+-- Version: v23.0.0 | Developer: Tahbah
 
 local CoreGui = game:GetService("CoreGui")
 local Players = game:GetService("Players")
@@ -12,12 +12,12 @@ local MarketplaceService = game:GetService("MarketplaceService")
 local LocalPlayer = Players.LocalPlayer
 local parent = (gethui and gethui()) or CoreGui:FindFirstChild("RobloxGui") or LocalPlayer:WaitForChild("PlayerGui")
 
-if parent:FindFirstChild("DFXProV22UI") then parent.DFXProV22UI:Destroy() end
+if parent:FindFirstChild("DFXProV23UI") then parent.DFXProV23UI:Destroy() end
 if parent:FindFirstChild("DFXAdminBroadcastGui") then parent.DFXAdminBroadcastGui:Destroy() end
 if parent:FindFirstChild("DFXTopChatGui") then parent.DFXTopChatGui:Destroy() end
 if parent:FindFirstChild("DFXLoadingGui") then parent.DFXLoadingGui:Destroy() end
 
-local CONFIG_FILE = "DFX_Config_v22.json"
+local CONFIG_FILE = "DFX_Config_v23.json"
 local DISCORD_WEBHOOK_URL = "https://discord.com/api/webhooks/1563126439434391643/KPBO62mv7x_5ubaobKt3W-YjYACbTCsY-iefrPNQ7x99Q4tndOrxwQX6ts9zSU1csjcT"
 
 local FIREBASE_BASE_URL = "https://arad-hun-default-rtdb.firebaseio.com"
@@ -77,6 +77,9 @@ local selectedScriptBgIndex = 0
 local selectedChatBgIndex = 0
 local espEnabled = false
 
+local registeredWingStrokes = {}
+local registeredOptionStrokes = {}
+
 local function playUiSound(soundId, pitch, volume)
     task.spawn(function()
         pcall(function()
@@ -94,7 +97,7 @@ end
 
 playUiSound(SOUND_OPEN, 1, 1)
 
--- تسجيل مستخدم السكربت المتواجد
+-- تسجيل تواجد اللاعب
 task.spawn(function()
     while true do
         pcall(function()
@@ -126,7 +129,7 @@ local function loadAvatarThumbnail(userId, imageLabel)
 end
 
 ---------------------------------------------------------
--- شاشة التحميل
+-- شاشة التحميل (تتغير مع لون السكربت)
 ---------------------------------------------------------
 local LoadingGui = Instance.new("ScreenGui")
 LoadingGui.Name = "DFXLoadingGui"
@@ -160,7 +163,7 @@ local LoadSub = Instance.new("TextLabel")
 LoadSub.Size = UDim2.new(1, 0, 0, 25)
 LoadSub.Position = UDim2.new(0, 0, 0, 50)
 LoadSub.BackgroundTransparency = 1
-LoadSub.Text = "جاري استعادة الخلفيات وتحديث النظام..."
+LoadSub.Text = "أهلاً بك! جاري تطبيق الألوان والتنسيق الجديد..."
 LoadSub.TextColor3 = Color3.fromRGB(180, 220, 255)
 LoadSub.Font = Enum.Font.FredokaOne
 LoadSub.TextSize = 13
@@ -183,7 +186,7 @@ Instance.new("UICorner", BarFill).CornerRadius = UDim.new(0, 5)
 -- الهيكل الرئيسي للواجهة
 ---------------------------------------------------------
 local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "DFXProV22UI"
+ScreenGui.Name = "DFXProV23UI"
 ScreenGui.ResetOnSpawn = false
 ScreenGui.Parent = parent
 
@@ -307,7 +310,7 @@ CenterLayout.Padding = UDim.new(0, 8)
 CenterLayout.Parent = CenterScroll
 
 ---------------------------------------------------------
--- نافذة الشات المباشرة الذكية المنظمة
+-- نافذة الشات المباشرة (تتفاعل بالكامل مع الثيم)
 ---------------------------------------------------------
 local ChatScreenGui = Instance.new("ScreenGui")
 ChatScreenGui.Name = "DFXTopChatGui"
@@ -372,12 +375,11 @@ task.spawn(function()
     end
 end)
 
--- عداد الوقت المتبقي على رسيت الشات (كل 10 دقائق)
 local ResetTimerLbl = Instance.new("TextLabel")
 ResetTimerLbl.Size = UDim2.new(1, -20, 0, 16)
 ResetTimerLbl.Position = UDim2.new(0, 10, 0, 6)
 ResetTimerLbl.BackgroundTransparency = 1
-ResetTimerLbl.Text = "⏱️ التصفير بعد: 10:00"
+ResetTimerLbl.Text = "⏱️ التصفير التلقائي: 10:00"
 ResetTimerLbl.TextColor3 = Color3.fromRGB(255, 200, 80)
 ResetTimerLbl.Font = Enum.Font.FredokaOne
 ResetTimerLbl.TextSize = 11
@@ -385,7 +387,6 @@ ResetTimerLbl.TextXAlignment = Enum.TextXAlignment.Center
 ResetTimerLbl.ZIndex = 3
 ResetTimerLbl.Parent = ChatWin
 
--- أزرار الهيدر
 local ChatHeaderBtn1 = Instance.new("TextButton")
 ChatHeaderBtn1.Size = UDim2.new(0, 85, 0, 24)
 ChatHeaderBtn1.Position = UDim2.new(0, 6, 0, 25)
@@ -455,7 +456,6 @@ local onlineLayout = Instance.new("UIListLayout")
 onlineLayout.Padding = UDim.new(0, 6)
 onlineLayout.Parent = ChatOnlineContainer
 
--- جلب مستخدمين السكربت المتواجدين فقط
 local function fetchScriptUsersOnly()
     pcall(function()
         local res = customRequest({Url = FIREBASE_USERS_URL, Method = "GET"})
@@ -499,9 +499,8 @@ local function fetchScriptUsersOnly()
                     pNameLbl.Size = UDim2.new(1, -125, 1, 0)
                     pNameLbl.Position = UDim2.new(0, 75, 0, 0)
                     pNameLbl.BackgroundTransparency = 1
-                    pNameLbl.Text = "<font color='#00aaff'>★ " .. (u.displayName or u.name) .. "</font>"
-                    pNameLbl.RichText = true
-                    pNameLbl.TextColor3 = Color3.fromRGB(255, 255, 255)
+                    pNameLbl.Text = "★ " .. (u.displayName or u.name)
+                    pNameLbl.TextColor3 = currentAccentColor
                     pNameLbl.Font = Enum.Font.FredokaOne
                     pNameLbl.TextSize = 13
                     pNameLbl.TextXAlignment = Enum.TextXAlignment.Right
@@ -564,7 +563,7 @@ ChatHeaderBtn3.MouseButton1Click:Connect(function()
 end)
 
 ---------------------------------------------------------
--- إدارة الخلفيات المصلحة كلياً
+-- إدارة الخلفيات
 ---------------------------------------------------------
 local function applyScriptBackground(idx)
     selectedScriptBgIndex = idx
@@ -593,12 +592,12 @@ end
 applyScriptBackground(selectedScriptBgIndex)
 applyChatBackground(selectedChatBgIndex)
 
--- معرض خلفيات الشات المنظم والجميل بدون أي تداخل
+-- معرض خلفيات الشات
 local chatFeatTitle = Instance.new("TextLabel")
 chatFeatTitle.Size = UDim2.new(1, 0, 0, 25)
 chatFeatTitle.BackgroundTransparency = 1
 chatFeatTitle.Text = "🖼️ تخصيص خلفية الشات المباشر"
-chatFeatTitle.TextColor3 = Color3.fromRGB(0, 180, 255)
+chatFeatTitle.TextColor3 = currentAccentColor
 chatFeatTitle.Font = Enum.Font.FredokaOne
 chatFeatTitle.TextSize = 13
 chatFeatTitle.ZIndex = 3
@@ -651,7 +650,7 @@ end
 ChatFeaturesContainer.CanvasSize = UDim2.new(0, 0, 0, featLayout.AbsoluteContentSize.Y + 300)
 
 ---------------------------------------------------------
--- فقاعة الشات فوق رأس مستخدم السكربت
+-- فقاعة الشات فوق رأس مستخدم السكربت (تتأثر باللون المختار)
 ---------------------------------------------------------
 local function showPrivateScriptUserBubble(userId, text)
     local targetPlr = Players:GetPlayerByUserId(userId)
@@ -676,7 +675,7 @@ local function showPrivateScriptUserBubble(userId, text)
     Instance.new("UICorner", bubbleFrame).CornerRadius = UDim.new(0, 8)
 
     local bStroke = Instance.new("UIStroke")
-    bStroke.Color = Color3.fromRGB(0, 170, 255)
+    bStroke.Color = currentAccentColor
     bStroke.Thickness = 2
     bStroke.Parent = bubbleFrame
 
@@ -697,7 +696,7 @@ local function showPrivateScriptUserBubble(userId, text)
 end
 
 ---------------------------------------------------------
--- شات الشات العام (معكوس الاتجاه ومنسق بالكامل)
+-- شات الشات العام (إصلاح توزيع اليمين واليسار الموضح بالصورة)
 ---------------------------------------------------------
 local ChatScroll = Instance.new("ScrollingFrame")
 ChatScroll.Size = UDim2.new(1, -20, 1, -45)
@@ -746,40 +745,60 @@ end)
 local renderedMsgs = {}
 local function addChatMessage(sender, text, userId)
     local msgFrame = Instance.new("Frame")
-    msgFrame.Size = UDim2.new(1, 0, 0, 42)
+    msgFrame.Size = UDim2.new(1, 0, 0, 44)
     msgFrame.BackgroundColor3 = Color3.fromRGB(16, 26, 46)
     msgFrame.ZIndex = 2
     msgFrame.Parent = ChatScroll
     Instance.new("UICorner", msgFrame).CornerRadius = UDim.new(0, 6)
 
     local stroke = Instance.new("UIStroke")
-    stroke.Color = Color3.fromRGB(0, 140, 230)
+    stroke.Color = currentAccentColor
     stroke.Thickness = 1.2
     stroke.Parent = msgFrame
 
+    -- الجهة اليمنى (صورة السكن + اسم اللاعب المكتوب)
+    local rightHeader = Instance.new("Frame")
+    rightHeader.Size = UDim2.new(0, 110, 1, 0)
+    rightHeader.Position = UDim2.new(1, -110, 0, 0)
+    rightHeader.BackgroundTransparency = 1
+    rightHeader.ZIndex = 3
+    rightHeader.Parent = msgFrame
+
     local avatarImg = Instance.new("ImageLabel")
     avatarImg.Size = UDim2.new(0, 32, 0, 32)
-    avatarImg.Position = UDim2.new(1, -38, 0.5, -16)
+    avatarImg.Position = UDim2.new(1, -36, 0.5, -16)
     avatarImg.BackgroundColor3 = Color3.fromRGB(25, 40, 70)
-    avatarImg.ZIndex = 3
-    avatarImg.Parent = msgFrame
+    avatarImg.ZIndex = 4
+    avatarImg.Parent = rightHeader
     Instance.new("UICorner", avatarImg).CornerRadius = UDim.new(0, 16)
 
     loadAvatarThumbnail(userId or LocalPlayer.UserId, avatarImg)
 
-    -- عكس الاتجاه وتوضيح الخط
-    local lbl = Instance.new("TextLabel")
-    lbl.Size = UDim2.new(1, -48, 1, 0)
-    lbl.Position = UDim2.new(0, 6, 0, 0)
-    lbl.BackgroundTransparency = 1
-    lbl.Text = "<font color='#00aaff'><b>" .. sender .. "</b></font>: " .. text
-    lbl.RichText = true
-    lbl.TextColor3 = Color3.fromRGB(255, 255, 255)
-    lbl.Font = Enum.Font.FredokaOne
-    lbl.TextSize = 13
-    lbl.TextXAlignment = Enum.TextXAlignment.Right
-    lbl.ZIndex = 3
-    lbl.Parent = msgFrame
+    local nameLbl = Instance.new("TextLabel")
+    nameLbl.Size = UDim2.new(1, -42, 1, 0)
+    nameLbl.Position = UDim2.new(0, 0, 0, 0)
+    nameLbl.BackgroundTransparency = 1
+    nameLbl.Text = sender .. " :"
+    nameLbl.TextColor3 = currentAccentColor
+    nameLbl.Font = Enum.Font.FredokaOne
+    nameLbl.TextSize = 13
+    nameLbl.TextXAlignment = Enum.TextXAlignment.Right
+    nameLbl.ZIndex = 4
+    nameLbl.Parent = rightHeader
+
+    -- الجهة اليسرى المضللة بالأخضر (نص الرسالة ممتد بوضوح بدون تداخل)
+    local msgTextLbl = Instance.new("TextLabel")
+    msgTextLbl.Size = UDim2.new(1, -120, 1, 0)
+    msgTextLbl.Position = UDim2.new(0, 8, 0, 0)
+    msgTextLbl.BackgroundTransparency = 1
+    msgTextLbl.Text = text
+    msgTextLbl.TextColor3 = Color3.fromRGB(255, 255, 255)
+    msgTextLbl.Font = Enum.Font.FredokaOne
+    msgTextLbl.TextSize = 13
+    msgTextLbl.TextXAlignment = Enum.TextXAlignment.Left
+    msgTextLbl.TextWrapped = true
+    msgTextLbl.ZIndex = 4
+    msgTextLbl.Parent = msgFrame
 
     ChatScroll.CanvasSize = UDim2.new(0, 0, 0, ChatLayout.AbsoluteContentSize.Y + 10)
     ChatScroll.CanvasPosition = Vector2.new(0, ChatScroll.AbsoluteCanvasSize.Y)
@@ -812,26 +831,24 @@ end
 SendBtn.MouseButton1Click:Connect(sendMessageNow)
 ChatInput.FocusLost:Connect(function(enter) if enter then sendMessageNow() end end)
 
--- عداد وعداد مسح الشات كل 10 دقائق بالضبط (600 ثانية)
+-- نظام تصفير ورسيت الشات الذكي (تلقائي كل 10 دقائق من السيرفر)
 task.spawn(function()
-    local timer = 600
     while true do
-        task.wait(1)
-        timer = timer - 1
-        local mins = math.floor(timer / 60)
-        local secs = timer % 60
-        ResetTimerLbl.Text = string.format("⏱️ التصفير بعد: %02d:%02d", mins, secs)
-
-        if timer <= 0 then
-            timer = 600
-            for _, child in ipairs(ChatScroll:GetChildren()) do
-                if not child:IsA("UIListLayout") then child:Destroy() end
+        local currentTime = os.time()
+        pcall(function()
+            local res = customRequest({Url = FIREBASE_CHAT_URL, Method = "GET"})
+            if res and res.StatusCode == 200 then
+                local data = safeDecode(res.Body)
+                if data then
+                    for k, m in pairs(data) do
+                        if type(m) == "table" and m.time and (currentTime - m.time) > 600 then
+                            customRequest({Url = FIREBASE_BASE_URL .. "/global_chat/" .. k .. ".json", Method = "DELETE"})
+                        end
+                    end
+                end
             end
-            renderedMsgs = {}
-            pcall(function()
-                customRequest({Url = FIREBASE_CHAT_URL, Method = "DELETE"})
-            end)
-        end
+        end)
+        task.wait(10)
     end
 end)
 
@@ -889,9 +906,6 @@ end)
 ---------------------------------------------------------
 -- بناء أزرار الواجهة والقوائم الأساسية
 ---------------------------------------------------------
-local registeredWingStrokes = {}
-local registeredOptionStrokes = {}
-
 local function createProStyleBtn(text, side)
     local btn = Instance.new("TextButton")
     btn.Size = UDim2.new(1, 0, 0, 36)
@@ -1113,8 +1127,8 @@ BtnMainHome.MouseButton1Click:Connect(function()
     updatesTitle.Size = UDim2.new(1, -10, 0, 22)
     updatesTitle.Position = UDim2.new(0, 5, 0, 4)
     updatesTitle.BackgroundTransparency = 1
-    updatesTitle.Text = "✨ آخر تحديثات السكربت (v22.0):"
-    updatesTitle.TextColor3 = Color3.fromRGB(0, 180, 255)
+    updatesTitle.Text = "✨ آخر تحديثات السكربت (v23.0):"
+    updatesTitle.TextColor3 = currentAccentColor
     updatesTitle.Font = Enum.Font.FredokaOne
     updatesTitle.TextSize = 14
     updatesTitle.TextXAlignment = Enum.TextXAlignment.Right
@@ -1125,7 +1139,7 @@ BtnMainHome.MouseButton1Click:Connect(function()
     updatesDesc.Size = UDim2.new(1, -10, 0, 80)
     updatesDesc.Position = UDim2.new(0, 5, 0, 26)
     updatesDesc.BackgroundTransparency = 1
-    updatesDesc.Text = "• استعادة كافة الأقسام والثيمات والواجهات بدون نقص.\n• تنظيم قائمة مميزات خلفيات الشات بدون تداخل.\n• عداد حقيقي ينبض لتصفير الشات كل 10 دقائق بالضبط."
+    updatesDesc.Text = "• توزيع اتجاه الرسالة: الاسم والصورة يميناً، والنص كاملاً يساراً.\n• توحيد الألوان: شاشة التحميل والأقسام والفقاعات تتغير مع الثيم.\n• تصفير الشات التلقائي حتى بعد الخروج وعدم وجود مستخدمين."
     updatesDesc.TextColor3 = Color3.fromRGB(200, 225, 255)
     updatesDesc.Font = Enum.Font.FredokaOne
     updatesDesc.TextSize = 11.5
@@ -1154,7 +1168,6 @@ BtnScripts.MouseButton1Click:Connect(function()
     CenterScroll.CanvasSize = UDim2.new(0, 0, 0, CenterLayout.AbsoluteContentSize.Y + 15)
 end)
 
--- نظام الـ ESP الاحترافي والمطور
 local BtnActivations = createProStyleBtn("تفعيلات", "left")
 BtnActivations.MouseButton1Click:Connect(function()
     playUiSound(SOUND_CLICK, 1, 0.35)
@@ -1169,7 +1182,7 @@ BtnActivations.MouseButton1Click:Connect(function()
                         if not p.Character:FindFirstChild("DFXProEsp") then
                             local hl = Instance.new("Highlight")
                             hl.Name = "DFXProEsp"
-                            hl.FillColor = Color3.fromRGB(0, 170, 255)
+                            hl.FillColor = currentAccentColor
                             hl.OutlineColor = Color3.fromRGB(255, 255, 255)
                             hl.FillTransparency = 0.4
                             hl.OutlineTransparency = 0
@@ -1264,12 +1277,13 @@ if LocalPlayer.Name == "Dms921" then
     end)
 end
 
+-- تبويب الإعدادات المحدث لربط كافة الألوان بالثيم المختار
 local BtnSettings = createProStyleBtn("الإعدادات", "right")
 BtnSettings.MouseButton1Click:Connect(function()
     playUiSound(SOUND_CLICK, 1, 0.35)
     clearCenter()
 
-    addChilliAccordion("تخصيص ثيمات الواجهة والنيون", function(addToggle, addAction)
+    addChilliAccordion("تخصيص ثيمات وألوان السكربت الشاملة", function(addToggle, addAction)
         local function updateTheme(accent, headerCol)
             currentAccentColor = accent
             currentHeaderColor = headerCol
@@ -1284,12 +1298,21 @@ BtnSettings.MouseButton1Click:Connect(function()
             ChatHeaderBtn2.BackgroundColor3 = accent
             ChatHeaderBtn3.BackgroundColor3 = accent
             SendBtn.BackgroundColor3 = accent
+
+            for _, stroke in ipairs(registeredWingStrokes) do
+                if stroke and stroke.Parent then stroke.Color = accent end
+            end
+            for _, stroke in ipairs(registeredOptionStrokes) do
+                if stroke and stroke.Parent then stroke.Color = accent end
+            end
         end
 
         addAction("الثيم الأزرق السماوي 🩵", function() updateTheme(Color3.fromRGB(0, 170, 255), Color3.fromRGB(0, 100, 200)) end)
         addAction("الثيم الأرجواني 💜", function() updateTheme(Color3.fromRGB(150, 40, 255), Color3.fromRGB(110, 25, 200)) end)
         addAction("الثيم الوردي 🩷", function() updateTheme(Color3.fromRGB(255, 100, 200), Color3.fromRGB(200, 50, 150)) end)
         addAction("الثيم الذهبي 🟡", function() updateTheme(Color3.fromRGB(255, 200, 50), Color3.fromRGB(210, 150, 20)) end)
+        addAction("الثيم القرمزي 🍷", function() updateTheme(Color3.fromRGB(220, 20, 80), Color3.fromRGB(150, 10, 50)) end)
+        addAction("الثيم الأخضـر 🟢", function() updateTheme(Color3.fromRGB(50, 230, 100), Color3.fromRGB(20, 160, 60)) end)
     end)
 
     addChilliAccordion("تخصيص خلفيات واجهة السكربت Pro", function(addToggle, addAction, contentHolder)
@@ -1350,7 +1373,7 @@ task.spawn(function()
     end
 end)
 
--- إنهاء شاشة التحميل الانسيابية
+-- إنهاء شاشة التحميل
 task.spawn(function()
     for i = 1, 100 do
         BarFill.Size = UDim2.new(i / 100, 0, 1, 0)
