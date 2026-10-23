@@ -1,5 +1,5 @@
--- DFX Hub - Bold Fonts, Animated RGB Text Strokes & Fixed Pro Backgrounds
--- Version: v5.1.0 | Developer: Tahbah
+-- DFX Hub - Pro Backgrounds Fixed, Map Banner API, Bold Font & RGB Dynamic Outlines
+-- Version: v5.2.0 | Developer: Tahbah
 
 local CoreGui = game:GetService("CoreGui")
 local Players = game:GetService("Players")
@@ -12,7 +12,7 @@ local MarketplaceService = game:GetService("MarketplaceService")
 local LocalPlayer = Players.LocalPlayer
 local parent = (gethui and gethui()) or CoreGui:FindFirstChild("RobloxGui") or LocalPlayer:WaitForChild("PlayerGui")
 
-if parent:FindFirstChild("DFXProV5UI") then parent.DFXProV5UI:Destroy() end
+if parent:FindFirstChild("DFXProV52UI") then parent.DFXProV52UI:Destroy() end
 if parent:FindFirstChild("DFXAdminBroadcastGui") then parent.DFXAdminBroadcastGui:Destroy() end
 if parent:FindFirstChild("DFXTopChatGui") then parent.DFXTopChatGui:Destroy() end
 
@@ -36,18 +36,9 @@ local function safeDecode(jsonStr)
     return nil
 end
 
--- جلب وتخزين الخلفيات مع حماية التنزيل Direct Decoded
-local bg1Url = "rbxassetid://138651783706047"
-local bg2Url = "rbxassetid://7405483764"
-
-pcall(function()
-    if getcustomasset and writefile then
-        if not isfile("DFX_Bg1.jpg") then writefile("DFX_Bg1.jpg", game:HttpGet("https://j.top4top.io/p_3947namvl1.jpg")) end
-        if not isfile("DFX_Bg2.jpg") then writefile("DFX_Bg2.jpg", game:HttpGet("https://i.top4top.io/p_3947szrlj0.jpg")) end
-        bg1Url = getcustomasset("DFX_Bg1.jpg")
-        bg2Url = getcustomasset("DFX_Bg2.jpg")
-    end
-end)
+-- روابط الخلفيات الاحترافية Pro
+local bg1Url = "https://j.top4top.io/p_3947namvl1.jpg"
+local bg2Url = "https://i.top4top.io/p_3947szrlj0.jpg"
 
 local SOUND_CLICK = "rbxassetid://6895079853"
 
@@ -74,7 +65,7 @@ local FIREBASE_PRESENCE_URL = FIREBASE_BASE_URL .. "/presence"
 -- الهيكل الرئيسي للواجهة
 ---------------------------------------------------------
 local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "DFXProV5UI"
+ScreenGui.Name = "DFXProV52UI"
 ScreenGui.ResetOnSpawn = false
 ScreenGui.Parent = parent
 
@@ -92,20 +83,20 @@ CenterBox.Name = "CenterBox"
 CenterBox.Size = UDim2.new(0, 340, 1, 0)
 CenterBox.Position = UDim2.new(0.5, -170, 0, 0)
 CenterBox.BackgroundColor3 = Color3.fromRGB(15, 12, 22)
-CenterBox.BackgroundTransparency = 0
+CenterBox.BackgroundTransparency = 0.35 -- شبه شفاف لكي تظهر الخلفيات بوضوح
 CenterBox.BorderSizePixel = 0
 CenterBox.ClipsDescendants = true
 CenterBox.Parent = MainFrame
 Instance.new("UICorner", CenterBox).CornerRadius = UDim.new(0, 10)
 
--- خلفية الصور الاحترافية البرو
+-- خلفية الصور الاحترافية Pro المرئية بوضوح
 local BgImage = Instance.new("ImageLabel")
 BgImage.Name = "BgImage"
 BgImage.Size = UDim2.new(1, 0, 1, 0)
 BgImage.BackgroundTransparency = 1
 BgImage.Visible = false
 BgImage.ScaleType = Enum.ScaleType.Crop
-BgImage.ZIndex = 1
+BgImage.ZIndex = 0
 BgImage.Parent = CenterBox
 Instance.new("UICorner", BgImage).CornerRadius = UDim.new(0, 10)
 
@@ -184,14 +175,13 @@ CenterLayout.Padding = UDim.new(0, 8)
 CenterLayout.Parent = CenterScroll
 
 ---------------------------------------------------------
--- إدارة الألوان والتحديثات الديناميكية
+-- إدارة الألوان والتحديثات الديناميكية المتزامنة مع الشات
 ---------------------------------------------------------
 local currentAccentColor = Color3.fromRGB(150, 40, 255)
 local currentHeaderColor = Color3.fromRGB(110, 25, 200)
 
 local registeredWingStrokes = {}
 local registeredChatThemeElements = {}
-local registeredTextStrokes = {}
 
 local function updateThemeColors(accent, headerCol)
     currentAccentColor = accent
@@ -211,7 +201,7 @@ local function updateThemeColors(accent, headerCol)
 end
 
 ---------------------------------------------------------
--- إنشاء الأزرار والقوائم مع الخطوط العريضة والمحيط المتوهج المتحرك
+-- إنشاء الأزرار والقوائم بخطوط عريضة وفخمة
 ---------------------------------------------------------
 local function createProStyleBtn(text, side)
     local btn = Instance.new("TextButton")
@@ -234,7 +224,7 @@ local function createProStyleBtn(text, side)
     return btn
 end
 
--- القوائم المنسدلة مع خط عريض ومحيطي متوهج نيون/RGB
+-- القوائم المنسدلة بخط عريض وفخم وإطار محيطي متحرك RGB متناسق
 local function addChilliAccordion(titleText, builderFunc)
     local folderFrame = Instance.new("Frame")
     folderFrame.Size = UDim2.new(1, 0, 0, 36)
@@ -247,25 +237,23 @@ local function addChilliAccordion(titleText, builderFunc)
     headBtn.BackgroundTransparency = 1
     headBtn.Text = "  >  " .. titleText
     headBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-    headBtn.Font = Enum.Font.FredokaOne -- خط عريض وكبير
-    headBtn.TextSize = 20 -- تكبير الحجم بشكل بارز جداً
+    headBtn.Font = Enum.Font.FredokaOne -- خط عريض وبارز جداً
+    headBtn.TextSize = 20
     headBtn.TextXAlignment = Enum.TextXAlignment.Center
     headBtn.ZIndex = 3
     headBtn.Parent = folderFrame
 
-    -- إطار خط محيطي متوهج حول النص متحرك بأسلوب RGB/Accent
     local textStroke = Instance.new("UIStroke")
     textStroke.Color = currentAccentColor
     textStroke.Thickness = 1.5
     textStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Contextual
     textStroke.Parent = headBtn
-    table.insert(registeredTextStrokes, textStroke)
 
     task.spawn(function()
         local hue = 0
         while headBtn and headBtn.Parent do
             hue = (hue + 0.008) % 1
-            textStroke.Color = Color3.fromHSV(hue, 0.8, 1) -- تحريك قوس قزح يدور حول خط الكلمات
+            textStroke.Color = Color3.fromHSV(hue, 0.8, 1) -- تأثير لون محيط يدور حول النص بـ RGB انسيابي
             task.wait(0.03)
         end
     end)
@@ -303,11 +291,6 @@ local function addChilliAccordion(titleText, builderFunc)
         nameLbl.TextXAlignment = Enum.TextXAlignment.Left
         nameLbl.ZIndex = 4
         nameLbl.Parent = rowFrame
-
-        local rowTextStroke = Instance.new("UIStroke")
-        rowTextStroke.Color = Color3.fromRGB(0, 0, 0)
-        rowTextStroke.Thickness = 1
-        rowTextStroke.Parent = nameLbl
 
         local toggleBtn = Instance.new("TextButton")
         toggleBtn.Size = UDim2.new(0, 22, 0, 22)
@@ -412,7 +395,7 @@ local function clearCenter()
 end
 
 ---------------------------------------------------------
--- نافذة الشات المباشرة
+-- نافذة الشات المباشر (متزامنة بالكامل مع ألوان السكربت)
 ---------------------------------------------------------
 local ChatScreenGui = Instance.new("ScreenGui")
 ChatScreenGui.Name = "DFXTopChatGui"
@@ -591,7 +574,7 @@ SendBtn.MouseButton1Click:Connect(sendMessageNow)
 ChatInput.FocusLost:Connect(function(enter) if enter then sendMessageNow() end end)
 
 ---------------------------------------------------------
--- واجهة "الرئيسية" المحدثة بالكامل
+-- واجهة "الرئيسية" مع بنر صورة الماب عبر API
 ---------------------------------------------------------
 local BtnMainHome = createProStyleBtn("الرئيسية", "left")
 BtnMainHome.MouseButton1Click:Connect(function()
@@ -605,11 +588,11 @@ BtnMainHome.MouseButton1Click:Connect(function()
         if info then placeName = info.Name end
     end)
 
-    -- 1. بنر صورة الماب التلقائية
+    -- 1. بنر صورة الماب التلقائية باستخدام رابط Thumbnail API الصحيح
     local mapBanner = Instance.new("ImageLabel")
     mapBanner.Size = UDim2.new(1, 0, 0, 110)
     mapBanner.BackgroundColor3 = Color3.fromRGB(20, 20, 30)
-    mapBanner.Image = "rbxassetid://" .. tostring(placeId)
+    mapBanner.Image = "https://www.roblox.com/asset-thumbnail/image?assetId=" .. tostring(placeId) .. "&width=420&height=250&format=png"
     mapBanner.ScaleType = Enum.ScaleType.Crop
     mapBanner.ZIndex = 3
     mapBanner.Parent = CenterScroll
@@ -677,7 +660,7 @@ BtnMainHome.MouseButton1Click:Connect(function()
         end
     end)
 
-    -- 3. روابط المجتمعات الرسمية
+    -- 3. روابط المجتمعات الرسمية المطلوبة
     local discordAction = Instance.new("TextButton")
     discordAction.Size = UDim2.new(1, 0, 0, 34)
     discordAction.BackgroundColor3 = Color3.fromRGB(30, 20, 50)
@@ -722,7 +705,7 @@ BtnMainHome.MouseButton1Click:Connect(function()
     updatesTitle.Size = UDim2.new(1, -10, 0, 22)
     updatesTitle.Position = UDim2.new(0, 5, 0, 4)
     updatesTitle.BackgroundTransparency = 1
-    updatesTitle.Text = "✨ آخر تحديثات السكربت (v5.1):"
+    updatesTitle.Text = "✨ آخر تحديثات السكربت (v5.2):"
     updatesTitle.TextColor3 = Color3.fromRGB(255, 200, 100)
     updatesTitle.Font = Enum.Font.FredokaOne
     updatesTitle.TextSize = 14
@@ -734,7 +717,7 @@ BtnMainHome.MouseButton1Click:Connect(function()
     updatesDesc.Size = UDim2.new(1, -10, 0, 42)
     updatesDesc.Position = UDim2.new(0, 5, 0, 26)
     updatesDesc.BackgroundTransparency = 1
-    updatesDesc.Text = "• تكبير الخطوط بشكل بارز مع خط محيطي متوهج RGB.\n• إصلاح رسم وتفعيل خلفيات الواجهة Pro بنجاح."
+    updatesDesc.Text = "• إصلاح ظهور الخلفيات وتفعيل الشفافية المناسبة لها.\n• إصلاح بنر صورة الماب وتطوير الخطوط العريضة والإطار المتحرك."
     updatesDesc.TextColor3 = Color3.fromRGB(220, 220, 240)
     updatesDesc.Font = Enum.Font.FredokaOne
     updatesDesc.TextSize = 12
@@ -847,16 +830,16 @@ BtnSettings.MouseButton1Click:Connect(function()
         addAction("تفعيل الخلفية الاحترافية الأولى (1)", function()
             BgImage.Image = bg1Url
             BgImage.Visible = true
-            CenterBox.BackgroundTransparency = 0.1
+            CenterBox.BackgroundTransparency = 0.35 -- شبه شفاف لتظهر الخلفية بوضوح
         end)
         addAction("تفعيل الخلفية الاحترافية الثانية (2)", function()
             BgImage.Image = bg2Url
             BgImage.Visible = true
-            CenterBox.BackgroundTransparency = 0.1
+            CenterBox.BackgroundTransparency = 0.35 -- شبه شفاف لتظهر الخلفية بوضوح
         end)
         addAction("إغلاق الخلفية", function()
             BgImage.Visible = false
-            CenterBox.BackgroundTransparency = 0
+            CenterBox.BackgroundTransparency = 0.1
         end)
     end)
 
