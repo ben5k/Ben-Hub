@@ -1,5 +1,5 @@
--- DFX Hub - Final Version v6.1.0 | Developer: Tahbah
--- Features: Fixed Pro Backgrounds, Clean UI, Direct Links & RGB Outlines
+-- DFX Hub - Ultimate Version v7.0.0 | Developer: Tahbah
+-- Features: Grid Image Cards for Pro Backgrounds (Side-by-Side) + 8 New Wallpapers
 
 local CoreGui = game:GetService("CoreGui")
 local Players = game:GetService("Players")
@@ -12,7 +12,7 @@ local MarketplaceService = game:GetService("MarketplaceService")
 local LocalPlayer = Players.LocalPlayer
 local parent = (gethui and gethui()) or CoreGui:FindFirstChild("RobloxGui") or LocalPlayer:WaitForChild("PlayerGui")
 
-if parent:FindFirstChild("DFXProV61UI") then parent.DFXProV61UI:Destroy() end
+if parent:FindFirstChild("DFXProV7UI") then parent.DFXProV7UI:Destroy() end
 if parent:FindFirstChild("DFXAdminBroadcastGui") then parent.DFXAdminBroadcastGui:Destroy() end
 if parent:FindFirstChild("DFXTopChatGui") then parent.DFXTopChatGui:Destroy() end
 
@@ -36,7 +36,6 @@ local function safeDecode(jsonStr)
     return nil
 end
 
--- حل مشكلة الخلفيات Pro عبر التحميل والتخزين المحلي الصحيح
 local function fetchAsset(url, fileName)
     if writefile and getcustomasset and readfile then
         local file = "DFXHub_" .. fileName .. ".jpg"
@@ -48,8 +47,17 @@ local function fetchAsset(url, fileName)
     return url
 end
 
-local bg1Url = fetchAsset("https://j.top4top.io/p_3947namvl1.jpg", "bg_custom_1")
-local bg2Url = fetchAsset("https://i.top4top.io/p_3947szrlj0.jpg", "bg_custom_2")
+-- روابط الخلفيات الـ 8 الجديدة + القديمة
+local wallUrls = {
+    fetchAsset("https://d.top4top.io/p_3947d1izj0.jpg", "bg_1"),
+    fetchAsset("https://e.top4top.io/p_394715j211.jpg", "bg_2"),
+    fetchAsset("https://l.top4top.io/p_3947ds5ic0.jpg", "bg_3"),
+    fetchAsset("https://a.top4top.io/p_3947hoh3p1.jpg", "bg_4"),
+    fetchAsset("https://b.top4top.io/p_3947wn78l2.jpg", "bg_5"),
+    fetchAsset("https://c.top4top.io/p_3947n55o83.jpg", "bg_6"),
+    fetchAsset("https://d.top4top.io/p_394754mmu4.jpg", "bg_7"),
+    fetchAsset("https://e.top4top.io/p_39475mm3q5.jpg", "bg_8"),
+}
 
 local SOUND_CLICK = "rbxassetid://6895079853"
 
@@ -76,7 +84,7 @@ local FIREBASE_PRESENCE_URL = FIREBASE_BASE_URL .. "/presence"
 -- الهيكل الرئيسي للواجهة
 ---------------------------------------------------------
 local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "DFXProV61UI"
+ScreenGui.Name = "DFXProV7UI"
 ScreenGui.ResetOnSpawn = false
 ScreenGui.Parent = parent
 
@@ -94,7 +102,7 @@ CenterBox.Name = "CenterBox"
 CenterBox.Size = UDim2.new(0, 340, 1, 0)
 CenterBox.Position = UDim2.new(0.5, -170, 0, 0)
 CenterBox.BackgroundColor3 = Color3.fromRGB(15, 12, 22)
-CenterBox.BackgroundTransparency = 0.35 -- شفافية مناسبة لتظهر الخلفيات بوضوح خلف الأزرار
+CenterBox.BackgroundTransparency = 0.35
 CenterBox.BorderSizePixel = 0
 CenterBox.ClipsDescendants = true
 CenterBox.Parent = MainFrame
@@ -185,7 +193,7 @@ CenterLayout.Padding = UDim.new(0, 8)
 CenterLayout.Parent = CenterScroll
 
 ---------------------------------------------------------
--- إدارة الألوان والتحديثات الديناميكية
+-- إدارة الألوان والتحديثات
 ---------------------------------------------------------
 local currentAccentColor = Color3.fromRGB(150, 40, 255)
 local currentHeaderColor = Color3.fromRGB(110, 25, 200)
@@ -211,7 +219,7 @@ local function updateThemeColors(accent, headerCol)
 end
 
 ---------------------------------------------------------
--- إنشاء الأزرار والقوائم المنسدلة بخط عريض ومحيط أسود وإطار RGB متحرك
+-- إنشاء الأزرار والقوائم
 ---------------------------------------------------------
 local function createProStyleBtn(text, side)
     local btn = Instance.new("TextButton")
@@ -588,7 +596,7 @@ SendBtn.MouseButton1Click:Connect(sendMessageNow)
 ChatInput.FocusLost:Connect(function(enter) if enter then sendMessageNow() end end)
 
 ---------------------------------------------------------
--- واجهة "الرئيسية" مع روابط ديسكورد وتليجرام البسيطة
+-- واجهة "الرئيسية"
 ---------------------------------------------------------
 local BtnMainHome = createProStyleBtn("الرئيسية", "left")
 BtnMainHome.MouseButton1Click:Connect(function()
@@ -602,7 +610,6 @@ BtnMainHome.MouseButton1Click:Connect(function()
         if info then placeName = info.Name end
     end)
 
-    -- 1. بنر الماب
     local mapBanner = Instance.new("ImageLabel")
     mapBanner.Size = UDim2.new(1, 0, 0, 100)
     mapBanner.BackgroundColor3 = Color3.fromRGB(20, 20, 30)
@@ -626,7 +633,6 @@ BtnMainHome.MouseButton1Click:Connect(function()
     bannerTitle.Parent = mapBanner
     Instance.new("UICorner", bannerTitle).CornerRadius = UDim.new(0, 6)
 
-    -- 2. إحصائيات السيرفر
     local serverInfoFrame = Instance.new("Frame")
     serverInfoFrame.Size = UDim2.new(1, 0, 0, 45)
     serverInfoFrame.BackgroundColor3 = Color3.fromRGB(22, 16, 36)
@@ -669,7 +675,6 @@ BtnMainHome.MouseButton1Click:Connect(function()
         end
     end)
 
-    -- 3. أزرار الروابط البسيطة للديسكورد والتليجرام كما طلبت
     local discordAction = Instance.new("TextButton")
     discordAction.Size = UDim2.new(1, 0, 0, 34)
     discordAction.BackgroundColor3 = Color3.fromRGB(30, 20, 50)
@@ -706,10 +711,8 @@ BtnMainHome.MouseButton1Click:Connect(function()
 end)
 
 ---------------------------------------------------------
--- التبويبات (سكربتات، اقتراحات، تفعيلات)
+-- التبويبات الأخرى (سكربتات، اقتراحات، تفعيلات)
 ---------------------------------------------------------
-
--- 1. سكربتات
 local BtnScripts = createProStyleBtn("سكربتات", "left")
 BtnScripts.MouseButton1Click:Connect(function()
     playUiSound(SOUND_CLICK, 1)
@@ -735,7 +738,6 @@ BtnScripts.MouseButton1Click:Connect(function()
     CenterScroll.CanvasSize = UDim2.new(0, 0, 0, CenterLayout.AbsoluteContentSize.Y + 15)
 end)
 
--- 2. اقتراحات
 local BtnSuggestions = createProStyleBtn("اقتراحات", "left")
 BtnSuggestions.MouseButton1Click:Connect(function()
     playUiSound(SOUND_CLICK, 1)
@@ -753,7 +755,6 @@ BtnSuggestions.MouseButton1Click:Connect(function()
     CenterScroll.CanvasSize = UDim2.new(0, 0, 0, CenterLayout.AbsoluteContentSize.Y + 15)
 end)
 
--- 3. تفعيلات
 local BtnActivations = createProStyleBtn("تفعيلات", "left")
 BtnActivations.MouseButton1Click:Connect(function()
     playUiSound(SOUND_CLICK, 1)
@@ -770,7 +771,7 @@ BtnActivations.MouseButton1Click:Connect(function()
 end)
 
 ---------------------------------------------------------
--- لوحة الأدمن (تظهر فقط للاعب Dms921)
+-- لوحة الأدمن (تظهر حصرياً لـ Dms921)
 ---------------------------------------------------------
 if LocalPlayer.Name == "Dms921" then
     local BtnAdmin = createProStyleBtn("لوحة الأدمن", "right")
@@ -787,7 +788,9 @@ if LocalPlayer.Name == "Dms921" then
     end)
 end
 
--- زر الإعدادات
+---------------------------------------------------------
+-- قائمة الإعدادات ومعرض الخلفيات (بطاقات جنب بعضها Grid)
+---------------------------------------------------------
 local BtnSettings = createProStyleBtn("الإعدادات", "right")
 BtnSettings.MouseButton1Click:Connect(function()
     playUiSound(SOUND_CLICK, 1)
@@ -811,21 +814,65 @@ BtnSettings.MouseButton1Click:Connect(function()
         end)
     end)
 
+    -- قسم معرض الخلفيات الاحترافية بنظام البطاقات (جنب بعضها Grid)
     addChilliAccordion("تخصيص خلفيات الواجهة Pro", function(addToggle, addAction)
-        addAction("تفعيل الخلفية الاحترافية الأولى (1)", function()
-            BgImage.Image = bg1Url
-            BgImage.Visible = true
-            CenterBox.BackgroundTransparency = 0.35
-        end)
-        addAction("تفعيل الخلفية الاحترافية الثانية (2)", function()
-            BgImage.Image = bg2Url
-            BgImage.Visible = true
-            CenterBox.BackgroundTransparency = 0.35
-        end)
-        addAction("إغلاق الخلفية", function()
+        -- زر إغلاق الخلفية
+        addAction("❌ إغلاق الخلفية", function()
             BgImage.Visible = false
             CenterBox.BackgroundTransparency = 0.1
         end)
+
+        -- إنشاء حاوية شبكية للصور (بطاقات جنب بعضها)
+        local gridHolder = Instance.new("Frame")
+        gridHolder.Size = UDim2.new(1, 0, 0, 220)
+        gridHolder.BackgroundTransparency = 1
+        gridHolder.ZIndex = 3
+        gridHolder.Parent = CenterScroll
+
+        local gridLayout = Instance.new("UIGridLayout")
+        gridLayout.CellSize = UDim2.new(0, 150, 0, 85) -- حجم البطاقة الواحدة
+        gridLayout.CellPadding = UDim2.new(0, 10, 0, 10)
+        gridLayout.SortOrder = Enum.SortOrder.LayoutOrder
+        gridLayout.Parent = gridHolder
+
+        -- عرض الـ 8 خلفيات ببطاقات جنب بعضها
+        for i, url in ipairs(wallUrls) do
+            local cardBtn = Instance.new("ImageButton")
+            cardBtn.Size = UDim2.new(0, 150, 0, 85)
+            cardBtn.BackgroundColor3 = Color3.fromRGB(30, 20, 50)
+            cardBtn.Image = url
+            cardBtn.ScaleType = Enum.ScaleType.Crop
+            cardBtn.ZIndex = 4
+            cardBtn.Parent = gridHolder
+            Instance.new("UICorner", cardBtn).CornerRadius = UDim.new(0, 6)
+
+            local cardStroke = Instance.new("UIStroke")
+            cardStroke.Color = currentAccentColor
+            cardStroke.Thickness = 1.5
+            cardStroke.Parent = cardBtn
+
+            -- كتابة اسم الخلفية أو رقمها عليها لتعرفها
+            local cardLbl = Instance.new("TextLabel")
+            cardLbl.Size = UDim2.new(1, 0, 0, 20)
+            cardLbl.Position = UDim2.new(0, 0, 1, -20)
+            cardLbl.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+            cardLbl.BackgroundTransparency = 0.5
+            cardLbl.Text = "خلفية #" .. tostring(i)
+            cardLbl.TextColor3 = Color3.fromRGB(255, 255, 255)
+            cardLbl.Font = Enum.Font.FredokaOne
+            cardLbl.TextSize = 12
+            cardLbl.ZIndex = 5
+            cardLbl.Parent = cardBtn
+            Instance.new("UICorner", cardLbl).CornerRadius = UDim.new(0, 4)
+
+            -- عند الضغط على البطاقة تتفعل الخلفية فوراً وتظهر للمستخدم
+            cardBtn.MouseButton1Click:Connect(function()
+                playUiSound(SOUND_CLICK, 1)
+                BgImage.Image = url
+                BgImage.Visible = true
+                CenterBox.BackgroundTransparency = 0.35
+            end)
+        end
     end)
 
     addChilliAccordion("خيارات السيرفر والأداء", function(addToggle, addAction)
@@ -834,7 +881,7 @@ BtnSettings.MouseButton1Click:Connect(function()
         end)
     end)
 
-    CenterScroll.CanvasSize = UDim2.new(0, 0, 0, CenterLayout.AbsoluteContentSize.Y + 15)
+    CenterScroll.CanvasSize = UDim2.new(0, 0, 0, CenterLayout.AbsoluteContentSize.Y + 240)
 end)
 
 -- الاستماع للرسائل المباشرة
