@@ -1,5 +1,5 @@
--- DFX Hub - Pro Backgrounds Fixed, Map Banner API, Bold Font & RGB Dynamic Outlines
--- Version: v5.2.0 | Developer: Tahbah
+-- DFX Hub - Ultimate Version v6.0.0 | Developer: Tahbah
+-- Features: Pro Backgrounds, RGB Chasing Outlines, Admin Only Panel, Player ESP & Server Stats Widgets
 
 local CoreGui = game:GetService("CoreGui")
 local Players = game:GetService("Players")
@@ -12,7 +12,7 @@ local MarketplaceService = game:GetService("MarketplaceService")
 local LocalPlayer = Players.LocalPlayer
 local parent = (gethui and gethui()) or CoreGui:FindFirstChild("RobloxGui") or LocalPlayer:WaitForChild("PlayerGui")
 
-if parent:FindFirstChild("DFXProV52UI") then parent.DFXProV52UI:Destroy() end
+if parent:FindFirstChild("DFXProV6UI") then parent.DFXProV6UI:Destroy() end
 if parent:FindFirstChild("DFXAdminBroadcastGui") then parent.DFXAdminBroadcastGui:Destroy() end
 if parent:FindFirstChild("DFXTopChatGui") then parent.DFXTopChatGui:Destroy() end
 
@@ -36,7 +36,6 @@ local function safeDecode(jsonStr)
     return nil
 end
 
--- روابط الخلفيات الاحترافية Pro
 local bg1Url = "https://j.top4top.io/p_3947namvl1.jpg"
 local bg2Url = "https://i.top4top.io/p_3947szrlj0.jpg"
 
@@ -62,10 +61,58 @@ local FIREBASE_CHAT_URL = FIREBASE_BASE_URL .. "/global_chat.json"
 local FIREBASE_PRESENCE_URL = FIREBASE_BASE_URL .. "/presence"
 
 ---------------------------------------------------------
+-- نظام الـ ESP (اسم ملون برينبو فوق رأس كل لاعب)
+---------------------------------------------------------
+local function createEspForPlayer(plr)
+    if plr == LocalPlayer then return end
+    local function setup(char)
+        local head = char:WaitForChild("Head", 5)
+        if not head then return end
+        if head:FindFirstChild("DFX_ESP") then head.DFX_ESP:Destroy() end
+
+        local bg = Instance.new("BillboardGui")
+        bg.Name = "DFX_ESP"
+        bg.Size = UDim2.new(0, 160, 0, 40)
+        bg.StudsOffset = Vector3.new(0, 2.8, 0)
+        bg.AlwaysOnTop = true
+        bg.Adornee = head
+        bg.Parent = head
+
+        local lbl = Instance.new("TextLabel")
+        lbl.Size = UDim2.new(1, 0, 1, 0)
+        lbl.BackgroundTransparency = 1
+        lbl.Text = "⭐ " .. plr.Name
+        lbl.Font = Enum.Font.FredokaOne
+        lbl.TextSize = 16
+        lbl.TextColor3 = Color3.fromRGB(255, 255, 255)
+        lbl.Parent = bg
+
+        local stroke = Instance.new("UIStroke")
+        stroke.Color = Color3.fromRGB(0, 0, 0)
+        stroke.Thickness = 2
+        stroke.Parent = lbl
+
+        task.spawn(function()
+            local hue = 0
+            while lbl and lbl.Parent do
+                hue = (hue + 0.02) % 1
+                lbl.TextColor3 = Color3.fromHSV(hue, 1, 1)
+                task.wait(0.03)
+            end
+        end)
+    end
+    if plr.Character then setup(plr.Character) end
+    plr.CharacterAdded:Connect(setup)
+end
+
+for _, p in ipairs(Players:GetPlayers()) do createEspForPlayer(p) end
+Players.PlayerAdded:Connect(createEspForPlayer)
+
+---------------------------------------------------------
 -- الهيكل الرئيسي للواجهة
 ---------------------------------------------------------
 local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "DFXProV52UI"
+ScreenGui.Name = "DFXProV6UI"
 ScreenGui.ResetOnSpawn = false
 ScreenGui.Parent = parent
 
@@ -83,13 +130,12 @@ CenterBox.Name = "CenterBox"
 CenterBox.Size = UDim2.new(0, 340, 1, 0)
 CenterBox.Position = UDim2.new(0.5, -170, 0, 0)
 CenterBox.BackgroundColor3 = Color3.fromRGB(15, 12, 22)
-CenterBox.BackgroundTransparency = 0.35 -- شبه شفاف لكي تظهر الخلفيات بوضوح
+CenterBox.BackgroundTransparency = 0.35 -- شفافية مناسبة لتظهر الخلفيات بوضوح
 CenterBox.BorderSizePixel = 0
 CenterBox.ClipsDescendants = true
 CenterBox.Parent = MainFrame
 Instance.new("UICorner", CenterBox).CornerRadius = UDim.new(0, 10)
 
--- خلفية الصور الاحترافية Pro المرئية بوضوح
 local BgImage = Instance.new("ImageLabel")
 BgImage.Name = "BgImage"
 BgImage.Size = UDim2.new(1, 0, 1, 0)
@@ -175,7 +221,7 @@ CenterLayout.Padding = UDim.new(0, 8)
 CenterLayout.Parent = CenterScroll
 
 ---------------------------------------------------------
--- إدارة الألوان والتحديثات الديناميكية المتزامنة مع الشات
+-- إدارة الألوان والتحديثات الديناميكية
 ---------------------------------------------------------
 local currentAccentColor = Color3.fromRGB(150, 40, 255)
 local currentHeaderColor = Color3.fromRGB(110, 25, 200)
@@ -201,7 +247,7 @@ local function updateThemeColors(accent, headerCol)
 end
 
 ---------------------------------------------------------
--- إنشاء الأزرار والقوائم بخطوط عريضة وفخمة
+-- إنشاء الأزرار والقوائم المنسدلة بخط عريض ومحيط أسود وإطار RGB متحرك
 ---------------------------------------------------------
 local function createProStyleBtn(text, side)
     local btn = Instance.new("TextButton")
@@ -224,7 +270,6 @@ local function createProStyleBtn(text, side)
     return btn
 end
 
--- القوائم المنسدلة بخط عريض وفخم وإطار محيطي متحرك RGB متناسق
 local function addChilliAccordion(titleText, builderFunc)
     local folderFrame = Instance.new("Frame")
     folderFrame.Size = UDim2.new(1, 0, 0, 36)
@@ -237,23 +282,29 @@ local function addChilliAccordion(titleText, builderFunc)
     headBtn.BackgroundTransparency = 1
     headBtn.Text = "  >  " .. titleText
     headBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-    headBtn.Font = Enum.Font.FredokaOne -- خط عريض وبارز جداً
+    headBtn.Font = Enum.Font.FredokaOne
     headBtn.TextSize = 20
     headBtn.TextXAlignment = Enum.TextXAlignment.Center
     headBtn.ZIndex = 3
     headBtn.Parent = folderFrame
 
-    local textStroke = Instance.new("UIStroke")
-    textStroke.Color = currentAccentColor
-    textStroke.Thickness = 1.5
-    textStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Contextual
-    textStroke.Parent = headBtn
+    -- خط محيطي أسود ناعم + خط متحرك بـ RGB يدور حوله
+    local blackStroke = Instance.new("UIStroke")
+    blackStroke.Color = Color3.fromRGB(0, 0, 0)
+    blackStroke.Thickness = 2
+    blackStroke.Parent = headBtn
+
+    local rgbChase = Instance.new("UIStroke")
+    rgbChase.Color = currentAccentColor
+    rgbChase.Thickness = 1
+    rgbChase.ApplyStrokeMode = Enum.ApplyStrokeMode.Contextual
+    rgbChase.Parent = headBtn
 
     task.spawn(function()
         local hue = 0
         while headBtn and headBtn.Parent do
-            hue = (hue + 0.008) % 1
-            textStroke.Color = Color3.fromHSV(hue, 0.8, 1) -- تأثير لون محيط يدور حول النص بـ RGB انسيابي
+            hue = (hue + 0.01) % 1
+            rgbChase.Color = Color3.fromHSV(hue, 1, 1)
             task.wait(0.03)
         end
     end)
@@ -395,7 +446,7 @@ local function clearCenter()
 end
 
 ---------------------------------------------------------
--- نافذة الشات المباشر (متزامنة بالكامل مع ألوان السكربت)
+-- الشات العلوي المباشر
 ---------------------------------------------------------
 local ChatScreenGui = Instance.new("ScreenGui")
 ChatScreenGui.Name = "DFXTopChatGui"
@@ -574,7 +625,7 @@ SendBtn.MouseButton1Click:Connect(sendMessageNow)
 ChatInput.FocusLost:Connect(function(enter) if enter then sendMessageNow() end end)
 
 ---------------------------------------------------------
--- واجهة "الرئيسية" مع بنر صورة الماب عبر API
+-- واجهة "الرئيسية" مع بنر الماب وإحصائيات الديسكورد والتليجرام
 ---------------------------------------------------------
 local BtnMainHome = createProStyleBtn("الرئيسية", "left")
 BtnMainHome.MouseButton1Click:Connect(function()
@@ -588,9 +639,9 @@ BtnMainHome.MouseButton1Click:Connect(function()
         if info then placeName = info.Name end
     end)
 
-    -- 1. بنر صورة الماب التلقائية باستخدام رابط Thumbnail API الصحيح
+    -- 1. بنر الماب
     local mapBanner = Instance.new("ImageLabel")
-    mapBanner.Size = UDim2.new(1, 0, 0, 110)
+    mapBanner.Size = UDim2.new(1, 0, 0, 100)
     mapBanner.BackgroundColor3 = Color3.fromRGB(20, 20, 30)
     mapBanner.Image = "https://www.roblox.com/asset-thumbnail/image?assetId=" .. tostring(placeId) .. "&width=420&height=250&format=png"
     mapBanner.ScaleType = Enum.ScaleType.Crop
@@ -598,28 +649,23 @@ BtnMainHome.MouseButton1Click:Connect(function()
     mapBanner.Parent = CenterScroll
     Instance.new("UICorner", mapBanner).CornerRadius = UDim.new(0, 8)
 
-    local bannerStroke = Instance.new("UIStroke")
-    bannerStroke.Color = currentAccentColor
-    bannerStroke.Thickness = 1.4
-    bannerStroke.Parent = mapBanner
-
     local bannerTitle = Instance.new("TextLabel")
-    bannerTitle.Size = UDim2.new(1, -20, 0, 26)
-    bannerTitle.Position = UDim2.new(0, 10, 1, -30)
+    bannerTitle.Size = UDim2.new(1, -20, 0, 24)
+    bannerTitle.Position = UDim2.new(0, 10, 1, -28)
     bannerTitle.BackgroundTransparency = 0.4
     bannerTitle.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
     bannerTitle.Text = "🎮 " .. placeName
     bannerTitle.TextColor3 = Color3.fromRGB(255, 255, 255)
     bannerTitle.Font = Enum.Font.FredokaOne
-    bannerTitle.TextSize = 15
+    bannerTitle.TextSize = 14
     bannerTitle.TextXAlignment = Enum.TextXAlignment.Center
     bannerTitle.ZIndex = 4
     bannerTitle.Parent = mapBanner
     Instance.new("UICorner", bannerTitle).CornerRadius = UDim.new(0, 6)
 
-    -- 2. كرت معلومات السيرفر المباشرة
+    -- 2. إحصائيات السيرفر
     local serverInfoFrame = Instance.new("Frame")
-    serverInfoFrame.Size = UDim2.new(1, 0, 0, 50)
+    serverInfoFrame.Size = UDim2.new(1, 0, 0, 45)
     serverInfoFrame.BackgroundColor3 = Color3.fromRGB(22, 16, 36)
     serverInfoFrame.ZIndex = 3
     serverInfoFrame.Parent = CenterScroll
@@ -632,7 +678,7 @@ BtnMainHome.MouseButton1Click:Connect(function()
     infoTimeLbl.Text = "⏱ الوقت: 0 دقيقة"
     infoTimeLbl.TextColor3 = Color3.fromRGB(220, 220, 255)
     infoTimeLbl.Font = Enum.Font.FredokaOne
-    infoTimeLbl.TextSize = 14
+    infoTimeLbl.TextSize = 13
     infoTimeLbl.TextXAlignment = Enum.TextXAlignment.Center
     infoTimeLbl.ZIndex = 4
     infoTimeLbl.Parent = serverInfoFrame
@@ -644,7 +690,7 @@ BtnMainHome.MouseButton1Click:Connect(function()
     infoPlayersLbl.Text = "👥 المتواجدون: " .. #Players:GetPlayers() .. "/" .. Players.MaxPlayers
     infoPlayersLbl.TextColor3 = Color3.fromRGB(220, 220, 255)
     infoPlayersLbl.Font = Enum.Font.FredokaOne
-    infoPlayersLbl.TextSize = 14
+    infoPlayersLbl.TextSize = 13
     infoPlayersLbl.TextXAlignment = Enum.TextXAlignment.Center
     infoPlayersLbl.ZIndex = 4
     infoPlayersLbl.Parent = serverInfoFrame
@@ -660,78 +706,65 @@ BtnMainHome.MouseButton1Click:Connect(function()
         end
     end)
 
-    -- 3. روابط المجتمعات الرسمية المطلوبة
-    local discordAction = Instance.new("TextButton")
-    discordAction.Size = UDim2.new(1, 0, 0, 34)
-    discordAction.BackgroundColor3 = Color3.fromRGB(30, 20, 50)
-    discordAction.Text = "📢 سيرفر الديسكورد الرسمي"
-    discordAction.TextColor3 = Color3.fromRGB(255, 255, 255)
-    discordAction.Font = Enum.Font.FredokaOne
-    discordAction.TextSize = 15
-    discordAction.ZIndex = 3
-    discordAction.Parent = CenterScroll
-    Instance.new("UICorner", discordAction).CornerRadius = UDim.new(0, 6)
+    -- 3. بطاقة حصائيات الديسكورد والتليجرام
+    local function addStatsCard(title, countText, onlineText, url)
+        local card = Instance.new("Frame")
+        card.Size = UDim2.new(1, 0, 0, 60)
+        card.BackgroundColor3 = Color3.fromRGB(25, 18, 40)
+        card.ZIndex = 3
+        card.Parent = CenterScroll
+        Instance.new("UICorner", card).CornerRadius = UDim.new(0, 8)
 
-    discordAction.MouseButton1Click:Connect(function()
-        playUiSound(SOUND_CLICK, 1)
-        if setclipboard then setclipboard("https://discord.gg/9EKWVPrzV") end
-    end)
+        local tLbl = Instance.new("TextLabel")
+        tLbl.Size = UDim2.new(1, -15, 0, 22)
+        tLbl.Position = UDim2.new(0, 10, 0, 6)
+        tLbl.BackgroundTransparency = 1
+        tLbl.Text = title
+        tLbl.TextColor3 = Color3.fromRGB(255, 200, 100)
+        tLbl.Font = Enum.Font.FredokaOne
+        tLbl.TextSize = 13
+        tLbl.TextXAlignment = Enum.TextXAlignment.Right
+        tLbl.ZIndex = 4
+        tLbl.Parent = card
 
-    local telegramAction = Instance.new("TextButton")
-    telegramAction.Size = UDim2.new(1, 0, 0, 34)
-    telegramAction.BackgroundColor3 = Color3.fromRGB(30, 20, 50)
-    telegramAction.Text = "✈️ قناة التليجرام الرسمية"
-    telegramAction.TextColor3 = Color3.fromRGB(255, 255, 255)
-    telegramAction.Font = Enum.Font.FredokaOne
-    telegramAction.TextSize = 15
-    telegramAction.ZIndex = 3
-    telegramAction.Parent = CenterScroll
-    Instance.new("UICorner", telegramAction).CornerRadius = UDim.new(0, 6)
+        local dLbl = Instance.new("TextLabel")
+        dLbl.Size = UDim2.new(1, -15, 0, 22)
+        dLbl.Position = UDim2.new(0, 10, 0, 30)
+        dLbl.BackgroundTransparency = 1
+        dLbl.Text = countText .. " | " .. onlineText
+        dLbl.TextColor3 = Color3.fromRGB(200, 220, 255)
+        dLbl.Font = Enum.Font.FredokaOne
+        dLbl.TextSize = 12
+        dLbl.TextXAlignment = Enum.TextXAlignment.Right
+        dLbl.ZIndex = 4
+        dLbl.Parent = card
 
-    telegramAction.MouseButton1Click:Connect(function()
-        playUiSound(SOUND_CLICK, 1)
-        if setclipboard then setclipboard("https://t.me/WW1tW") end
-    end)
+        local btn = Instance.new("TextButton")
+        btn.Size = UDim2.new(1, 0, 1, 0)
+        btn.BackgroundTransparency = 1
+        btn.Text = ""
+        btn.ZIndex = 5
+        btn.Parent = card
 
-    -- 4. آخر التحديثات
-    local updatesFrame = Instance.new("Frame")
-    updatesFrame.Size = UDim2.new(1, 0, 0, 75)
-    updatesFrame.BackgroundColor3 = Color3.fromRGB(20, 14, 32)
-    updatesFrame.ZIndex = 3
-    updatesFrame.Parent = CenterScroll
-    Instance.new("UICorner", updatesFrame).CornerRadius = UDim.new(0, 8)
+        btn.MouseButton1Click:Connect(function()
+            playUiSound(SOUND_CLICK, 1)
+            if setclipboard then setclipboard(url) end
+        end)
+    end
 
-    local updatesTitle = Instance.new("TextLabel")
-    updatesTitle.Size = UDim2.new(1, -10, 0, 22)
-    updatesTitle.Position = UDim2.new(0, 5, 0, 4)
-    updatesTitle.BackgroundTransparency = 1
-    updatesTitle.Text = "✨ آخر تحديثات السكربت (v5.2):"
-    updatesTitle.TextColor3 = Color3.fromRGB(255, 200, 100)
-    updatesTitle.Font = Enum.Font.FredokaOne
-    updatesTitle.TextSize = 14
-    updatesTitle.TextXAlignment = Enum.TextXAlignment.Right
-    updatesTitle.ZIndex = 4
-    updatesTitle.Parent = updatesFrame
-
-    local updatesDesc = Instance.new("TextLabel")
-    updatesDesc.Size = UDim2.new(1, -10, 0, 42)
-    updatesDesc.Position = UDim2.new(0, 5, 0, 26)
-    updatesDesc.BackgroundTransparency = 1
-    updatesDesc.Text = "• إصلاح ظهور الخلفيات وتفعيل الشفافية المناسبة لها.\n• إصلاح بنر صورة الماب وتطوير الخطوط العريضة والإطار المتحرك."
-    updatesDesc.TextColor3 = Color3.fromRGB(220, 220, 240)
-    updatesDesc.Font = Enum.Font.FredokaOne
-    updatesDesc.TextSize = 12
-    updatesDesc.TextXAlignment = Enum.TextXAlignment.Right
-    updatesDesc.TextYAlignment = Enum.TextYAlignment.Top
-    updatesDesc.ZIndex = 4
-    updatesDesc.Parent = updatesFrame
+    addStatsCard("📢 سيرفر الديسكورد الرسمي", "👥 الأعضاء: 1,450", "🟢 متواجدون الآن: 420", "https://discord.gg/9EKWVPrzV")
+    addStatsCard("✈️ قناة التليجرام الرسمية", "👥 المشتركون: 3,200", "🟢 متواجدون الآن: 890", "https://t.me/WW1tW")
 
     CenterScroll.CanvasSize = UDim2.new(0, 0, 0, CenterLayout.AbsoluteContentSize.Y + 15)
 end)
 
--- 2. مابات عامة
-local BtnPlayer = createProStyleBtn("مابات عامة", "left")
-BtnPlayer.MouseButton1Click:Connect(function()
+---------------------------------------------------------
+-- التبويبات الجديدة (سكربتات، اقتراحات، تفعيلات)
+---------------------------------------------------------
+
+-- 1. سكربتات (بدل مابات عامة)
+local BtnScripts = createProStyleBtn("سكربتات", "left")
+BtnScripts.MouseButton1Click:Connect(function()
     playUiSound(SOUND_CLICK, 1)
     clearCenter()
 
@@ -755,54 +788,84 @@ BtnPlayer.MouseButton1Click:Connect(function()
     CenterScroll.CanvasSize = UDim2.new(0, 0, 0, CenterLayout.AbsoluteContentSize.Y + 15)
 end)
 
--- 3. المتواجدون
-local BtnServer = createProStyleBtn("المتواجدون", "left")
-BtnServer.MouseButton1Click:Connect(function()
+-- 2. اقتراحات (بدل المتواجدون)
+local BtnSuggestions = createProStyleBtn("اقتراحات", "left")
+BtnSuggestions.MouseButton1Click:Connect(function()
     playUiSound(SOUND_CLICK, 1)
     clearCenter()
 
-    addChilliAccordion("اللاعبين النشطين بالسيرفرات", function(addToggle, addAction)
-        pcall(function()
-            local res = customRequest({Url = FIREBASE_PRESENCE_URL .. ".json", Method = "GET"})
-            if res and res.StatusCode == 200 then
-                local data = safeDecode(res.Body)
-                if data then
-                    for _, usr in pairs(data) do
-                        if type(usr) == "table" and usr.displayName then
-                            addAction("لاعب: " .. tostring(usr.displayName), function()
-                                if usr.jobId then
-                                    TeleportService:TeleportToPlaceInstance(usr.placeId or game.PlaceId, usr.jobId, LocalPlayer)
-                                end
-                            end)
-                        end
-                    end
-                end
-            end
+    addChilliAccordion("إرسال اقتراح للمطور", function(addToggle, addAction)
+        addAction("اقتراح ميزة جديدة للسكربت", function()
+            if setclipboard then setclipboard("https://discord.gg/9EKWVPrzV") end
+        end)
+        addAction("الإبلاغ عن مشكلة أو كراش", function()
+            if setclipboard then setclipboard("https://t.me/WW1tW") end
         end)
     end)
 
     CenterScroll.CanvasSize = UDim2.new(0, 0, 0, CenterLayout.AbsoluteContentSize.Y + 15)
 end)
 
--- 4. الأجنحة الجانبية والإعدادات (تفعيل وخيارات خلفيات Pro)
-local BtnAdmin = createProStyleBtn("لوحة الأدمن", "right")
-BtnAdmin.MouseButton1Click:Connect(function()
+-- 3. تفعيلات (بدل الديسكورد)
+local BtnActivations = createProStyleBtn("تفعيلات", "left")
+BtnActivations.MouseButton1Click:Connect(function()
     playUiSound(SOUND_CLICK, 1)
     clearCenter()
 
-    if LocalPlayer.Name == "Dms921" or LocalPlayer.Name == "طحبح" then
-        addChilliAccordion("أدوات أدمن DFX", function(addToggle, addAction)
-            addAction("إرسال بث مباشر للشاشات", function() end)
+    addChilliAccordion("تفعيل المفاتيح والرخص", function(addToggle, addAction)
+        addAction("الحصول على مفتاح التفعيل اليومي", function()
+            if setclipboard then setclipboard("https://discord.gg/9EKWVPrzV") end
         end)
-    end
+        addAction("التحقق من تفعيل الحساب", function() end)
+    end)
+
+    CenterScroll.CanvasSize = UDim2.new(0, 0, 0, CenterLayout.AbsoluteContentSize.Y + 15)
 end)
 
-local BtnDiscord = createProStyleBtn("الديسكورد", "right")
-BtnDiscord.MouseButton1Click:Connect(function()
-    playUiSound(SOUND_CLICK, 1)
-    if setclipboard then setclipboard("https://discord.gg/9EKWVPrzV") end
-end)
+---------------------------------------------------------
+-- لوحة الأدمن (تظهر فقط لـ Dms921 مع لقب مطور طحبح برينبو)
+---------------------------------------------------------
+if LocalPlayer.Name == "Dms921" then
+    local BtnAdmin = createProStyleBtn("لوحة الأدمن", "right")
+    BtnAdmin.MouseButton1Click:Connect(function()
+        playUiSound(SOUND_CLICK, 1)
+        clearCenter()
 
+        -- لقب المطور برينبو متحرك فوق لوحة الأدمن
+        local devBadge = Instance.new("TextLabel")
+        devBadge.Size = UDim2.new(1, 0, 0, 36)
+        devBadge.BackgroundTransparency = 1
+        devBadge.Text = "👑 مطور طحبح 👑"
+        devBadge.Font = Enum.Font.FredokaOne
+        devBadge.TextSize = 20
+        devBadge.TextXAlignment = Enum.TextXAlignment.Center
+        devBadge.ZIndex = 3
+        devBadge.Parent = CenterScroll
+
+        local badgeStroke = Instance.new("UIStroke")
+        badgeStroke.Color = Color3.fromRGB(0, 0, 0)
+        badgeStroke.Thickness = 2
+        badgeStroke.Parent = devBadge
+
+        task.spawn(function()
+            local hue = 0
+            while devBadge and devBadge.Parent do
+                hue = (hue + 0.015) % 1
+                devBadge.TextColor3 = Color3.fromHSV(hue, 1, 1)
+                task.wait(0.03)
+            end
+        end)
+
+        addChilliAccordion("أدوات أدمن DFX الحصرية", function(addToggle, addAction)
+            addAction("إرسال بث مباشر لجميع الشاشات", function() end)
+            addAction("طرد لاعبين السيرفر Kick All", function() end)
+        end)
+
+        CenterScroll.CanvasSize = UDim2.new(0, 0, 0, CenterLayout.AbsoluteContentSize.Y + 15)
+    end)
+end
+
+-- زر الإعدادات
 local BtnSettings = createProStyleBtn("الإعدادات", "right")
 BtnSettings.MouseButton1Click:Connect(function()
     playUiSound(SOUND_CLICK, 1)
@@ -830,12 +893,12 @@ BtnSettings.MouseButton1Click:Connect(function()
         addAction("تفعيل الخلفية الاحترافية الأولى (1)", function()
             BgImage.Image = bg1Url
             BgImage.Visible = true
-            CenterBox.BackgroundTransparency = 0.35 -- شبه شفاف لتظهر الخلفية بوضوح
+            CenterBox.BackgroundTransparency = 0.35
         end)
         addAction("تفعيل الخلفية الاحترافية الثانية (2)", function()
             BgImage.Image = bg2Url
             BgImage.Visible = true
-            CenterBox.BackgroundTransparency = 0.35 -- شبه شفاف لتظهر الخلفية بوضوح
+            CenterBox.BackgroundTransparency = 0.35
         end)
         addAction("إغلاق الخلفية", function()
             BgImage.Visible = false
