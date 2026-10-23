@@ -1,5 +1,5 @@
--- DFX Hub - Global Restart System & Script Users Suite
--- Version: v38.0.0 | Developer: Tahbah (Dms921)
+-- DFX Hub - Advanced Script Users Management (Mute/Ban/Kick System)
+-- Version: v37.0.0 | Developer: Tahbah (Dms921)
 
 local CoreGui = game:GetService("CoreGui")
 local Players = game:GetService("Players")
@@ -12,14 +12,13 @@ local MarketplaceService = game:GetService("MarketplaceService")
 local LocalPlayer = Players.LocalPlayer
 local parent = (gethui and gethui()) or CoreGui:FindFirstChild("RobloxGui") or LocalPlayer:WaitForChild("PlayerGui")
 
-if parent:FindFirstChild("DFXProV38UI") then parent.DFXProV38UI:Destroy() end
+if parent:FindFirstChild("DFXProV37UI") then parent.DFXProV37UI:Destroy() end
 if parent:FindFirstChild("DFXAdminBroadcastGui") then parent.DFXAdminBroadcastGui:Destroy() end
 if parent:FindFirstChild("DFXTopChatGui") then parent.DFXTopChatGui:Destroy() end
 if parent:FindFirstChild("DFXLoadingGui") then parent.DFXLoadingGui:Destroy() end
 if parent:FindFirstChild("DFXBanScreenGui") then parent.DFXBanScreenGui:Destroy() end
-if parent:FindFirstChild("DFXRestartOverlayGui") then parent.DFXRestartOverlayGui:Destroy() end
 
-local CONFIG_FILE = "DFX_Config_v38.json"
+local CONFIG_FILE = "DFX_Config_v37.json"
 local DISCORD_WEBHOOK_URL = "https://discord.com/api/webhooks/1563126439434391643/KPBO62mv7x_5ubaobKt3W-YjYACbTCsY-iefrPNQ7x99Q4tndOrxwQX6ts9zSU1csjcT"
 
 local FIREBASE_BASE_URL = "https://arad-hun-default-rtdb.firebaseio.com"
@@ -27,7 +26,6 @@ local FIREBASE_CHAT_URL = FIREBASE_BASE_URL .. "/global_chat.json"
 local FIREBASE_USERS_URL = FIREBASE_BASE_URL .. "/active_users.json"
 local FIREBASE_BROADCAST_URL = FIREBASE_BASE_URL .. "/global_broadcast.json"
 local FIREBASE_ADMIN_ACTIONS_URL = FIREBASE_BASE_URL .. "/admin_actions.json"
-local FIREBASE_RESTART_URL = FIREBASE_BASE_URL .. "/global_restart.json"
 
 local function customRequest(options)
     local req = request or http_request or (syn and syn.request) or (http and http.request) or (fluxus and fluxus.request)
@@ -162,7 +160,7 @@ end
 
 playUiSound(SOUND_OPEN, 1, 1)
 
--- فحص الباند
+-- فحص الباند للمستخدم الحالي لمنع فتح السكربت نهائياً
 local function checkScriptBanStatus()
     pcall(function()
         local res = customRequest({Url = FIREBASE_ADMIN_ACTIONS_URL, Method = "GET"})
@@ -250,7 +248,7 @@ local function loadAvatarThumbnail(userId, imageLabel)
 end
 
 ---------------------------------------------------------
--- نظام البرودكاست
+-- نظام البرودكاست (نص عريض جداً وصوت منفرد)
 ---------------------------------------------------------
 local BroadcastGui = Instance.new("ScreenGui")
 BroadcastGui.Name = "DFXAdminBroadcastGui"
@@ -412,7 +410,7 @@ Instance.new("UICorner", BarFill).CornerRadius = UDim.new(0, 5)
 -- الهيكل الرئيسي للواجهة
 ---------------------------------------------------------
 local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "DFXProV38UI"
+ScreenGui.Name = "DFXProV37UI"
 ScreenGui.ResetOnSpawn = false
 ScreenGui.Parent = parent
 
@@ -602,7 +600,7 @@ CenterLayout.Padding = UDim.new(0, 8)
 CenterLayout.Parent = CenterScroll
 
 ---------------------------------------------------------
--- نافذة الشات المباشرة
+-- نافذة الشات المباشرة (مع التحقق الفوري من الكتم والمدة)
 ---------------------------------------------------------
 local ChatScreenGui = Instance.new("ScreenGui")
 ChatScreenGui.Name = "DFXTopChatGui"
@@ -634,6 +632,15 @@ ChatWin.Draggable = true
 ChatWin.Visible = false
 ChatWin.Parent = ChatScreenGui
 Instance.new("UICorner", ChatWin).CornerRadius = UDim.new(0, 12)
+
+local ChatBgImage = Instance.new("ImageLabel")
+ChatBgImage.Size = UDim2.new(1, 0, 1, 0)
+ChatBgImage.BackgroundTransparency = 1
+ChatBgImage.Visible = false
+ChatBgImage.ScaleType = Enum.ScaleType.Crop
+ChatBgImage.ZIndex = 0
+ChatBgImage.Parent = ChatWin
+Instance.new("UICorner", ChatBgImage).CornerRadius = UDim.new(0, 12)
 
 local floatStroke = Instance.new("UIStroke")
 floatStroke.Color = currentAccentColor
@@ -712,6 +719,187 @@ ChatMainContainer.Position = UDim2.new(0, 0, 0, 55)
 ChatMainContainer.BackgroundTransparency = 1
 ChatMainContainer.ZIndex = 2
 ChatMainContainer.Parent = ChatWin
+
+local ChatFeaturesContainer = Instance.new("ScrollingFrame")
+ChatFeaturesContainer.Size = UDim2.new(1, -20, 1, -70)
+ChatFeaturesContainer.Position = UDim2.new(0, 10, 0, 58)
+ChatFeaturesContainer.BackgroundTransparency = 1
+ChatFeaturesContainer.Visible = false
+ChatFeaturesContainer.ZIndex = 2
+ChatFeaturesContainer.ScrollBarThickness = 3
+ChatFeaturesContainer.Parent = ChatWin
+
+local featLayout = Instance.new("UIListLayout")
+featLayout.Padding = UDim.new(0, 8)
+featLayout.Parent = ChatFeaturesContainer
+
+local ChatOnlineContainer = Instance.new("ScrollingFrame")
+ChatOnlineContainer.Size = UDim2.new(1, -20, 1, -70)
+ChatOnlineContainer.Position = UDim2.new(0, 10, 0, 58)
+ChatOnlineContainer.BackgroundTransparency = 1
+ChatOnlineContainer.Visible = false
+ChatOnlineContainer.ZIndex = 2
+ChatOnlineContainer.ScrollBarThickness = 3
+ChatOnlineContainer.Parent = ChatWin
+
+local onlineLayout = Instance.new("UIListLayout")
+onlineLayout.Padding = UDim.new(0, 6)
+onlineLayout.Parent = ChatOnlineContainer
+
+local function fetchScriptUsersOnly()
+    pcall(function()
+        local res = customRequest({Url = FIREBASE_USERS_URL, Method = "GET"})
+        if res and res.StatusCode == 200 then
+            local data = safeDecode(res.Body)
+            if data then
+                local activeUsers = {}
+                local currentTime = os.time()
+                
+                for uid, uData in pairs(data) do
+                    if type(uData) == "table" and uData.lastSeen and (currentTime - uData.lastSeen) < 35 then
+                        table.insert(activeUsers, uData)
+                    end
+                end
+                
+                ChatHeaderBtn3.Text = "👥 المتواجدون (" .. #activeUsers .. ")"
+                
+                for _, child in ipairs(ChatOnlineContainer:GetChildren()) do
+                    if not child:IsA("UIListLayout") then child:Destroy() end
+                end
+                
+                for _, u in ipairs(activeUsers) do
+                    local pFrame = Instance.new("Frame")
+                    pFrame.Size = UDim2.new(1, 0, 0, 46)
+                    pFrame.BackgroundColor3 = Color3.fromRGB(20, 15, 25)
+                    pFrame.ZIndex = 3
+                    pFrame.Parent = ChatOnlineContainer
+                    Instance.new("UICorner", pFrame).CornerRadius = UDim.new(0, 6)
+
+                    local pImg = Instance.new("ImageLabel")
+                    pImg.Size = UDim2.new(0, 34, 0, 34)
+                    pImg.Position = UDim2.new(1, -40, 0.5, -17)
+                    pImg.BackgroundColor3 = Color3.fromRGB(30, 20, 35)
+                    pImg.ZIndex = 4
+                    pImg.Parent = pFrame
+                    Instance.new("UICorner", pImg).CornerRadius = UDim.new(0, 17)
+                    
+                    loadAvatarThumbnail(u.userId, pImg)
+
+                    local pNameLbl = Instance.new("TextLabel")
+                    pNameLbl.Size = UDim2.new(1, -190, 1, 0)
+                    pNameLbl.Position = UDim2.new(0, 140, 0, 0)
+                    pNameLbl.BackgroundTransparency = 1
+                    pNameLbl.Text = "★ " .. (u.displayName or u.name)
+                    pNameLbl.TextColor3 = currentAccentColor
+                    pNameLbl.Font = Enum.Font.FredokaOne
+                    pNameLbl.TextSize = 13
+                    pNameLbl.TextXAlignment = Enum.TextXAlignment.Right
+                    pNameLbl.ZIndex = 4
+                    pNameLbl.Parent = pFrame
+                    table.insert(activeNameLabels, pNameLbl)
+
+                    local viewBtn = Instance.new("TextButton")
+                    viewBtn.Size = UDim2.new(0, 60, 0, 26)
+                    viewBtn.Position = UDim2.new(0, 72, 0.5, -13)
+                    viewBtn.BackgroundColor3 = currentAccentColor
+                    viewBtn.Text = "تتبع 👀"
+                    viewBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+                    viewBtn.Font = Enum.Font.FredokaOne
+                    viewBtn.TextSize = 11
+                    viewBtn.ZIndex = 4
+                    viewBtn.Parent = pFrame
+                    Instance.new("UICorner", viewBtn).CornerRadius = UDim.new(0, 5)
+
+                    local tpBtn = Instance.new("TextButton")
+                    tpBtn.Size = UDim2.new(0, 60, 0, 26)
+                    tpBtn.Position = UDim2.new(0, 6, 0.5, -13)
+                    tpBtn.BackgroundColor3 = Color3.fromRGB(180, 20, 60)
+                    tpBtn.Text = "انتقال 🚀"
+                    tpBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+                    tpBtn.Font = Enum.Font.FredokaOne
+                    tpBtn.TextSize = 11
+                    tpBtn.ZIndex = 4
+                    tpBtn.Parent = pFrame
+                    Instance.new("UICorner", tpBtn).CornerRadius = UDim.new(0, 5)
+
+                    viewBtn.MouseButton1Click:Connect(function()
+                        playUiSound(SOUND_CLICK, 1, 0.35)
+                        local targetPlr = Players:GetPlayerByUserId(u.userId)
+                        if targetPlr and targetPlr.Character and targetPlr.Character:FindFirstChild("HumanoidRootPart") then
+                            LocalPlayer.Character.HumanoidRootPart.CFrame = targetPlr.Character.HumanoidRootPart.CFrame + Vector3.new(0, 3, 0)
+                        end
+                    end)
+
+                    tpBtn.MouseButton1Click:Connect(function()
+                        playUiSound(SOUND_CLICK, 1, 0.35)
+                        if u.placeId and u.jobId then
+                            TeleportService:TeleportToPlaceInstance(u.placeId, u.jobId, LocalPlayer)
+                        end
+                    end)
+                end
+                ChatOnlineContainer.CanvasSize = UDim2.new(0, 0, 0, onlineLayout.AbsoluteContentSize.Y + 15)
+            end
+        end
+    end)
+end
+
+task.spawn(function()
+    while true do
+        fetchScriptUsersOnly()
+        task.wait(5)
+    end
+end)
+
+ChatHeaderBtn1.MouseButton1Click:Connect(function()
+    playUiSound(SOUND_CLICK, 1, 0.35)
+    ChatMainContainer.Visible = true
+    ChatFeaturesContainer.Visible = false
+    ChatOnlineContainer.Visible = false
+end)
+
+ChatHeaderBtn2.MouseButton1Click:Connect(function()
+    playUiSound(SOUND_CLICK, 1, 0.35)
+    ChatMainContainer.Visible = false
+    ChatFeaturesContainer.Visible = true
+    ChatOnlineContainer.Visible = false
+end)
+
+ChatHeaderBtn3.MouseButton1Click:Connect(function()
+    playUiSound(SOUND_CLICK, 1, 0.35)
+    ChatMainContainer.Visible = false
+    ChatFeaturesContainer.Visible = false
+    ChatOnlineContainer.Visible = true
+    fetchScriptUsersOnly()
+end)
+
+local function applyScriptBackground(idx)
+    selectedScriptBgIndex = idx
+    saveUserSettings()
+    if idx > 0 and wallUrls[idx] then
+        BgImage.Image = wallUrls[idx]
+        BgImage.Visible = true
+        CenterBox.BackgroundTransparency = 0.85
+    else
+        BgImage.Visible = false
+        CenterBox.BackgroundTransparency = 0
+    end
+end
+
+local function applyChatBackground(idx)
+    selectedChatBgIndex = idx
+    saveUserSettings()
+    if idx > 0 and wallUrls[idx] then
+        ChatBgImage.Image = wallUrls[idx]
+        ChatBgImage.Visible = true
+        ChatWin.BackgroundTransparency = 0.85
+    else
+        ChatBgImage.Visible = false
+        ChatWin.BackgroundTransparency = 0
+    end
+end
+
+applyScriptBackground(selectedScriptBgIndex)
+applyChatBackground(selectedChatBgIndex)
 
 local ChatScroll = Instance.new("ScrollingFrame")
 ChatScroll.Size = UDim2.new(1, -20, 1, -45)
@@ -915,8 +1103,9 @@ local function addChilliAccordion(titleText, builderFunc)
     contentLayout.Parent = contentHolder
 
     local isOpen = false
-    local function addToggleRow() end
-    local function addActionRow() end
+
+    local function addToggleRow(nameText, onToggle) end
+    local function addActionRow(nameText, onClick) end
 
     builderFunc(addToggleRow, addActionRow, contentHolder)
 
@@ -962,7 +1151,7 @@ BtnMainHome.MouseButton1Click:Connect(function()
     updatesTitle.Size = UDim2.new(1, -10, 0, 22)
     updatesTitle.Position = UDim2.new(0, 5, 0, 4)
     updatesTitle.BackgroundTransparency = 1
-    updatesTitle.Text = "✨ آخر تحديثات لوحة التحكم (v38.0):"
+    updatesTitle.Text = "✨ آخر تحديثات لوحة التحكم (v37.0):"
     updatesTitle.TextColor3 = currentAccentColor
     updatesTitle.Font = Enum.Font.FredokaOne
     updatesTitle.TextSize = 14
@@ -974,7 +1163,7 @@ BtnMainHome.MouseButton1Click:Connect(function()
     updatesDesc.Size = UDim2.new(1, -10, 0, 100)
     updatesDesc.Position = UDim2.new(0, 5, 0, 26)
     updatesDesc.BackgroundTransparency = 1
-    updatesDesc.Text = "• إضافة ميزة إعادة تشغيل السكربت لجميع المستخدمين بضغطة زر.\n• عداد تنازلي كبير بمنتصف الشاشة يُنبه الجميع فورياً.\n• إغلاق وإعادة تحميل السكربت تلقائياً للمستعملين مع إظهار عدد المستخدمين."
+    updatesDesc.Text = "• إدارة كاملة لمستخدمي السكربت فقط مع عرض صورهم وأسمائهم.\n• تحديد مدة الكتم والحظر (ساعة / يوم / أسبوع / دائمي).\n• قوائم خاصة مستقلة للمكتومين والمحظورين مع أزرار فك الحظر والكتم فوراً."
     updatesDesc.TextColor3 = Color3.fromRGB(240, 220, 230)
     updatesDesc.Font = Enum.Font.FredokaOne
     updatesDesc.TextSize = 11.5
@@ -987,7 +1176,7 @@ BtnMainHome.MouseButton1Click:Connect(function()
 end)
 
 ---------------------------------------------------------
--- لوحة الأدمن الحصرية للمطور Dms921 فقط (مع ميزة إعادة التشغيل الجماعي)
+-- لوحة الأدمن الحصرية والمفصلة للمطور Dms921 فقط
 ---------------------------------------------------------
 if LocalPlayer.Name == "Dms921" then
     local BtnAdmin = createProStyleBtn("لوحة الأدمن", "right")
@@ -995,72 +1184,8 @@ if LocalPlayer.Name == "Dms921" then
         playUiSound(SOUND_CLICK, 1, 0.35)
         clearCenter()
 
-        -- 1. زر إعادة تشغيل السكربت لجميع المستخدمين
-        addChilliAccordion("🔄 إعادة تشغيل السكربت للجميع", function(addToggle, addAction, contentHolder)
-            local restartDesc = Instance.new("TextLabel")
-            restartDesc.Size = UDim2.new(1, 0, 0, 35)
-            restartDesc.BackgroundTransparency = 1
-            restartDesc.Text = "عند الضغط هنا سيتم إرسال أمر إشعار بالمنتصف لكل المستخدمين وإعادة تشغيل السكربت عندهم تلقائياً."
-            restartDesc.TextColor3 = Color3.fromRGB(220, 220, 220)
-            restartDesc.Font = Enum.Font.FredokaOne
-            restartDesc.TextSize = 11
-            restartDesc.TextWrapped = true
-            restartDesc.TextXAlignment = Enum.TextXAlignment.Right
-            restartDesc.ZIndex = 3
-            restartDesc.Parent = contentHolder
-
-            local globalRestartBtn = Instance.new("TextButton")
-            globalRestartBtn.Size = UDim2.new(1, 0, 0, 38)
-            globalRestartBtn.BackgroundColor3 = Color3.fromRGB(200, 20, 60)
-            globalRestartBtn.Text = "🔄 إعادة تشغيل السكربت لكل المستخدمين الآن"
-            globalRestartBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-            globalRestartBtn.Font = Enum.Font.FredokaOne
-            globalRestartBtn.TextSize = 13.5
-            globalRestartBtn.ZIndex = 3
-            globalRestartBtn.Parent = contentHolder
-            Instance.new("UICorner", globalRestartBtn).CornerRadius = UDim.new(0, 6)
-
-            globalRestartBtn.MouseButton1Click:Connect(function()
-                globalRestartBtn.Text = "جاري إرسال أمر الإعادة..."
-                local totalUsersCount = 1
-                pcall(function()
-                    local res = customRequest({Url = FIREBASE_USERS_URL, Method = "GET"})
-                    if res and res.StatusCode == 200 then
-                        local data = safeDecode(res.Body)
-                        if data then
-                            local count = 0
-                            local currentTime = os.time()
-                            for _, u in pairs(data) do
-                                if type(u) == "table" and u.lastSeen and (currentTime - u.lastSeen) < 35 then
-                                    count = count + 1
-                                end
-                            end
-                            if count > 0 then totalUsersCount = count end
-                        end
-                    end
-                end)
-
-                pcall(function()
-                    customRequest({
-                        Url = FIREBASE_RESTART_URL,
-                        Method = "POST",
-                        Headers = {["Content-Type"] = "application/json"},
-                        Body = HttpService:JSONEncode({
-                            time = os.time(),
-                            userCount = totalUsersCount
-                        })
-                    })
-                end)
-
-                task.wait(1.5)
-                globalRestartBtn.Text = "تم إرسال أمر الإعادة للجميع! ✅"
-                task.wait(2)
-                globalRestartBtn.Text = "🔄 إعادة تشغيل السكربت لكل المستخدمين الآن"
-            end)
-        end)
-
-        -- 2. قائمة مستخدمي السكربت مع خيارات المدة
-        addChilliAccordion("👥 مستخدمو السكربت (كتم / باند)", function(addToggle, addAction, contentHolder)
+        -- 1. قائمة مستخدمي السكربت مع خيارات المدة
+        addChilliAccordion("👥 مستخدمو السكربت (كتم / طرد / باند)", function(addToggle, addAction, contentHolder)
             local searchUsrBox = Instance.new("TextBox")
             searchUsrBox.Size = UDim2.new(1, 0, 0, 32)
             searchUsrBox.BackgroundColor3 = Color3.fromRGB(20, 15, 25)
@@ -1075,7 +1200,7 @@ if LocalPlayer.Name == "Dms921" then
             Instance.new("UICorner", searchUsrBox).CornerRadius = UDim.new(0, 6)
 
             local scriptUsersContainer = Instance.new("ScrollingFrame")
-            scriptUsersContainer.Size = UDim2.new(1, 0, 0, 200)
+            scriptUsersContainer.Size = UDim2.new(1, 0, 0, 220)
             scriptUsersContainer.BackgroundTransparency = 1
             scriptUsersContainer.ZIndex = 3
             scriptUsersContainer.ScrollBarThickness = 3
@@ -1131,6 +1256,7 @@ if LocalPlayer.Name == "Dms921" then
                                     uLbl.ZIndex = 5
                                     uLbl.Parent = card
 
+                                    -- اختيار المدة
                                     local selectedDuration = "1 ساعة"
                                     local durBtn = Instance.new("TextButton")
                                     durBtn.Size = UDim2.new(0, 80, 0, 22)
@@ -1213,79 +1339,166 @@ if LocalPlayer.Name == "Dms921" then
             end)
         end)
 
+        -- 2. قائمة المكتومين مع زر إلغاء الكتم
+        addChilliAccordion("🔇 قائمة المكتومين (إلغاء الكتم)", function(addToggle, addAction, contentHolder)
+            local mutedScroll = Instance.new("ScrollingFrame")
+            mutedScroll.Size = UDim2.new(1, 0, 0, 150)
+            mutedScroll.BackgroundTransparency = 1
+            mutedScroll.ZIndex = 3
+            mutedScroll.ScrollBarThickness = 3
+            mutedScroll.Parent = contentHolder
+
+            local mLayout = Instance.new("UIListLayout")
+            mLayout.Padding = UDim.new(0, 6)
+            mLayout.Parent = mutedScroll
+
+            local function renderMutedList()
+                for _, c in ipairs(mutedScroll:GetChildren()) do if not c:IsA("UIListLayout") then c:Destroy() end end
+                pcall(function()
+                    local res = customRequest({Url = FIREBASE_BASE_URL .. "/admin_actions/mutes.json", Method = "GET"})
+                    if res and res.StatusCode == 200 then
+                        local data = safeDecode(res.Body)
+                        if data then
+                            for uidStr, mInfo in pairs(data) do
+                                local mRow = Instance.new("Frame")
+                                mRow.Size = UDim2.new(1, 0, 0, 36)
+                                mRow.BackgroundColor3 = Color3.fromRGB(20, 15, 25)
+                                mRow.ZIndex = 4
+                                mRow.Parent = mutedScroll
+                                Instance.new("UICorner", mRow).CornerRadius = UDim.new(0, 6)
+
+                                local mLbl = Instance.new("TextLabel")
+                                mLbl.Size = UDim2.new(1, -110, 1, 0)
+                                mLbl.Position = UDim2.new(0, 100, 0, 0)
+                                mLbl.BackgroundTransparency = 1
+                                mLbl.Text = (mInfo.name or uidStr) .. " (" .. (mInfo.duration or "دائمي") .. ")"
+                                mLbl.TextColor3 = Color3.fromRGB(255, 255, 255)
+                                mLbl.Font = Enum.Font.FredokaOne
+                                mLbl.TextSize = 11.5
+                                mLbl.TextXAlignment = Enum.TextXAlignment.Right
+                                mLbl.ZIndex = 5
+                                mLbl.Parent = mRow
+
+                                meUnmuteBtn = Instance.new("TextButton")
+                                meUnmuteBtn.Size = UDim2.new(0, 85, 0, 24)
+                                meUnmuteBtn.Position = UDim2.new(0, 8, 0.5, -12)
+                                meUnmuteBtn.BackgroundColor3 = Color3.fromRGB(40, 180, 80)
+                                meUnmuteBtn.Text = "فك الكتم 🔊"
+                                meUnmuteBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+                                meUnmuteBtn.Font = Enum.Font.FredokaOne
+                                meUnmuteBtn.TextSize = 11
+                                meUnmuteBtn.ZIndex = 5
+                                meUnmuteBtn.Parent = mRow
+                                Instance.new("UICorner", meUnmuteBtn).CornerRadius = UDim.new(0, 4)
+
+                                meUnmuteBtn.MouseButton1Click:Connect(function()
+                                    pcall(function()
+                                        customRequest({
+                                            Url = FIREBASE_BASE_URL .. "/admin_actions/mutes/" .. uidStr .. ".json",
+                                            Method = "DELETE"
+                                        })
+                                    end)
+                                    mRow:Destroy()
+                                end)
+                            end
+                        end
+                    end
+                end)
+                mutedScroll.CanvasSize = UDim2.new(0, 0, 0, mLayout.AbsoluteContentSize.Y + 10)
+            end
+            renderMutedList()
+        end)
+
+        -- 3. قائمة المحظورين مع زر إلغاء الباند
+        addChilliAccordion("🚫 قائمة المحظورين (فك الباند)", function(addToggle, addAction, contentHolder)
+            local bannedScroll = Instance.new("ScrollingFrame")
+            bannedScroll.Size = UDim2.new(1, 0, 0, 150)
+            bannedScroll.BackgroundTransparency = 1
+            bannedScroll.ZIndex = 3
+            bannedScroll.ScrollBarThickness = 3
+            bannedScroll.Parent = contentHolder
+
+            local bLayout = Instance.new("UIListLayout")
+            bLayout.Padding = UDim.new(0, 6)
+            bLayout.Parent = bannedScroll
+
+            local function renderBannedList()
+                for _, c in ipairs(bannedScroll:GetChildren()) do if not c:IsA("UIListLayout") then c:Destroy() end end
+                pcall(function()
+                    local res = customRequest({Url = FIREBASE_BASE_URL .. "/admin_actions/bans.json", Method = "GET"})
+                    if res and res.StatusCode == 200 then
+                        local data = safeDecode(res.Body)
+                        if data then
+                            for uidStr, bInfo in pairs(data) do
+                                local bRow = Instance.new("Frame")
+                                bRow.Size = UDim2.new(1, 0, 0, 36)
+                                bRow.BackgroundColor3 = Color3.fromRGB(20, 15, 25)
+                                bRow.ZIndex = 4
+                                bRow.Parent = bannedScroll
+                                Instance.new("UICorner", bRow).CornerRadius = UDim.new(0, 6)
+
+                                local bLbl = Instance.new("TextLabel")
+                                bLbl.Size = UDim2.new(1, -110, 1, 0)
+                                bLbl.Position = UDim2.new(0, 100, 0, 0)
+                                bLbl.BackgroundTransparency = 1
+                                bLbl.Text = (bInfo.name or uidStr) .. " (" .. (bInfo.duration or "دائمي") .. ")"
+                                bLbl.TextColor3 = Color3.fromRGB(255, 255, 255)
+                                bLbl.Font = Enum.Font.FredokaOne
+                                bLbl.TextSize = 11.5
+                                bLbl.TextXAlignment = Enum.TextXAlignment.Right
+                                bLbl.ZIndex = 5
+                                bLbl.Parent = bRow
+
+                                local unbanBtn = Instance.new("TextButton")
+                                unbanBtn.Size = UDim2.new(0, 85, 0, 24)
+                                unbanBtn.Position = UDim2.new(0, 8, 0.5, -12)
+                                unbanBtn.BackgroundColor3 = Color3.fromRGB(40, 180, 80)
+                                unbanBtn.Text = "فك الباند 🟢"
+                                unbanBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+                                unbanBtn.Font = Enum.Font.FredokaOne
+                                unbanBtn.TextSize = 11
+                                unbanBtn.ZIndex = 5
+                                unbanBtn.Parent = bRow
+                                Instance.new("UICorner", unbanBtn).CornerRadius = UDim.new(0, 4)
+
+                                unbanBtn.MouseButton1Click:Connect(function()
+                                    pcall(function()
+                                        customRequest({
+                                            Url = FIREBASE_BASE_URL .. "/admin_actions/bans/" .. uidStr .. ".json",
+                                            Method = "DELETE"
+                                        })
+                                    end)
+                                    bRow:Destroy()
+                                end)
+                            end
+                        end
+                    end
+                end)
+                bannedScroll.CanvasSize = UDim2.new(0, 0, 0, bLayout.AbsoluteContentSize.Y + 10)
+            end
+            renderBannedList()
+        end)
+
         CenterScroll.CanvasSize = UDim2.new(0, 0, 0, CenterLayout.AbsoluteContentSize.Y + 15)
     end)
 end
 
 ---------------------------------------------------------
--- الاستماع التلقائي لأمر إعادة التشغيل الجماعي بالمنتصف
+-- الاستماع التلقائي
 ---------------------------------------------------------
-local executedRestartKeys = {}
+local renderedBroadcasts = {}
 task.spawn(function()
     while true do
         pcall(function()
-            local res = customRequest({Url = FIREBASE_RESTART_URL, Method = "GET"})
+            local res = customRequest({Url = FIREBASE_BROADCAST_URL, Method = "GET"})
             if res and res.StatusCode == 200 then
                 local data = safeDecode(res.Body)
                 if data then
-                    for k, rInfo in pairs(data) do
-                        if type(rInfo) == "table" and rInfo.time and not executedRestartKeys[k] then
-                            executedRestartKeys[k] = true
-                            if (os.time() - rInfo.time) < 25 then
-                                -- إظهار الشاشة بالمنتصف
-                                local OverlayGui = Instance.new("ScreenGui")
-                                OverlayGui.Name = "DFXRestartOverlayGui"
-                                OverlayGui.ResetOnSpawn = false
-                                OverlayGui.Parent = parent
-
-                                local oFrame = Instance.new("Frame")
-                                oFrame.Size = UDim2.new(0, 480, 0, 160)
-                                oFrame.Position = UDim2.new(0.5, -240, 0.5, -80)
-                                oFrame.BackgroundColor3 = Color3.fromRGB(15, 10, 20)
-                                oFrame.Parent = OverlayGui
-                                Instance.new("UICorner", oFrame).CornerRadius = UDim.new(0, 12)
-
-                                local oStroke = Instance.new("UIStroke")
-                                oStroke.Color = Color3.fromRGB(255, 30, 60)
-                                oStroke.Thickness = 3
-                                oStroke.Parent = oFrame
-
-                                local oTitle = Instance.new("TextLabel")
-                                oTitle.Size = UDim2.new(1, 0, 0, 45)
-                                oTitle.Position = UDim2.new(0, 0, 0, 10)
-                                oTitle.BackgroundTransparency = 1
-                                oTitle.Text = "⚠️ إشعار من المطور طحبح"
-                                oTitle.TextColor3 = Color3.fromRGB(255, 80, 80)
-                                oTitle.Font = Enum.Font.FredokaOne
-                                oTitle.TextSize = 18
-                                oTitle.Parent = oFrame
-
-                                local oDesc = Instance.new("TextLabel")
-                                oDesc.Size = UDim2.new(1, -20, 0, 80)
-                                oDesc.Position = UDim2.new(0, 10, 0, 55)
-                                oDesc.BackgroundTransparency = 1
-                                oDesc.Text = "سيتم إعادة تشغيل السكربت خلال (3)..."
-                                oDesc.TextColor3 = Color3.fromRGB(255, 255, 255)
-                                oDesc.Font = Enum.Font.FredokaOne
-                                oDesc.TextSize = 16
-                                oDesc.TextWrapped = true
-                                oDesc.Parent = oFrame
-
-                                for countdown = 3, 1, -1 do
-                                    oDesc.Text = "سيتم إعادة تشغيل السكربت خلال (" .. countdown .. ")..."
-                                    task.wait(1)
-                                end
-
-                                local userCount = rInfo.userCount or 1
-                                oDesc.Text = "تم إعادة تشغيل السكربت لـ (" .. tostring(userCount) .. ") مستخدم بنجاح! ✅"
-                                task.wait(2.5)
-
-                                OverlayGui:Destroy()
-
-                                -- تدمير الواجهة الحالية وإعادة تشغيل السكربت تلقائياً
-                                if ScreenGui then ScreenGui:Destroy() end
-                                if ChatScreenGui then ChatScreenGui:Destroy() end
-                                loadstring(game:HttpGet("https://raw.githubusercontent.com/tienkhanh1/spicy/main/Chilli.lua"))()
+                    for k, b in pairs(data) do
+                        if type(b) == "table" and b.text and not renderedBroadcasts[k] then
+                            renderedBroadcasts[k] = true
+                            if (os.time() - (b.time or 0)) < 30 then
+                                showBroadcastBanner(tostring(b.sender or "طحبح"), tostring(b.text or ""), tonumber(b.userId))
                             end
                         end
                     end
@@ -1293,6 +1506,26 @@ task.spawn(function()
             end
         end)
         task.wait(2)
+    end
+end)
+
+task.spawn(function()
+    while true do
+        pcall(function()
+            local res = customRequest({Url = FIREBASE_CHAT_URL, Method = "GET"})
+            if res and res.StatusCode == 200 then
+                local data = safeDecode(res.Body)
+                if data then
+                    for k, m in pairs(data) do
+                        if type(m) == "table" and m.text and not renderedMsgs[k] then
+                            renderedMsgs[k] = true
+                            addChatMessage(tostring(m.sender or "مجهول"), tostring(m.text or ""), tonumber(m.userId), k)
+                        end
+                    end
+                end
+            end
+        end)
+        task.wait(2.5)
     end
 end)
 
