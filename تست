@@ -1,5 +1,5 @@
--- DFX Hub - Rotating Neon Trail, Webhook Suggestions & Clean Isolated Wallpapers
--- Version: v12.0.0 | Developer: Tahbah
+-- DFX Hub - Fixed Wallpaper Leak Bug, Enhanced Neon Controls & Webhook Suggestions
+-- Version: v13.0.0 | Developer: Tahbah
 
 local CoreGui = game:GetService("CoreGui")
 local Players = game:GetService("Players")
@@ -12,12 +12,12 @@ local MarketplaceService = game:GetService("MarketplaceService")
 local LocalPlayer = Players.LocalPlayer
 local parent = (gethui and gethui()) or CoreGui:FindFirstChild("RobloxGui") or LocalPlayer:WaitForChild("PlayerGui")
 
-if parent:FindFirstChild("DFXProV12UI") then parent.DFXProV12UI:Destroy() end
+if parent:FindFirstChild("DFXProV13UI") then parent.DFXProV13UI:Destroy() end
 if parent:FindFirstChild("DFXAdminBroadcastGui") then parent.DFXAdminBroadcastGui:Destroy() end
 if parent:FindFirstChild("DFXTopChatGui") then parent.DFXTopChatGui:Destroy() end
 if parent:FindFirstChild("DFXLoadingGui") then parent.DFXLoadingGui:Destroy() end
 
-local CONFIG_FILE = "DFX_Config_v12.json"
+local CONFIG_FILE = "DFX_Config_v13.json"
 local DISCORD_WEBHOOK_URL = "https://discord.com/api/webhooks/1563126439434391643/KPBO62mv7x_5ubaobKt3W-YjYACbTCsY-iefrPNQ7x99Q4tndOrxwQX6ts9zSU1csjcT"
 
 local function customRequest(options)
@@ -68,6 +68,7 @@ local SOUND_CLICK = "rbxassetid://6895079853"
 
 local enableShakeEffect = true
 local neonThickness = 2
+local enableNeonAnim = true
 
 local function playUiSound(soundId, pitch, volume)
     task.spawn(function()
@@ -147,7 +148,7 @@ Instance.new("UICorner", BarFill).CornerRadius = UDim.new(0, 5)
 -- الهيكل الرئيسي للواجهة
 ---------------------------------------------------------
 local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "DFXProV12UI"
+ScreenGui.Name = "DFXProV13UI"
 ScreenGui.ResetOnSpawn = false
 ScreenGui.Parent = parent
 
@@ -187,7 +188,7 @@ centerStroke.Color = Color3.fromRGB(150, 40, 255)
 centerStroke.Thickness = 2
 centerStroke.Parent = CenterBox
 
--- حركة النيون المتوهجة حول الإطار
+-- حركة النيون المتحركة حول الإطار
 local centerNeonGradient = Instance.new("UIGradient")
 centerNeonGradient.Color = ColorSequence.new({
     ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 255, 255)),
@@ -199,8 +200,10 @@ centerNeonGradient.Parent = centerStroke
 task.spawn(function()
     local rot = 0
     while true do
-        rot = (rot + 2) % 360
-        centerNeonGradient.Rotation = rot
+        if enableNeonAnim then
+            rot = (rot + 3) % 360
+            centerNeonGradient.Rotation = rot
+        end
         task.wait(0.02)
     end
 end)
@@ -338,8 +341,10 @@ chatNeonGradient.Parent = chatStroke
 task.spawn(function()
     local rot = 0
     while true do
-        rot = (rot + 2) % 360
-        chatNeonGradient.Rotation = rot
+        if enableNeonAnim then
+            rot = (rot + 3) % 360
+            chatNeonGradient.Rotation = rot
+        end
         task.wait(0.02)
     end
 end)
@@ -397,7 +402,8 @@ local function saveCurrentConfig()
             headR = currentHeaderColor.R, headG = currentHeaderColor.G, headB = currentHeaderColor.B,
             bgIndex = selectedBgIndex,
             shake = enableShakeEffect,
-            neonThick = neonThickness
+            neonThick = neonThickness,
+            neonAnim = enableNeonAnim
         }
         pcall(function() writefile(CONFIG_FILE, HttpService:JSONEncode(cfg)) end)
     end
@@ -468,6 +474,7 @@ local function loadSavedConfig()
                     centerStroke.Thickness = neonThickness
                     chatStroke.Thickness = neonThickness
                 end
+                if data.neonAnim ~= nil then enableNeonAnim = data.neonAnim end
             end
         end)
     end
@@ -581,7 +588,7 @@ local function addChilliAccordion(titleText, builderFunc)
 
     local isOpen = false
 
-    local function addToggleRow(nameText, onToggle)
+    local function addToggleRow(nameText, onToggle, initialVal)
         local rowFrame = Instance.new("Frame")
         rowFrame.Size = UDim2.new(1, 0, 0, 36)
         rowFrame.BackgroundColor3 = Color3.fromRGB(22, 16, 36)
@@ -625,12 +632,12 @@ local function addChilliAccordion(titleText, builderFunc)
         innerBox.Size = UDim2.new(1, -6, 1, -6)
         innerBox.Position = UDim2.new(0, 3, 0, 3)
         innerBox.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-        innerBox.Visible = false
+        innerBox.Visible = initialVal or false
         innerBox.ZIndex = 5
         innerBox.Parent = toggleBtn
         Instance.new("UICorner", innerBox).CornerRadius = UDim.new(0, 2)
 
-        local state = false
+        local state = initialVal or false
         toggleBtn.MouseButton1Click:Connect(function()
             playUiSound(SOUND_CLICK, 1, 0.35)
             state = not state
@@ -679,7 +686,8 @@ local function addChilliAccordion(titleText, builderFunc)
         contentHolder.Visible = isOpen
 
         if isOpen then
-            local totalHeight = contentLayout.AbsoluteContentSize.Y
+            task.wait(0.01)
+            local totalHeight = contentLayout.AbsoluteContentSize.Y + 15
             contentHolder.Size = UDim2.new(1, 0, 0, totalHeight)
             folderFrame.Size = UDim2.new(1, 0, 0, totalHeight + 40)
         else
@@ -687,7 +695,7 @@ local function addChilliAccordion(titleText, builderFunc)
         end
 
         task.wait(0.05)
-        CenterScroll.CanvasSize = UDim2.new(0, 0, 0, CenterLayout.AbsoluteContentSize.Y + 15)
+        CenterScroll.CanvasSize = UDim2.new(0, 0, 0, CenterLayout.AbsoluteContentSize.Y + 25)
     end)
 end
 
@@ -929,7 +937,7 @@ BtnMainHome.MouseButton1Click:Connect(function()
     updatesTitle.Size = UDim2.new(1, -10, 0, 22)
     updatesTitle.Position = UDim2.new(0, 5, 0, 4)
     updatesTitle.BackgroundTransparency = 1
-    updatesTitle.Text = "✨ آخر تحديثات السكربت (v12.0):"
+    updatesTitle.Text = "✨ آخر تحديثات السكربت (v13.0):"
     updatesTitle.TextColor3 = Color3.fromRGB(255, 200, 100)
     updatesTitle.Font = Enum.Font.FredokaOne
     updatesTitle.TextSize = 14
@@ -941,7 +949,7 @@ BtnMainHome.MouseButton1Click:Connect(function()
     updatesDesc.Size = UDim2.new(1, -10, 0, 80)
     updatesDesc.Position = UDim2.new(0, 5, 0, 26)
     updatesDesc.BackgroundTransparency = 1
-    updatesDesc.Text = "• تأثير نيون دوار متوهج حول الإطار والشات حسب ألوانك.\n• نظام إرسال الاقتراحات المباشر لدعم الديسكورد عبر Webhook.\n• عزل كامل لصور الخلفيات لعدم ظهورها إلا بالطلب."
+    updatesDesc.Text = "• حل نهائي لخطأ ظهور بطاقات الخلفيات بدون فتح القائمة.\n• تحكم كامل بنيون الإطار والدوران في قسم الإعدادات.\n• نظام إرسال الاقتراحات المباشر عبر Webhook للديسكورد."
     updatesDesc.TextColor3 = Color3.fromRGB(220, 220, 240)
     updatesDesc.Font = Enum.Font.FredokaOne
     updatesDesc.TextSize = 11.5
@@ -1095,7 +1103,7 @@ if LocalPlayer.Name == "Dms921" then
 end
 
 ---------------------------------------------------------
--- الإعدادات والتحكم بدرجة النيون
+-- الإعدادات والتحكم بنيون الإطار (مصلحة بالكامل)
 ---------------------------------------------------------
 local BtnSettings = createProStyleBtn("الإعدادات", "right")
 BtnSettings.MouseButton1Click:Connect(function()
@@ -1129,7 +1137,7 @@ BtnSettings.MouseButton1Click:Connect(function()
         end)
     end)
 
-    -- زر صريح يبني المعرض فقط فور الضغط عليه لعدم التسرب إطلاقاً
+    -- القائمة الحصرية المخفية تماماً حتى يتم الضغط عليها
     addChilliAccordion("تخصيص خلفيات الواجهة Pro", function(addToggle, addAction)
         addAction("❌ إغلاق الخلفية", function()
             applyBackgroundByIndex(0)
@@ -1139,7 +1147,8 @@ BtnSettings.MouseButton1Click:Connect(function()
         gridHolder.Size = UDim2.new(1, 0, 0, 220)
         gridHolder.BackgroundTransparency = 1
         gridHolder.ZIndex = 3
-        gridHolder.Parent = CenterScroll
+        -- تم إصلاح الخطأ بربطها بـ contentHolder الخاص بالقائمة المنسدلة
+        gridHolder.Parent = contentHolder
 
         local gridLayout = Instance.new("UIGridLayout")
         gridLayout.CellSize = UDim2.new(0, 150, 0, 85)
@@ -1182,20 +1191,25 @@ BtnSettings.MouseButton1Click:Connect(function()
         end
     end)
 
-    addChilliAccordion("درجة وسماكة نيون الإطار", function(addToggle, addAction)
-        addAction("درجة النيون: خفيف (1px)", function()
+    addChilliAccordion("تحكم بنيون الإطار والدوران", function(addToggle, addAction)
+        addToggle("تشغيل/إيقاف دوران النيون المتحرك", function(st)
+            enableNeonAnim = st
+            saveCurrentConfig()
+        end, enableNeonAnim)
+
+        addAction("سماكة النيون: خفيف (1px)", function()
             neonThickness = 1
             centerStroke.Thickness = 1
             chatStroke.Thickness = 1
             saveCurrentConfig()
         end)
-        addAction("درجة النيون: متوسط (2px)", function()
+        addAction("سماكة النيون: متوسط (2px)", function()
             neonThickness = 2
             centerStroke.Thickness = 2
             chatStroke.Thickness = 2
             saveCurrentConfig()
         end)
-        addAction("درجة النيون: قوي (3.5px)", function()
+        addAction("سماكة النيون: قوي (3.5px)", function()
             neonThickness = 3.5
             centerStroke.Thickness = 3.5
             chatStroke.Thickness = 3.5
@@ -1211,7 +1225,7 @@ BtnSettings.MouseButton1Click:Connect(function()
         addToggle("تفعيل/إيقاف أنيميشن الاهتزاز", function(st)
             enableShakeEffect = st
             saveCurrentConfig()
-        end)
+        end, enableShakeEffect)
         addAction("إعادة دخول السيرفر Rejoin", function()
             TeleportService:Teleport(game.PlaceId, LocalPlayer)
         end)
