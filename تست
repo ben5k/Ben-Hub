@@ -1,5 +1,5 @@
--- DFX Hub - Fixed Broadcast Layout, Crimson/Black Theme & Multi-Colors
--- Version: v31.0.0 | Developer: Tahbah (Dms921)
+-- DFX Hub - Egg White Broadcast, Loop Audio & Music Tab
+-- Version: v32.0.0 | Developer: Tahbah (Dms921)
 
 local CoreGui = game:GetService("CoreGui")
 local Players = game:GetService("Players")
@@ -12,12 +12,12 @@ local MarketplaceService = game:GetService("MarketplaceService")
 local LocalPlayer = Players.LocalPlayer
 local parent = (gethui and gethui()) or CoreGui:FindFirstChild("RobloxGui") or LocalPlayer:WaitForChild("PlayerGui")
 
-if parent:FindFirstChild("DFXProV31UI") then parent.DFXProV31UI:Destroy() end
+if parent:FindFirstChild("DFXProV32UI") then parent.DFXProV32UI:Destroy() end
 if parent:FindFirstChild("DFXAdminBroadcastGui") then parent.DFXAdminBroadcastGui:Destroy() end
 if parent:FindFirstChild("DFXTopChatGui") then parent.DFXTopChatGui:Destroy() end
 if parent:FindFirstChild("DFXLoadingGui") then parent.DFXLoadingGui:Destroy() end
 
-local CONFIG_FILE = "DFX_Config_v31.json"
+local CONFIG_FILE = "DFX_Config_v32.json"
 local DISCORD_WEBHOOK_URL = "https://discord.com/api/webhooks/1563126439434391643/KPBO62mv7x_5ubaobKt3W-YjYACbTCsY-iefrPNQ7x99Q4tndOrxwQX6ts9zSU1csjcT"
 
 local FIREBASE_BASE_URL = "https://arad-hun-default-rtdb.firebaseio.com"
@@ -173,7 +173,7 @@ local function loadAvatarThumbnail(userId, imageLabel)
 end
 
 ---------------------------------------------------------
--- نظام عرض البرودكاست (معدل تماماً لمنع أي تداخل في النصوص)
+-- نظام عرض البرودكاست (نص كبير، لون البيض، وتكرار الصوت)
 ---------------------------------------------------------
 local BroadcastGui = Instance.new("ScreenGui")
 BroadcastGui.Name = "DFXAdminBroadcastGui"
@@ -181,46 +181,51 @@ BroadcastGui.ResetOnSpawn = false
 BroadcastGui.Parent = parent
 
 local function showBroadcastBanner(senderName, text, userId)
-    playUiSound(BROADCAST_SOUND_ID, 1, 2.0)
+    -- تشغيل الصوت المتكرر (Looped) وبصوت عالٍ
+    local snd = Instance.new("Sound")
+    snd.SoundId = BROADCAST_SOUND_ID
+    snd.Volume = 2.0
+    snd.Looped = true -- تكرار الصوت حل المشكلة
+    snd.Parent = SoundService
+    snd:Play()
 
     local banner = Instance.new("Frame")
-    banner.Size = UDim2.new(0, 500, 0, 75)
-    banner.Position = UDim2.new(0.5, -250, 0, -90)
+    banner.Size = UDim2.new(0, 520, 0, 85)
+    banner.Position = UDim2.new(0.5, -260, 0, -90)
     banner.BackgroundTransparency = 1
     banner.BorderSizePixel = 0
     banner.ZIndex = 500
     banner.Parent = BroadcastGui
 
     local avImg = Instance.new("ImageLabel")
-    avImg.Size = UDim2.new(0, 48, 0, 48)
-    avImg.Position = UDim2.new(0, 10, 0.5, -24)
+    avImg.Size = UDim2.new(0, 52, 0, 52)
+    avImg.Position = UDim2.new(0, 10, 0.5, -26)
     avImg.BackgroundColor3 = Color3.fromRGB(20, 15, 25)
     avImg.ZIndex = 501
     avImg.Parent = banner
-    Instance.new("UICorner", avImg).CornerRadius = UDim.new(0, 24)
+    Instance.new("UICorner", avImg).CornerRadius = UDim.new(0, 26)
     loadAvatarThumbnail(userId or LocalPlayer.UserId, avImg)
 
     local avStroke = Instance.new("UIStroke")
-    avStroke.Color = Color3.fromRGB(255, 40, 80)
+    avStroke.Color = Color3.fromRGB(255, 253, 240) -- لون البيض
     avStroke.Thickness = 2
     avStroke.Parent = avImg
 
-    -- صندوق النصوص لمنع أي تداخل نهائياً
     local textContainer = Instance.new("Frame")
-    textContainer.Size = UDim2.new(1, -70, 1, 0)
-    textContainer.Position = UDim2.new(0, 68, 0, 0)
+    textContainer.Size = UDim2.new(1, -75, 1, 0)
+    textContainer.Position = UDim2.new(0, 72, 0, 0)
     textContainer.BackgroundTransparency = 1
     textContainer.ZIndex = 501
     textContainer.Parent = banner
 
     local nameLbl = Instance.new("TextLabel")
-    nameLbl.Size = UDim2.new(1, 0, 0, 24)
-    nameLbl.Position = UDim2.new(0, 0, 0, 6)
+    nameLbl.Size = UDim2.new(1, 0, 0, 26)
+    nameLbl.Position = UDim2.new(0, 0, 0, 4)
     nameLbl.BackgroundTransparency = 1
     nameLbl.Text = senderName .. " 👑 :"
-    nameLbl.TextColor3 = Color3.fromRGB(255, 50, 90)
+    nameLbl.TextColor3 = Color3.fromRGB(255, 253, 240) -- لون البيض دائماً
     nameLbl.Font = Enum.Font.FredokaOne
-    nameLbl.TextSize = 16
+    nameLbl.TextSize = 17
     nameLbl.TextXAlignment = Enum.TextXAlignment.Left
     nameLbl.ZIndex = 502
     nameLbl.Parent = textContainer
@@ -231,13 +236,13 @@ local function showBroadcastBanner(senderName, text, userId)
     nameStroke.Parent = nameLbl
 
     local textLbl = Instance.new("TextLabel")
-    textLbl.Size = UDim2.new(1, 0, 0, 40)
-    textLbl.Position = UDim2.new(0, 0, 0, 28)
+    textLbl.Size = UDim2.new(1, 0, 0, 48)
+    textLbl.Position = UDim2.new(0, 0, 0, 30)
     textLbl.BackgroundTransparency = 1
     textLbl.Text = text
-    textLbl.TextColor3 = Color3.fromRGB(255, 255, 255)
+    textLbl.TextColor3 = Color3.fromRGB(255, 253, 240) -- لون البيض دائماً وبخط كبير جداً
     textLbl.Font = Enum.Font.FredokaOne
-    textLbl.TextSize = 15
+    textLbl.TextSize = 17.5 -- خط كبير وواضح
     textLbl.TextXAlignment = Enum.TextXAlignment.Left
     textLbl.TextWrapped = true
     textLbl.ZIndex = 502
@@ -249,13 +254,14 @@ local function showBroadcastBanner(senderName, text, userId)
     textStroke.Parent = textLbl
 
     TweenService:Create(banner, TweenInfo.new(0.5, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
-        Position = UDim2.new(0.5, -250, 0, 25)
+        Position = UDim2.new(0.5, -260, 0, 25)
     }):Play()
 
     task.delay(6, function()
+        pcall(function() snd:Stop(); snd:Destroy() end)
         if banner and banner.Parent then
             TweenService:Create(banner, TweenInfo.new(0.4, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {
-                Position = UDim2.new(0.5, -250, 0, -100)
+                Position = UDim2.new(0.5, -260, 0, -100)
             }):Play()
             task.wait(0.4)
             banner:Destroy()
@@ -330,7 +336,7 @@ Instance.new("UICorner", BarFill).CornerRadius = UDim.new(0, 5)
 -- الهيكل الرئيسي للواجهة
 ---------------------------------------------------------
 local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "DFXProV31UI"
+ScreenGui.Name = "DFXProV32UI"
 ScreenGui.ResetOnSpawn = false
 ScreenGui.Parent = parent
 
@@ -520,7 +526,7 @@ CenterLayout.Padding = UDim.new(0, 8)
 CenterLayout.Parent = CenterScroll
 
 ---------------------------------------------------------
--- نافذة الشات المباشرة (تصميم محسن واحترافي)
+-- نافذة الشات المباشرة
 ---------------------------------------------------------
 local ChatScreenGui = Instance.new("ScreenGui")
 ChatScreenGui.Name = "DFXTopChatGui"
@@ -1366,7 +1372,7 @@ BtnMainHome.MouseButton1Click:Connect(function()
     updatesTitle.Size = UDim2.new(1, -10, 0, 22)
     updatesTitle.Position = UDim2.new(0, 5, 0, 4)
     updatesTitle.BackgroundTransparency = 1
-    updatesTitle.Text = "✨ آخر تحديثات السكربت (v31.0):"
+    updatesTitle.Text = "✨ آخر تحديثات السكربت (v32.0):"
     updatesTitle.TextColor3 = currentAccentColor
     updatesTitle.Font = Enum.Font.FredokaOne
     updatesTitle.TextSize = 14
@@ -1379,7 +1385,7 @@ BtnMainHome.MouseButton1Click:Connect(function()
     updatesDesc.Size = UDim2.new(1, -10, 0, 90)
     updatesDesc.Position = UDim2.new(0, 5, 0, 26)
     updatesDesc.BackgroundTransparency = 1
-    updatesDesc.Text = "• إصلاح تداخل وتخربط النصوص في نظام البرودكاست نهائياً.\n• إضافة العديد من الثيمات والألوان الفخمة الجديدة.\n• حماية صارمة للوحة الأدمن وتحديث واجهة الشات."
+    updatesDesc.Text = "• تكبير نص البرودكاست وتثبيته بلون البيض الدائم دون أي تداخل.\n• إضافة تكرار الصوت تلقائياً.\n• إضافة قسم الموسيقى الجديد لتشغيل الأغاني وإيقافها بحرية."
     updatesDesc.TextColor3 = Color3.fromRGB(240, 220, 230)
     updatesDesc.Font = Enum.Font.FredokaOne
     updatesDesc.TextSize = 11.5
@@ -1601,6 +1607,103 @@ BtnScripts.MouseButton1Click:Connect(function()
     })
 
     CenterScroll.CanvasSize = UDim2.new(0, 0, 0, CenterLayout.AbsoluteContentSize.Y + 20)
+end)
+
+---------------------------------------------------------
+-- تبويب "موسيقى" الجديد
+---------------------------------------------------------
+local BtnMusic = createProStyleBtn("موسيقى", "left")
+BtnMusic.MouseButton1Click:Connect(function()
+    playUiSound(SOUND_CLICK, 1, 0.35)
+    clearCenter()
+
+    local musicTracks = {
+        {name = "🎵 موسيقى تشغيل 1", id = "rbxassetid://122268584750241"},
+        {name = "🎵 موسيقى تشغيل 2", id = "rbxassetid://90390662535933"},
+        {name = "🎵 موسيقى تشغيل 3", id = "rbxassetid://82746224492420"},
+        {name = "🎵 موسيقى تشغيل 4", id = "rbxassetid://74895850882339"}
+    }
+
+    if not _G.DFXActiveMusicSound then
+        _G.DFXActiveMusicSound = nil
+    end
+
+    local stopAllMusicBtn = Instance.new("TextButton")
+    stopAllMusicBtn.Size = UDim2.new(1, 0, 0, 36)
+    stopAllMusicBtn.BackgroundColor3 = Color3.fromRGB(180, 20, 60)
+    stopAllMusicBtn.Text = "⏹️ إيقاف جميع الأغاني"
+    stopAllMusicBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    stopAllMusicBtn.Font = Enum.Font.FredokaOne
+    stopAllMusicBtn.TextSize = 14
+    stopAllMusicBtn.ZIndex = 3
+    stopAllMusicBtn.Parent = CenterScroll
+    Instance.new("UICorner", stopAllMusicBtn).CornerRadius = UDim.new(0, 8)
+
+    stopAllMusicBtn.MouseButton1Click:Connect(function()
+        playUiSound(SOUND_CLICK, 1, 0.35)
+        if _G.DFXActiveMusicSound then
+            pcall(function() _G.DFXActiveMusicSound:Stop(); _G.DFXActiveMusicSound:Destroy() end)
+            _G.DFXActiveMusicSound = nil
+        end
+    end)
+
+    for _, track in ipairs(musicTracks) do
+        local mCard = Instance.new("Frame")
+        mCard.Size = UDim2.new(1, 0, 0, 50)
+        mCard.BackgroundColor3 = Color3.fromRGB(20, 15, 25)
+        mCard.ZIndex = 3
+        mCard.Parent = CenterScroll
+        Instance.new("UICorner", mCard).CornerRadius = UDim.new(0, 8)
+
+        local mStroke = Instance.new("UIStroke")
+        mStroke.Color = currentAccentColor
+        mStroke.Thickness = 1.5
+        mStroke.Parent = mCard
+        table.insert(registeredOptionStrokes, mStroke)
+
+        local mTitle = Instance.new("TextLabel")
+        mTitle.Size = UDim2.new(1, -120, 1, 0)
+        mTitle.Position = UDim2.new(0, 10, 0, 0)
+        mTitle.BackgroundTransparency = 1
+        mTitle.Text = track.name
+        mTitle.TextColor3 = Color3.fromRGB(255, 253, 240)
+        mTitle.Font = Enum.Font.FredokaOne
+        mTitle.TextSize = 13.5
+        mTitle.TextXAlignment = Enum.TextXAlignment.Right
+        mTitle.ZIndex = 4
+        mTitle.Parent = mCard
+
+        local playBtn = Instance.new("TextButton")
+        playBtn.Size = UDim2.new(0, 100, 0, 34)
+        playBtn.Position = UDim2.new(0, 10, 0.5, -17)
+        playBtn.BackgroundColor3 = currentAccentColor
+        playBtn.Text = "تشغيل 🎶"
+        playBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+        playBtn.Font = Enum.Font.FredokaOne
+        playBtn.TextSize = 13
+        playBtn.ZIndex = 4
+        playBtn.Parent = mCard
+        Instance.new("UICorner", playBtn).CornerRadius = UDim.new(0, 6)
+
+        playBtn.MouseButton1Click:Connect(function()
+            playUiSound(SOUND_CLICK, 1, 0.35)
+            if _G.DFXActiveMusicSound then
+                pcall(function() _G.DFXActiveMusicSound:Stop(); _G.DFXActiveMusicSound:Destroy() end)
+            end
+            local snd = Instance.new("Sound")
+            snd.SoundId = track.id
+            snd.Volume = 1.0
+            snd.Looped = true -- تكرار الموسيقى تلقائياً
+            snd.Parent = SoundService
+            snd:Play()
+            _G.DFXActiveMusicSound = snd
+            playBtn.Text = "يعمل الآن ▶️"
+            task.wait(1.5)
+            playBtn.Text = "تشغيل 🎶"
+        end)
+    end
+
+    CenterScroll.CanvasSize = UDim2.new(0, 0, 0, CenterLayout.AbsoluteContentSize.Y + 25)
 end)
 
 local BtnActivations = createProStyleBtn("تفعيلات", "left")
