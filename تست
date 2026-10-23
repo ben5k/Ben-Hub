@@ -1,4 +1,4 @@
--- DFX Hub - Stable Fixed Version (v2.2.1)
+-- DFX Hub - Pro Backgrounds & Script Pro Buttons
 -- Developer: Tahbah
 
 local CoreGui = game:GetService("CoreGui")
@@ -12,7 +12,7 @@ local MarketplaceService = game:GetService("MarketplaceService")
 local LocalPlayer = Players.LocalPlayer
 local parent = (gethui and gethui()) or CoreGui:FindFirstChild("RobloxGui") or LocalPlayer:WaitForChild("PlayerGui")
 
-if parent:FindFirstChild("DFXProV12UI") then parent.DFXProV12UI:Destroy() end
+if parent:FindFirstChild("DFXProFinalUI") then parent.DFXProFinalUI:Destroy() end
 if parent:FindFirstChild("DFXAdminBroadcastGui") then parent.DFXAdminBroadcastGui:Destroy() end
 if parent:FindFirstChild("DFXExactChatGui") then parent.DFXExactChatGui:Destroy() end
 
@@ -35,6 +35,20 @@ local function safeDecode(jsonStr)
     if success then return result end
     return nil
 end
+
+local function fetchAsset(url, fileName)
+    if writefile and getcustomasset and readfile then
+        local file = "DFXHub_" .. fileName .. ".jpg"
+        if not isfile(file) then
+            pcall(function() writefile(file, game:HttpGet(url)) end)
+        end
+        if isfile(file) then return getcustomasset(file) end
+    end
+    return url
+end
+
+local bg1Url = fetchAsset("https://j.top4top.io/p_3947namvl1.jpg", "bg_custom_1")
+local bg2Url = fetchAsset("https://i.top4top.io/p_3947szrlj0.jpg", "bg_custom_2")
 
 local SOUND_CLICK = "rbxassetid://6895079853"
 local SOUND_BROADCAST = "rbxassetid://17208361335"
@@ -63,7 +77,7 @@ local FIREBASE_BROADCAST_URL = FIREBASE_BASE_URL .. "/broadcasts.json"
 -- الهيكل الرئيسي
 ---------------------------------------------------------
 local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "DFXProV12UI"
+ScreenGui.Name = "DFXProFinalUI"
 ScreenGui.ResetOnSpawn = false
 ScreenGui.Parent = parent
 
@@ -198,12 +212,12 @@ local function updateThemeColors(accent, headerCol)
 end
 
 ---------------------------------------------------------
--- دالة تصاميم الأزرار
+-- تصاميم الأزرار المطورة للسكربت (Pro Script Buttons)
 ---------------------------------------------------------
 local function createProStyleBtn(text, side)
     local btn = Instance.new("TextButton")
     btn.Size = UDim2.new(1, 0, 0, 34)
-    btn.BackgroundColor3 = Color3.fromRGB(28, 15, 48)
+    btn.BackgroundColor3 = Color3.fromRGB(24, 16, 40)
     btn.Text = text
     btn.TextColor3 = Color3.fromRGB(255, 255, 255)
     btn.Font = Enum.Font.GothamBold
@@ -213,7 +227,7 @@ local function createProStyleBtn(text, side)
 
     local stroke = Instance.new("UIStroke")
     stroke.Color = currentAccentColor
-    stroke.Thickness = 1.8
+    stroke.Thickness = 1.6
     stroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
     stroke.Parent = btn
 
@@ -224,8 +238,8 @@ end
 local function addDirectToggle(nameText, descText, defaultState, onToggle)
     local rowFrame = Instance.new("Frame")
     rowFrame.Size = UDim2.new(1, 0, 0, descText ~= "" and 46 or 34)
-    rowFrame.BackgroundColor3 = Color3.fromRGB(24, 14, 42)
-    rowFrame.BackgroundTransparency = 0.25
+    rowFrame.BackgroundColor3 = Color3.fromRGB(22, 14, 38)
+    rowFrame.BackgroundTransparency = 0.2
     rowFrame.BorderSizePixel = 0
     rowFrame.ZIndex = 2
     rowFrame.Parent = CenterScroll
@@ -233,7 +247,7 @@ local function addDirectToggle(nameText, descText, defaultState, onToggle)
 
     local rowStroke = Instance.new("UIStroke")
     rowStroke.Color = currentAccentColor
-    rowStroke.Thickness = 1.4
+    rowStroke.Thickness = 1.2
     rowStroke.Parent = rowFrame
     table.insert(registeredRowStrokes, rowStroke)
 
@@ -293,8 +307,8 @@ end
 local function addDirectAction(nameText, onClick)
     local rowFrame = Instance.new("Frame")
     rowFrame.Size = UDim2.new(1, 0, 0, 34)
-    rowFrame.BackgroundColor3 = Color3.fromRGB(24, 14, 42)
-    rowFrame.BackgroundTransparency = 0.25
+    rowFrame.BackgroundColor3 = Color3.fromRGB(22, 14, 38)
+    rowFrame.BackgroundTransparency = 0.2
     rowFrame.BorderSizePixel = 0
     rowFrame.ZIndex = 2
     rowFrame.Parent = CenterScroll
@@ -302,7 +316,7 @@ local function addDirectAction(nameText, onClick)
 
     local rowStroke = Instance.new("UIStroke")
     rowStroke.Color = currentAccentColor
-    rowStroke.Thickness = 1.4
+    rowStroke.Thickness = 1.2
     rowStroke.Parent = rowFrame
     table.insert(registeredRowStrokes, rowStroke)
 
@@ -328,7 +342,7 @@ local function addCategoryHeader(titleText)
     local lbl = Instance.new("TextLabel")
     lbl.Size = UDim2.new(1, 0, 0, 26)
     lbl.BackgroundTransparency = 1
-    lbl.Text = "✦ " .. titleText .. " ✦"
+    lbl.Text = "--- " .. titleText .. " ---"
     lbl.TextColor3 = Color3.fromRGB(230, 210, 255)
     lbl.Font = Enum.Font.GothamBold
     lbl.TextSize = 13.5
@@ -346,7 +360,7 @@ local function clearCenter()
 end
 
 ---------------------------------------------------------
--- نافذة الشات المباشر
+-- نافذة الشات المباشر (تتضمن أزرار الشات بالإيموجيات)
 ---------------------------------------------------------
 local ChatScreenGui = Instance.new("ScreenGui")
 ChatScreenGui.Name = "DFXExactChatGui"
@@ -526,11 +540,11 @@ SendBtn.MouseButton1Click:Connect(sendMessageNow)
 ChatInput.FocusLost:Connect(function(enter) if enter then sendMessageNow() end end)
 
 ---------------------------------------------------------
--- بناء الأقسام
+-- بناء الأقسام (الرئيسية بدون أي إيموجي)
 ---------------------------------------------------------
 
--- 1. الرئيسية
-local BtnMainHome = createProStyleBtn("الرئيسية 🏠", "left")
+-- 1. الرئيسية (بدون إيموجيات نهائياً بناءً على طلبك)
+local BtnMainHome = createProStyleBtn("الرئيسية", "left")
 BtnMainHome.MouseButton1Click:Connect(function()
     playUiSound(SOUND_CLICK, 1)
     clearCenter()
@@ -561,7 +575,7 @@ BtnMainHome.MouseButton1Click:Connect(function()
     mapTitleLbl.Size = UDim2.new(1, -15, 0, 22)
     mapTitleLbl.Position = UDim2.new(0, 5, 0, 6)
     mapTitleLbl.BackgroundTransparency = 1
-    mapTitleLbl.Text = "🎮 " .. placeName
+    mapTitleLbl.Text = placeName
     mapTitleLbl.TextColor3 = Color3.fromRGB(255, 255, 255)
     mapTitleLbl.Font = Enum.Font.GothamBold
     mapTitleLbl.TextSize = 13.5
@@ -572,7 +586,7 @@ BtnMainHome.MouseButton1Click:Connect(function()
     timeLbl.Size = UDim2.new(1, -15, 0, 22)
     timeLbl.Position = UDim2.new(0, 5, 0, 30)
     timeLbl.BackgroundTransparency = 1
-    timeLbl.Text = "⏱ الوقت بالداخل: 0 دقيقة"
+    timeLbl.Text = "الوقت بالداخل: 0 دقيقة"
     timeLbl.TextColor3 = Color3.fromRGB(210, 190, 255)
     timeLbl.Font = Enum.Font.Gotham
     timeLbl.TextSize = 11.5
@@ -584,16 +598,16 @@ BtnMainHome.MouseButton1Click:Connect(function()
         while timeLbl and timeLbl.Parent do
             local elapsed = os.time() - startT
             local mins = math.floor(elapsed / 60)
-            timeLbl.Text = "⏱ الوقت بالداخل: " .. tostring(mins) .. " دقيقة"
+            timeLbl.Text = "الوقت بالداخل: " .. tostring(mins) .. " دقيقة"
             task.wait(5)
         end
     end)
 
     addCategoryHeader("روابط التواصل والسكربتات")
-    addDirectAction("📢 سيرفر الديسكورد الرسمي", function()
+    addDirectAction("سيرفر الديسكورد الرسمي", function()
         if setclipboard then setclipboard("https://discord.gg/benhub") end
     end)
-    addDirectAction("✈️ قناة التليجرام الرسمية", function()
+    addDirectAction("قناة التليجرام الرسمية", function()
         if setclipboard then setclipboard("https://t.me/DFXHub") end
     end)
 
@@ -606,7 +620,7 @@ BtnMainHome.MouseButton1Click:Connect(function()
 end)
 
 -- 2. مابات عامة
-local BtnPlayer = createProStyleBtn("مابات عامة 🌐", "left")
+local BtnPlayer = createProStyleBtn("مابات عامة", "left")
 BtnPlayer.MouseButton1Click:Connect(function()
     playUiSound(SOUND_CLICK, 1)
     clearCenter()
@@ -623,7 +637,7 @@ BtnPlayer.MouseButton1Click:Connect(function()
 end)
 
 -- 3. المتواجدون
-local BtnServer = createProStyleBtn("المتواجدون 🟢", "left")
+local BtnServer = createProStyleBtn("المتواجدون", "left")
 BtnServer.MouseButton1Click:Connect(function()
     playUiSound(SOUND_CLICK, 1)
     clearCenter()
@@ -636,7 +650,7 @@ BtnServer.MouseButton1Click:Connect(function()
             if data then
                 for _, usr in pairs(data) do
                     if type(usr) == "table" and usr.displayName then
-                        addDirectAction("🟢 " .. tostring(usr.displayName), function()
+                        addDirectAction("لاعب: " .. tostring(usr.displayName), function()
                             if usr.jobId then
                                 TeleportService:TeleportToPlaceInstance(usr.placeId or game.PlaceId, usr.jobId, LocalPlayer)
                             end
@@ -649,15 +663,15 @@ BtnServer.MouseButton1Click:Connect(function()
     CenterScroll.CanvasSize = UDim2.new(0, 0, 0, CenterLayout.AbsoluteContentSize.Y + 10)
 end)
 
--- 4. الأجنحة الجانبية الأخرى
-local BtnAdmin = createProStyleBtn("لوحة الأدمن 👑", "right")
+-- 4. الأجنحة الجانبية والإعدادات (تتضمن الخيارات الشاملة للخلفيات Pro)
+local BtnAdmin = createProStyleBtn("لوحة الأدمن", "right")
 BtnAdmin.MouseButton1Click:Connect(function()
     playUiSound(SOUND_CLICK, 1)
     clearCenter()
 
     if LocalPlayer.Name == "Dms921" or LocalPlayer.Name == "طحبح" then
         addCategoryHeader("أدوات أدمن DFX")
-        addDirectAction("📢 إرسال بث مباشر للشاشات", function()
+        addDirectAction("إرسال بث مباشر للشاشات", function()
             pcall(function()
                 customRequest({
                     Url = FIREBASE_BROADCAST_URL,
@@ -676,43 +690,56 @@ BtnAdmin.MouseButton1Click:Connect(function()
     end
 end)
 
-local BtnDiscord = createProStyleBtn("الديسكورد 💬", "right")
+local BtnDiscord = createProStyleBtn("الديسكورد", "right")
 BtnDiscord.MouseButton1Click:Connect(function()
     playUiSound(SOUND_CLICK, 1)
     if setclipboard then setclipboard("https://discord.gg/benhub") end
 end)
 
-local BtnSettings = createProStyleBtn("الإعدادات ⚙️", "right")
+local BtnSettings = createProStyleBtn("الإعدادات", "right")
 BtnSettings.MouseButton1Click:Connect(function()
     playUiSound(SOUND_CLICK, 1)
     clearCenter()
 
-    addCategoryHeader("🎨 تخصيص ثيمات وألوان الواجهة")
-    addDirectAction("💜 الثيم البنفسجي الافتراضي", function()
+    addCategoryHeader("تخصيص ألوان وثيمات الواجهة")
+    addDirectAction("الثيم البنفسجي الافتراضي", function()
         updateThemeColors(Color3.fromRGB(150, 40, 255), Color3.fromRGB(110, 25, 200))
     end)
-    addDirectAction("❤️ الثيم الأحمر", function()
+    addDirectAction("الثيم الأحمر", function()
         updateThemeColors(Color3.fromRGB(235, 75, 65), Color3.fromRGB(210, 45, 45))
     end)
-    addDirectAction("💙 الثيم الأزرق", function()
+    addDirectAction("الثيم الأزرق", function()
         updateThemeColors(Color3.fromRGB(50, 150, 255), Color3.fromRGB(30, 100, 220))
     end)
-    addDirectAction("💚 الثيم الأخضر", function()
+    addDirectAction("الثيم الأخضر", function()
         updateThemeColors(Color3.fromRGB(50, 200, 100), Color3.fromRGB(30, 150, 70))
     end)
-    addDirectAction("💛 الثيم الذهبي", function()
+    addDirectAction("الثيم الذهبي", function()
         updateThemeColors(Color3.fromRGB(255, 200, 50), Color3.fromRGB(210, 150, 20))
     end)
 
-    addCategoryHeader("🌐 خيارات السيرفر والأداء")
-    addDirectAction("🔄 إعادة دخول السيرفر Rejoin", function()
+    addCategoryHeader("تخصيص خلفيات الواجهة Pro")
+    addDirectAction("تفعيل الخلفية الاحترافية الأولى (1)", function()
+        BgImage.Image = bg1Url
+        BgImage.Visible = true
+    end)
+    addDirectAction("تفعيل الخلفية الاحترافية الثانية (2)", function()
+        BgImage.Image = bg2Url
+        BgImage.Visible = true
+    end)
+    addDirectAction("جعل الخلفية شفافة تماماً", function()
+        BgImage.Visible = false
+    end)
+
+    addCategoryHeader("خيارات السيرفر والأداء")
+    addDirectAction("إعادة دخول السيرفر Rejoin", function()
         TeleportService:Teleport(game.PlaceId, LocalPlayer)
     end)
 
     CenterScroll.CanvasSize = UDim2.new(0, 0, 0, CenterLayout.AbsoluteContentSize.Y + 10)
 end)
 
--- الاستماع للرسائل
+-- الاستماع للرسائل المباشرة
 task.spawn(function()
     while true do
         pcall(function()
