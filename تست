@@ -1,5 +1,5 @@
--- DFX Hub - Ultimate Animated UI, Dynamic Themes, Config Save & Loading Screen
--- Version: v9.0.0 | Developer: Tahbah
+-- DFX Hub - Dynamic Chat Theme Colors, Fixed Background Accordion & Reliable Audio
+-- Version: v10.0.0 | Developer: Tahbah
 
 local CoreGui = game:GetService("CoreGui")
 local Players = game:GetService("Players")
@@ -8,17 +8,16 @@ local TeleportService = game:GetService("TeleportService")
 local HttpService = game:GetService("HttpService")
 local SoundService = game:GetService("SoundService")
 local MarketplaceService = game:GetService("MarketplaceService")
-local UserInputService = game:GetService("UserInputService")
 
 local LocalPlayer = Players.LocalPlayer
 local parent = (gethui and gethui()) or CoreGui:FindFirstChild("RobloxGui") or LocalPlayer:WaitForChild("PlayerGui")
 
-if parent:FindFirstChild("DFXProV9UI") then parent.DFXProV9UI:Destroy() end
+if parent:FindFirstChild("DFXProV10UI") then parent.DFXProV10UI:Destroy() end
 if parent:FindFirstChild("DFXAdminBroadcastGui") then parent.DFXAdminBroadcastGui:Destroy() end
 if parent:FindFirstChild("DFXTopChatGui") then parent.DFXTopChatGui:Destroy() end
 if parent:FindFirstChild("DFXLoadingGui") then parent.DFXLoadingGui:Destroy() end
 
-local CONFIG_FILE = "DFX_Config_v9.json"
+local CONFIG_FILE = "DFX_Config_v10.json"
 
 local function customRequest(options)
     local req = request or http_request or (syn and syn.request) or (http and http.request) or (fluxus and fluxus.request)
@@ -63,9 +62,9 @@ local wallUrls = {
     fetchAsset("https://e.top4top.io/p_39475mm3q5.jpg", "bg_8"),
 }
 
--- الأصوات المطلوبة
-local SOUND_OPEN = "rbxassetid://98797174600699"
-local SOUND_POP = "rbxassetid://9114223179" -- صوت فقاعة ناعم
+-- الأصوات المعتمدة كلياً في روبلوكس
+local SOUND_OPEN = "rbxassetid://6895079853"
+local SOUND_CLICK = "rbxassetid://12221967"
 
 local enableShakeEffect = true
 
@@ -74,7 +73,7 @@ local function playUiSound(soundId, pitch)
         pcall(function()
             local snd = Instance.new("Sound")
             snd.SoundId = soundId
-            snd.Volume = 3
+            snd.Volume = 5
             snd.Pitch = pitch or 1
             snd.Parent = SoundService
             if not snd.IsLoaded then snd.Loaded:Wait() end
@@ -90,7 +89,7 @@ local FIREBASE_BASE_URL = "https://t7b7-54245-default-rtdb.firebaseio.com"
 local FIREBASE_CHAT_URL = FIREBASE_BASE_URL .. "/global_chat.json"
 
 ---------------------------------------------------------
--- شاشة تسجيل دخول احترافية (Loading Screen)
+-- شاشة تسجيل الدخول
 ---------------------------------------------------------
 local LoadingGui = Instance.new("ScreenGui")
 LoadingGui.Name = "DFXLoadingGui"
@@ -147,7 +146,7 @@ Instance.new("UICorner", BarFill).CornerRadius = UDim.new(0, 5)
 -- الهيكل الرئيسي للواجهة
 ---------------------------------------------------------
 local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "DFXProV9UI"
+ScreenGui.Name = "DFXProV10UI"
 ScreenGui.ResetOnSpawn = false
 ScreenGui.Parent = parent
 
@@ -257,7 +256,7 @@ CenterLayout.Padding = UDim.new(0, 8)
 CenterLayout.Parent = CenterScroll
 
 ---------------------------------------------------------
--- نافذة الشات المباشرة (تأخذ خلفية الثيم كرافت)
+-- نافذة الشات المباشرة (متزامنة بالكامل مع الألوان)
 ---------------------------------------------------------
 local ChatScreenGui = Instance.new("ScreenGui")
 ChatScreenGui.Name = "DFXTopChatGui"
@@ -309,8 +308,44 @@ chatStroke.Color = Color3.fromRGB(150, 40, 255)
 chatStroke.Thickness = 2
 chatStroke.Parent = ChatWin
 
+local ChatHeaderBtn1 = Instance.new("TextButton")
+ChatHeaderBtn1.Size = UDim2.new(0, 110, 0, 26)
+ChatHeaderBtn1.Position = UDim2.new(0, 10, 0, 10)
+ChatHeaderBtn1.BackgroundColor3 = Color3.fromRGB(150, 40, 255)
+ChatHeaderBtn1.Text = "💬 الشات العام"
+ChatHeaderBtn1.TextColor3 = Color3.fromRGB(255, 255, 255)
+ChatHeaderBtn1.Font = Enum.Font.FredokaOne
+ChatHeaderBtn1.TextSize = 12
+ChatHeaderBtn1.ZIndex = 2
+ChatHeaderBtn1.Parent = ChatWin
+Instance.new("UICorner", ChatHeaderBtn1).CornerRadius = UDim.new(0, 6)
+
+local ChatHeaderBtn2 = Instance.new("TextButton")
+ChatHeaderBtn2.Size = UDim2.new(0, 100, 0, 26)
+ChatHeaderBtn2.Position = UDim2.new(0, 128, 0, 10)
+ChatHeaderBtn2.BackgroundColor3 = Color3.fromRGB(150, 40, 255)
+ChatHeaderBtn2.Text = "★ مميزات"
+ChatHeaderBtn2.TextColor3 = Color3.fromRGB(255, 255, 255)
+ChatHeaderBtn2.Font = Enum.Font.FredokaOne
+ChatHeaderBtn2.TextSize = 12
+ChatHeaderBtn2.ZIndex = 2
+ChatHeaderBtn2.Parent = ChatWin
+Instance.new("UICorner", ChatHeaderBtn2).CornerRadius = UDim.new(0, 6)
+
+local SendBtn = Instance.new("TextButton")
+SendBtn.Size = UDim2.new(0, 95, 0, 30)
+SendBtn.Position = UDim2.new(1, -105, 1, -36)
+SendBtn.BackgroundColor3 = Color3.fromRGB(150, 40, 255)
+SendBtn.Text = "إرسال 🚀"
+SendBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+SendBtn.Font = Enum.Font.FredokaOne
+SendBtn.TextSize = 13
+SendBtn.ZIndex = 2
+SendBtn.Parent = ChatWin
+Instance.new("UICorner", SendBtn).CornerRadius = UDim.new(0, 6)
+
 ---------------------------------------------------------
--- إدارة الألوان والأزياء ومزامنة الإطارات
+-- نظام الثيمات والمزامنة الشاملة
 ---------------------------------------------------------
 local currentAccentColor = Color3.fromRGB(150, 40, 255)
 local currentHeaderColor = Color3.fromRGB(110, 25, 200)
@@ -338,6 +373,11 @@ local function updateThemeColors(accent, headerCol, skipSave)
     Header.BackgroundColor3 = headerCol
     floatStroke.Color = accent
     chatStroke.Color = accent
+
+    -- مزامنة أزرار الشات بالكامل مع الثيم
+    ChatHeaderBtn1.BackgroundColor3 = accent
+    ChatHeaderBtn2.BackgroundColor3 = accent
+    SendBtn.BackgroundColor3 = accent
 
     for _, stroke in ipairs(registeredWingStrokes) do
         if stroke and stroke.Parent then stroke.Color = accent end
@@ -386,7 +426,7 @@ local function loadSavedConfig()
 end
 
 ---------------------------------------------------------
--- أنيميشن الاهتزاز والضغط المطول والإنهاء المرن
+-- أنيميشن الاهتزاز والضغط المطول
 ---------------------------------------------------------
 local function addInteractiveAnimation(guiObject)
     local originalPos = guiObject.Position
@@ -426,7 +466,7 @@ local function addInteractiveAnimation(guiObject)
 end
 
 ---------------------------------------------------------
--- أزرار الأجنحة والقوائم المنسدلة مع أطر ملونة متزامنة
+-- الأزرار والقوائم المنسدلة النظيفة
 ---------------------------------------------------------
 local function createProStyleBtn(text, side)
     local btn = Instance.new("TextButton")
@@ -538,7 +578,7 @@ local function addChilliAccordion(titleText, builderFunc)
 
         local state = false
         toggleBtn.MouseButton1Click:Connect(function()
-            playUiSound(SOUND_POP, 1)
+            playUiSound(SOUND_CLICK, 1)
             state = not state
             innerBox.Visible = state
             if onToggle then onToggle(state) end
@@ -571,7 +611,7 @@ local function addChilliAccordion(titleText, builderFunc)
         btn.Parent = rowFrame
 
         btn.MouseButton1Click:Connect(function()
-            playUiSound(SOUND_POP, 1)
+            playUiSound(SOUND_CLICK, 1)
             if onClick then onClick() end
         end)
     end
@@ -579,7 +619,7 @@ local function addChilliAccordion(titleText, builderFunc)
     builderFunc(addToggleRow, addActionRow)
 
     headBtn.MouseButton1Click:Connect(function()
-        playUiSound(SOUND_POP, 1)
+        playUiSound(SOUND_CLICK, 1)
         isOpen = not isOpen
         headBtn.Text = (isOpen and "  ˅  " or "  >  ") .. titleText
         contentHolder.Visible = isOpen
@@ -606,20 +646,8 @@ local function clearCenter()
 end
 
 ---------------------------------------------------------
--- تفاصيل وأزرار الشات العلوي
+-- عناصر وتمرير الرسائل للشات
 ---------------------------------------------------------
-local ChatHeaderBtn1 = Instance.new("TextButton")
-ChatHeaderBtn1.Size = UDim2.new(0, 110, 0, 26)
-ChatHeaderBtn1.Position = UDim2.new(0, 10, 0, 10)
-ChatHeaderBtn1.BackgroundColor3 = currentAccentColor
-ChatHeaderBtn1.Text = "💬 الشات العام"
-ChatHeaderBtn1.TextColor3 = Color3.fromRGB(255, 255, 255)
-ChatHeaderBtn1.Font = Enum.Font.FredokaOne
-ChatHeaderBtn1.TextSize = 12
-ChatHeaderBtn1.ZIndex = 2
-ChatHeaderBtn1.Parent = ChatWin
-Instance.new("UICorner", ChatHeaderBtn1).CornerRadius = UDim.new(0, 6)
-
 local ChatTimerLbl = Instance.new("TextLabel")
 ChatTimerLbl.Size = UDim2.new(0, 70, 0, 26)
 ChatTimerLbl.Position = UDim2.new(1, -78, 0, 10)
@@ -669,20 +697,8 @@ ChatInput.ZIndex = 2
 ChatInput.Parent = ChatWin
 Instance.new("UICorner", ChatInput).CornerRadius = UDim.new(0, 6)
 
-local SendBtn = Instance.new("TextButton")
-SendBtn.Size = UDim2.new(0, 95, 0, 30)
-SendBtn.Position = UDim2.new(1, -105, 1, -36)
-SendBtn.BackgroundColor3 = currentAccentColor
-SendBtn.Text = "إرسال 🚀"
-SendBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-SendBtn.Font = Enum.Font.FredokaOne
-SendBtn.TextSize = 13
-SendBtn.ZIndex = 2
-SendBtn.Parent = ChatWin
-Instance.new("UICorner", SendBtn).CornerRadius = UDim.new(0, 6)
-
 FloatingChatBtn.MouseButton1Click:Connect(function()
-    playUiSound(SOUND_POP, 1)
+    playUiSound(SOUND_CLICK, 1)
     ChatWin.Visible = not ChatWin.Visible
 end)
 
@@ -736,11 +752,11 @@ SendBtn.MouseButton1Click:Connect(sendMessageNow)
 ChatInput.FocusLost:Connect(function(enter) if enter then sendMessageNow() end end)
 
 ---------------------------------------------------------
--- واجهة "الرئيسية" النظيفة والجاهزة
+-- واجهة "الرئيسية"
 ---------------------------------------------------------
 local BtnMainHome = createProStyleBtn("الرئيسية", "left")
 BtnMainHome.MouseButton1Click:Connect(function()
-    playUiSound(SOUND_POP, 1)
+    playUiSound(SOUND_CLICK, 1)
     clearCenter()
 
     local placeId = game.PlaceId
@@ -750,7 +766,6 @@ BtnMainHome.MouseButton1Click:Connect(function()
         if info then placeName = info.Name end
     end)
 
-    -- 1. بنر الماب
     local mapBanner = Instance.new("ImageLabel")
     mapBanner.Size = UDim2.new(1, 0, 0, 95)
     mapBanner.BackgroundColor3 = Color3.fromRGB(20, 20, 30)
@@ -774,7 +789,6 @@ BtnMainHome.MouseButton1Click:Connect(function()
     bannerTitle.Parent = mapBanner
     Instance.new("UICorner", bannerTitle).CornerRadius = UDim.new(0, 6)
 
-    -- 2. كرت الوقت المباشر الدقيق
     local serverInfoFrame = Instance.new("Frame")
     serverInfoFrame.Size = UDim2.new(1, 0, 0, 45)
     serverInfoFrame.BackgroundColor3 = Color3.fromRGB(22, 16, 36)
@@ -818,7 +832,6 @@ BtnMainHome.MouseButton1Click:Connect(function()
         end
     end)
 
-    -- 3. أزرار الديسكورد والتليجرام
     local discordAction = Instance.new("TextButton")
     discordAction.Size = UDim2.new(1, 0, 0, 32)
     discordAction.BackgroundColor3 = Color3.fromRGB(30, 20, 50)
@@ -831,7 +844,7 @@ BtnMainHome.MouseButton1Click:Connect(function()
     Instance.new("UICorner", discordAction).CornerRadius = UDim.new(0, 6)
 
     discordAction.MouseButton1Click:Connect(function()
-        playUiSound(SOUND_POP, 1)
+        playUiSound(SOUND_CLICK, 1)
         if setclipboard then setclipboard("https://discord.gg/9EKWVPrzV") end
     end)
 
@@ -847,11 +860,10 @@ BtnMainHome.MouseButton1Click:Connect(function()
     Instance.new("UICorner", telegramAction).CornerRadius = UDim.new(0, 6)
 
     telegramAction.MouseButton1Click:Connect(function()
-        playUiSound(SOUND_POP, 1)
+        playUiSound(SOUND_CLICK, 1)
         if setclipboard then setclipboard("https://t.me/WW1tW") end
     end)
 
-    -- 4. قسم آخر التحديثات
     local updatesFrame = Instance.new("Frame")
     updatesFrame.Size = UDim2.new(1, 0, 0, 110)
     updatesFrame.BackgroundColor3 = Color3.fromRGB(20, 14, 32)
@@ -863,7 +875,7 @@ BtnMainHome.MouseButton1Click:Connect(function()
     updatesTitle.Size = UDim2.new(1, -10, 0, 22)
     updatesTitle.Position = UDim2.new(0, 5, 0, 4)
     updatesTitle.BackgroundTransparency = 1
-    updatesTitle.Text = "✨ آخر تحديثات السكربت (v9.0):"
+    updatesTitle.Text = "✨ آخر تحديثات السكربت (v10.0):"
     updatesTitle.TextColor3 = Color3.fromRGB(255, 200, 100)
     updatesTitle.Font = Enum.Font.FredokaOne
     updatesTitle.TextSize = 14
@@ -875,7 +887,7 @@ BtnMainHome.MouseButton1Click:Connect(function()
     updatesDesc.Size = UDim2.new(1, -10, 0, 80)
     updatesDesc.Position = UDim2.new(0, 5, 0, 26)
     updatesDesc.BackgroundTransparency = 1
-    updatesDesc.Text = "• إضافة شاشة تسجيل دخول احترافية مع صوت الفتح الخاص.\n• إضافة أنيميشن اهتزاز مرن بالماوس وعند الضغط المطول.\n• إخفاء كروت الصور حتى فتح القائمة المخصصة لها.\n• تطبيق خلفيات الثيمات على نافذة الشات العريض."
+    updatesDesc.Text = "• مزامنة أزرار الشات بالكامل مع ثيم الألوان المختار.\n• إخفاء كروت الصور حتى فتح قائمة خلفيات Pro حصرياً.\n• إصلاح وتأكيد دعم الأصوات والمؤثرات لجميع الأجهزة."
     updatesDesc.TextColor3 = Color3.fromRGB(220, 220, 240)
     updatesDesc.Font = Enum.Font.FredokaOne
     updatesDesc.TextSize = 11.5
@@ -888,11 +900,11 @@ BtnMainHome.MouseButton1Click:Connect(function()
 end)
 
 ---------------------------------------------------------
--- الأقسام الأخرى (سكربتات، اقتراحات، تفعيلات)
+-- الأقسام الأخرى
 ---------------------------------------------------------
 local BtnScripts = createProStyleBtn("سكربتات", "left")
 BtnScripts.MouseButton1Click:Connect(function()
-    playUiSound(SOUND_POP, 1)
+    playUiSound(SOUND_CLICK, 1)
     clearCenter()
 
     addChilliAccordion("سكربتات المابات الشائعة", function(addToggle, addAction)
@@ -917,7 +929,7 @@ end)
 
 local BtnSuggestions = createProStyleBtn("اقتراحات", "left")
 BtnSuggestions.MouseButton1Click:Connect(function()
-    playUiSound(SOUND_POP, 1)
+    playUiSound(SOUND_CLICK, 1)
     clearCenter()
 
     addChilliAccordion("إرسال اقتراح للمطور", function(addToggle, addAction)
@@ -934,7 +946,7 @@ end)
 
 local BtnActivations = createProStyleBtn("تفعيلات", "left")
 BtnActivations.MouseButton1Click:Connect(function()
-    playUiSound(SOUND_POP, 1)
+    playUiSound(SOUND_CLICK, 1)
     clearCenter()
 
     addChilliAccordion("تفعيل المفاتيح والرخص", function(addToggle, addAction)
@@ -947,13 +959,10 @@ BtnActivations.MouseButton1Click:Connect(function()
     CenterScroll.CanvasSize = UDim2.new(0, 0, 0, CenterLayout.AbsoluteContentSize.Y + 15)
 end)
 
----------------------------------------------------------
--- لوحة الأدمن (تظهر حصرياً لـ Dms921)
----------------------------------------------------------
 if LocalPlayer.Name == "Dms921" then
     local BtnAdmin = createProStyleBtn("لوحة الأدمن", "right")
     BtnAdmin.MouseButton1Click:Connect(function()
-        playUiSound(SOUND_POP, 1)
+        playUiSound(SOUND_CLICK, 1)
         clearCenter()
 
         addChilliAccordion("أدوات أدمن DFX الحصرية", function(addToggle, addAction)
@@ -966,11 +975,11 @@ if LocalPlayer.Name == "Dms921" then
 end
 
 ---------------------------------------------------------
--- الإعدادات وخيارات الخلفيات المخفية تلقائياً
+-- الإعدادات (مع بناء كروت خلفيات Pro حصرياً عند الفتح)
 ---------------------------------------------------------
 local BtnSettings = createProStyleBtn("الإعدادات", "right")
 BtnSettings.MouseButton1Click:Connect(function()
-    playUiSound(SOUND_POP, 1)
+    playUiSound(SOUND_CLICK, 1)
     clearCenter()
 
     addChilliAccordion("تخصيص ثيمات وألوان الواجهة", function(addToggle, addAction)
@@ -1000,7 +1009,7 @@ BtnSettings.MouseButton1Click:Connect(function()
         end)
     end)
 
-    -- لا تظهر بطاقات صور الخلفيات Pro إطلاقاً إلا فور الضغط على القائمة المخصصة
+    -- لا يتم إنشاء كروت خلفيات الصور إطلاقاً إلا داخل بناء هذه القائمة بعينها
     addChilliAccordion("تخصيص خلفيات الواجهة Pro", function(addToggle, addAction)
         addAction("❌ إغلاق الخلفية", function()
             applyBackgroundByIndex(0)
@@ -1047,7 +1056,7 @@ BtnSettings.MouseButton1Click:Connect(function()
             Instance.new("UICorner", cardLbl).CornerRadius = UDim.new(0, 4)
 
             cardBtn.MouseButton1Click:Connect(function()
-                playUiSound(SOUND_POP, 1)
+                playUiSound(SOUND_CLICK, 1)
                 applyBackgroundByIndex(i)
             end)
         end
@@ -1066,18 +1075,18 @@ BtnSettings.MouseButton1Click:Connect(function()
     CenterScroll.CanvasSize = UDim2.new(0, 0, 0, CenterLayout.AbsoluteContentSize.Y + 240)
 end)
 
--- حركة شاشة التحميل الانسيابية الممتعة
+-- شاشة التحميل الانسيابية
 task.spawn(function()
     for i = 1, 100 do
         BarFill.Size = UDim2.new(i / 100, 0, 1, 0)
-        task.wait(0.015)
+        task.wait(0.012)
     end
     LoadSub.Text = "تم التجهيز بنجاح!"
-    task.wait(0.3)
-    TweenService:Create(LoadFrame, TweenInfo.new(0.4, Enum.EasingStyle.Back, Enum.EasingDirection.In), {
+    task.wait(0.2)
+    TweenService:Create(LoadFrame, TweenInfo.new(0.3, Enum.EasingStyle.Back, Enum.EasingDirection.In), {
         Size = UDim2.new(0, 0, 0, 0)
     }):Play()
-    task.wait(0.4)
+    task.wait(0.3)
     LoadingGui:Destroy()
 
     MainFrame.Visible = true
@@ -1109,11 +1118,11 @@ task.spawn(function()
 end)
 
 CloseBtn.MouseButton1Click:Connect(function()
-    playUiSound(SOUND_POP, 1)
-    TweenService:Create(MainFrame, TweenInfo.new(0.4, Enum.EasingStyle.Back, Enum.EasingDirection.In), {
+    playUiSound(SOUND_CLICK, 1)
+    TweenService:Create(MainFrame, TweenInfo.new(0.3, Enum.EasingStyle.Back, Enum.EasingDirection.In), {
         Size = UDim2.new(0, 0, 0, 0)
     }):Play()
-    task.wait(0.4)
+    task.wait(0.3)
     MainFrame.Visible = false
     MainFrame.Size = UDim2.new(0, 560, 0, 360)
 end)
