@@ -1,5 +1,5 @@
--- DFX Hub - Pro Backgrounds & Script Pro Buttons
--- Developer: Tahbah
+-- DFX Hub - Ultra Pro UI & Large Text Redesign
+-- Developer: Tahbah | Version: v3.0.0
 
 local CoreGui = game:GetService("CoreGui")
 local Players = game:GetService("Players")
@@ -12,7 +12,7 @@ local MarketplaceService = game:GetService("MarketplaceService")
 local LocalPlayer = Players.LocalPlayer
 local parent = (gethui and gethui()) or CoreGui:FindFirstChild("RobloxGui") or LocalPlayer:WaitForChild("PlayerGui")
 
-if parent:FindFirstChild("DFXProFinalUI") then parent.DFXProFinalUI:Destroy() end
+if parent:FindFirstChild("DFXUltraProV3UI") then parent.DFXUltraProV3UI:Destroy() end
 if parent:FindFirstChild("DFXAdminBroadcastGui") then parent.DFXAdminBroadcastGui:Destroy() end
 if parent:FindFirstChild("DFXExactChatGui") then parent.DFXExactChatGui:Destroy() end
 
@@ -51,7 +51,6 @@ local bg1Url = fetchAsset("https://j.top4top.io/p_3947namvl1.jpg", "bg_custom_1"
 local bg2Url = fetchAsset("https://i.top4top.io/p_3947szrlj0.jpg", "bg_custom_2")
 
 local SOUND_CLICK = "rbxassetid://6895079853"
-local SOUND_BROADCAST = "rbxassetid://17208361335"
 
 local function playUiSound(soundId, pitch)
     task.spawn(function()
@@ -74,17 +73,17 @@ local FIREBASE_PRESENCE_URL = FIREBASE_BASE_URL .. "/presence"
 local FIREBASE_BROADCAST_URL = FIREBASE_BASE_URL .. "/broadcasts.json"
 
 ---------------------------------------------------------
--- الهيكل الرئيسي
+-- الهيكل الرئيسي للواجهة
 ---------------------------------------------------------
 local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "DFXProFinalUI"
+ScreenGui.Name = "DFXUltraProV3UI"
 ScreenGui.ResetOnSpawn = false
 ScreenGui.Parent = parent
 
 local MainFrame = Instance.new("Frame")
 MainFrame.Name = "MainFrame"
-MainFrame.Size = UDim2.new(0, 540, 0, 320)
-MainFrame.Position = UDim2.new(0.5, -270, 0.5, -160)
+MainFrame.Size = UDim2.new(0, 560, 0, 340)
+MainFrame.Position = UDim2.new(0.5, -280, 0.5, -170)
 MainFrame.BackgroundTransparency = 1
 MainFrame.Active = true
 MainFrame.Draggable = true
@@ -92,12 +91,13 @@ MainFrame.Parent = ScreenGui
 
 local CenterBox = Instance.new("Frame")
 CenterBox.Name = "CenterBox"
-CenterBox.Size = UDim2.new(0, 330, 1, 0)
-CenterBox.Position = UDim2.new(0.5, -165, 0, 0)
-CenterBox.BackgroundColor3 = Color3.fromRGB(15, 10, 25)
-CenterBox.BackgroundTransparency = 0.85
+CenterBox.Size = UDim2.new(0, 340, 1, 0)
+CenterBox.Position = UDim2.new(0.5, -170, 0, 0)
+CenterBox.BackgroundColor3 = Color3.fromRGB(12, 10, 22)
+CenterBox.BackgroundTransparency = 0.15
 CenterBox.BorderSizePixel = 0
 CenterBox.Parent = MainFrame
+Instance.new("UICorner", CenterBox).CornerRadius = UDim.new(0, 12)
 
 local BgImage = Instance.new("ImageLabel")
 BgImage.Name = "BgImage"
@@ -107,75 +107,80 @@ BgImage.Visible = false
 BgImage.ScaleType = Enum.ScaleType.Crop
 BgImage.ZIndex = 0
 BgImage.Parent = CenterBox
+Instance.new("UICorner", BgImage).CornerRadius = UDim.new(0, 12)
 
 local centerStroke = Instance.new("UIStroke")
 centerStroke.Color = Color3.fromRGB(150, 40, 255)
 centerStroke.Thickness = 2
 centerStroke.Parent = CenterBox
 
+-- الهيدر العلوي
 local Header = Instance.new("Frame")
-Header.Size = UDim2.new(1, 0, 0, 38)
+Header.Size = UDim2.new(1, 0, 0, 42)
 Header.BackgroundColor3 = Color3.fromRGB(110, 25, 200)
 Header.BorderSizePixel = 0
 Header.ZIndex = 2
 Header.Parent = CenterBox
+Instance.new("UICorner", Header).CornerRadius = UDim.new(0, 12)
 
 local TitleMain = Instance.new("TextLabel")
-TitleMain.Size = UDim2.new(1, -45, 1, 0)
+TitleMain.Size = UDim2.new(1, -50, 1, 0)
 TitleMain.Position = UDim2.new(0, 10, 0, 0)
 TitleMain.BackgroundTransparency = 1
 TitleMain.Text = "⚡ DFX Hub | المطور: طحبح"
 TitleMain.TextColor3 = Color3.fromRGB(255, 255, 255)
 TitleMain.Font = Enum.Font.GothamBold
-TitleMain.TextSize = 17
+TitleMain.TextSize = 18
 TitleMain.TextXAlignment = Enum.TextXAlignment.Center
 TitleMain.ZIndex = 4
 TitleMain.Parent = Header
 
 local CloseBtn = Instance.new("TextButton")
-CloseBtn.Size = UDim2.new(0, 24, 0, 24)
-CloseBtn.Position = UDim2.new(1, -28, 0, 7)
-CloseBtn.BackgroundColor3 = Color3.fromRGB(200, 30, 80)
+CloseBtn.Size = UDim2.new(0, 26, 0, 26)
+CloseBtn.Position = UDim2.new(1, -32, 0, 8)
+CloseBtn.BackgroundColor3 = Color3.fromRGB(220, 40, 80)
 CloseBtn.Text = "✕"
 CloseBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
 CloseBtn.Font = Enum.Font.GothamBold
-CloseBtn.TextSize = 14
+CloseBtn.TextSize = 15
 CloseBtn.ZIndex = 4
 CloseBtn.Parent = Header
-Instance.new("UICorner", CloseBtn).CornerRadius = UDim.new(0, 4)
+Instance.new("UICorner", CloseBtn).CornerRadius = UDim.new(0, 6)
 
+-- الأجنحة الجانبية
 local LeftWing = Instance.new("Frame")
-LeftWing.Size = UDim2.new(0, 100, 1, -42)
-LeftWing.Position = UDim2.new(0.5, -270, 0, 42)
+LeftWing.Size = UDim2.new(0, 105, 1, -48)
+LeftWing.Position = UDim2.new(0.5, -280, 0, 48)
 LeftWing.BackgroundTransparency = 1
 LeftWing.Parent = MainFrame
 
 local LeftLayout = Instance.new("UIListLayout")
-LeftLayout.Padding = UDim.new(0, 6)
+LeftLayout.Padding = UDim.new(0, 7)
 LeftLayout.Parent = LeftWing
 
 local RightWing = Instance.new("Frame")
-RightWing.Size = UDim2.new(0, 100, 1, -42)
-RightWing.Position = UDim2.new(0.5, 170, 0, 42)
+RightWing.Size = UDim2.new(0, 105, 1, -48)
+RightWing.Position = UDim2.new(0.5, 175, 0, 48)
 RightWing.BackgroundTransparency = 1
 RightWing.Parent = MainFrame
 
 local RightLayout = Instance.new("UIListLayout")
-RightLayout.Padding = UDim.new(0, 6)
+RightLayout.Padding = UDim.new(0, 7)
 RightLayout.Parent = RightWing
 
+-- قائمة التمرير الوسطى
 local CenterScroll = Instance.new("ScrollingFrame")
-CenterScroll.Size = UDim2.new(1, -12, 1, -48)
-CenterScroll.Position = UDim2.new(0, 6, 0, 42)
+CenterScroll.Size = UDim2.new(1, -16, 1, -54)
+CenterScroll.Position = UDim2.new(0, 8, 0, 48)
 CenterScroll.BackgroundTransparency = 1
 CenterScroll.CanvasSize = UDim2.new(0, 0, 0, 0)
-CenterScroll.ScrollBarThickness = 3
+CenterScroll.ScrollBarThickness = 4
 CenterScroll.ZIndex = 2
 CenterScroll.Parent = CenterBox
 
 local CenterLayout = Instance.new("UIListLayout")
 CenterLayout.SortOrder = Enum.SortOrder.LayoutOrder
-CenterLayout.Padding = UDim.new(0, 6)
+CenterLayout.Padding = UDim.new(0, 8)
 CenterLayout.Parent = CenterScroll
 
 ---------------------------------------------------------
@@ -212,22 +217,22 @@ local function updateThemeColors(accent, headerCol)
 end
 
 ---------------------------------------------------------
--- تصاميم الأزرار المطورة للسكربت (Pro Script Buttons)
+-- تصاميم الأزرار الاحترافية الجديدة بأسلوب Ultra Glass
 ---------------------------------------------------------
 local function createProStyleBtn(text, side)
     local btn = Instance.new("TextButton")
-    btn.Size = UDim2.new(1, 0, 0, 34)
-    btn.BackgroundColor3 = Color3.fromRGB(24, 16, 40)
+    btn.Size = UDim2.new(1, 0, 0, 36)
+    btn.BackgroundColor3 = Color3.fromRGB(22, 14, 38)
     btn.Text = text
     btn.TextColor3 = Color3.fromRGB(255, 255, 255)
     btn.Font = Enum.Font.GothamBold
-    btn.TextSize = 13.5
+    btn.TextSize = 15 -- كلمات كبيرة وواضحة
     btn.Parent = (side == "left") and LeftWing or RightWing
     Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 8)
 
     local stroke = Instance.new("UIStroke")
     stroke.Color = currentAccentColor
-    stroke.Thickness = 1.6
+    stroke.Thickness = 1.8
     stroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
     stroke.Parent = btn
 
@@ -237,8 +242,8 @@ end
 
 local function addDirectToggle(nameText, descText, defaultState, onToggle)
     local rowFrame = Instance.new("Frame")
-    rowFrame.Size = UDim2.new(1, 0, 0, descText ~= "" and 46 or 34)
-    rowFrame.BackgroundColor3 = Color3.fromRGB(22, 14, 38)
+    rowFrame.Size = UDim2.new(1, 0, 0, descText ~= "" and 50 or 38)
+    rowFrame.BackgroundColor3 = Color3.fromRGB(20, 12, 34)
     rowFrame.BackgroundTransparency = 0.2
     rowFrame.BorderSizePixel = 0
     rowFrame.ZIndex = 2
@@ -252,34 +257,34 @@ local function addDirectToggle(nameText, descText, defaultState, onToggle)
     table.insert(registeredRowStrokes, rowStroke)
 
     local nameLbl = Instance.new("TextLabel")
-    nameLbl.Size = UDim2.new(1, -50, 0, 20)
+    nameLbl.Size = UDim2.new(1, -55, 0, 22)
     nameLbl.Position = UDim2.new(0, 8, 0, 4)
     nameLbl.BackgroundTransparency = 1
     nameLbl.Text = nameText
     nameLbl.TextColor3 = Color3.fromRGB(255, 255, 255)
     nameLbl.Font = Enum.Font.GothamBold
-    nameLbl.TextSize = 13.5
+    nameLbl.TextSize = 14.5 -- تكبير النص
     nameLbl.TextXAlignment = Enum.TextXAlignment.Right
     nameLbl.ZIndex = 3
     nameLbl.Parent = rowFrame
 
     if descText ~= "" then
         local descLbl = Instance.new("TextLabel")
-        descLbl.Size = UDim2.new(1, -50, 0, 18)
-        descLbl.Position = UDim2.new(0, 8, 0, 24)
+        descLbl.Size = UDim2.new(1, -55, 0, 18)
+        descLbl.Position = UDim2.new(0, 8, 0, 26)
         descLbl.BackgroundTransparency = 1
         descLbl.Text = descText
         descLbl.TextColor3 = Color3.fromRGB(200, 190, 230)
         descLbl.Font = Enum.Font.Gotham
-        descLbl.TextSize = 11
+        descLbl.TextSize = 11.5
         descLbl.TextXAlignment = Enum.TextXAlignment.Right
         descLbl.ZIndex = 3
         descLbl.Parent = rowFrame
     end
 
     local toggleBtn = Instance.new("TextButton")
-    toggleBtn.Size = UDim2.new(0, 36, 0, 20)
-    toggleBtn.Position = UDim2.new(0, 8, 0.5, -10)
+    toggleBtn.Size = UDim2.new(0, 38, 0, 22)
+    toggleBtn.Position = UDim2.new(0, 8, 0.5, -11)
     toggleBtn.BackgroundColor3 = defaultState and currentAccentColor or Color3.fromRGB(45, 35, 70)
     toggleBtn.Text = ""
     toggleBtn.ZIndex = 3
@@ -287,8 +292,8 @@ local function addDirectToggle(nameText, descText, defaultState, onToggle)
     Instance.new("UICorner", toggleBtn).CornerRadius = UDim.new(0, 6)
 
     local innerBox = Instance.new("Frame")
-    innerBox.Size = UDim2.new(0, 14, 0, 16)
-    innerBox.Position = defaultState and UDim2.new(1, -16, 0.5, -8) or UDim2.new(0, 2, 0.5, -8)
+    innerBox.Size = UDim2.new(0, 16, 0, 18)
+    innerBox.Position = defaultState and UDim2.new(1, -18, 0.5, -9) or UDim2.new(0, 2, 0.5, -9)
     innerBox.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
     innerBox.ZIndex = 4
     innerBox.Parent = toggleBtn
@@ -299,15 +304,15 @@ local function addDirectToggle(nameText, descText, defaultState, onToggle)
         playUiSound(SOUND_CLICK, 1)
         state = not state
         toggleBtn.BackgroundColor3 = state and currentAccentColor or Color3.fromRGB(45, 35, 70)
-        innerBox.Position = state and UDim2.new(1, -16, 0.5, -8) or UDim2.new(0, 2, 0.5, -8)
+        innerBox.Position = state and UDim2.new(1, -18, 0.5, -9) or UDim2.new(0, 2, 0.5, -9)
         if onToggle then onToggle(state) end
     end)
 end
 
 local function addDirectAction(nameText, onClick)
     local rowFrame = Instance.new("Frame")
-    rowFrame.Size = UDim2.new(1, 0, 0, 34)
-    rowFrame.BackgroundColor3 = Color3.fromRGB(22, 14, 38)
+    rowFrame.Size = UDim2.new(1, 0, 0, 38)
+    rowFrame.BackgroundColor3 = Color3.fromRGB(20, 12, 34)
     rowFrame.BackgroundTransparency = 0.2
     rowFrame.BorderSizePixel = 0
     rowFrame.ZIndex = 2
@@ -327,7 +332,7 @@ local function addDirectAction(nameText, onClick)
     btn.Text = nameText
     btn.TextColor3 = Color3.fromRGB(255, 255, 255)
     btn.Font = Enum.Font.GothamBold
-    btn.TextSize = 13.5
+    btn.TextSize = 14.5 -- تكبير النص
     btn.TextXAlignment = Enum.TextXAlignment.Center
     btn.ZIndex = 3
     btn.Parent = rowFrame
@@ -340,12 +345,12 @@ end
 
 local function addCategoryHeader(titleText)
     local lbl = Instance.new("TextLabel")
-    lbl.Size = UDim2.new(1, 0, 0, 26)
+    lbl.Size = UDim2.new(1, 0, 0, 28)
     lbl.BackgroundTransparency = 1
-    lbl.Text = "--- " .. titleText .. " ---"
+    lbl.Text = "❖ " .. titleText .. " ❖"
     lbl.TextColor3 = Color3.fromRGB(230, 210, 255)
     lbl.Font = Enum.Font.GothamBold
-    lbl.TextSize = 13.5
+    lbl.TextSize = 15 -- نص العنوان كبير وواضح
     lbl.TextXAlignment = Enum.TextXAlignment.Center
     lbl.ZIndex = 2
     lbl.Parent = CenterScroll
@@ -360,7 +365,7 @@ local function clearCenter()
 end
 
 ---------------------------------------------------------
--- نافذة الشات المباشر (تتضمن أزرار الشات بالإيموجيات)
+-- نافذة الشات المباشر العائمة
 ---------------------------------------------------------
 local ChatScreenGui = Instance.new("ScreenGui")
 ChatScreenGui.Name = "DFXExactChatGui"
@@ -540,58 +545,59 @@ SendBtn.MouseButton1Click:Connect(sendMessageNow)
 ChatInput.FocusLost:Connect(function(enter) if enter then sendMessageNow() end end)
 
 ---------------------------------------------------------
--- بناء الأقسام (الرئيسية بدون أي إيموجي)
+-- بناء التبويبات (قسم الرئيسية الجديد كلياً كروت فاخرة)
 ---------------------------------------------------------
 
--- 1. الرئيسية (بدون إيموجيات نهائياً بناءً على طلبك)
+-- 1. الرئيسية
 local BtnMainHome = createProStyleBtn("الرئيسية", "left")
 BtnMainHome.MouseButton1Click:Connect(function()
     playUiSound(SOUND_CLICK, 1)
     clearCenter()
 
     local placeId = game.PlaceId
-    local placeName = "ماب روبلوكس"
+    local placeName = "ماب روبلوكس الحالي"
     pcall(function()
         local info = MarketplaceService:GetProductInfo(placeId)
         if info then placeName = info.Name end
     end)
 
-    addCategoryHeader("معلومات الماب الحالي")
+    addCategoryHeader("معلومات الماب والوقت")
 
-    local mapFrame = Instance.new("Frame")
-    mapFrame.Size = UDim2.new(1, 0, 0, 60)
-    mapFrame.BackgroundColor3 = Color3.fromRGB(24, 14, 42)
-    mapFrame.BackgroundTransparency = 0.2
-    mapFrame.Parent = CenterScroll
-    Instance.new("UICorner", mapFrame).CornerRadius = UDim.new(0, 8)
+    -- كرت الماب الفاخر
+    local cardMap = Instance.new("Frame")
+    cardMap.Size = UDim2.new(1, 0, 0, 65)
+    cardMap.BackgroundColor3 = Color3.fromRGB(22, 14, 38)
+    cardMap.BackgroundTransparency = 0.15
+    cardMap.Parent = CenterScroll
+    Instance.new("UICorner", cardMap).CornerRadius = UDim.new(0, 10)
 
-    local mapStroke = Instance.new("UIStroke")
-    mapStroke.Color = currentAccentColor
-    mapStroke.Thickness = 1.4
-    mapStroke.Parent = mapFrame
-    table.insert(registeredRowStrokes, mapStroke)
+    local cardStroke = Instance.new("UIStroke")
+    cardStroke.Color = currentAccentColor
+    cardStroke.Thickness = 1.4
+    cardStroke.Parent = cardMap
+    table.insert(registeredRowStrokes, cardStroke)
 
     local mapTitleLbl = Instance.new("TextLabel")
-    mapTitleLbl.Size = UDim2.new(1, -15, 0, 22)
-    mapTitleLbl.Position = UDim2.new(0, 5, 0, 6)
+    mapTitleLbl.Size = UDim2.new(1, -20, 0, 26)
+    mapTitleLbl.Position = UDim2.new(0, 10, 0, 8)
     mapTitleLbl.BackgroundTransparency = 1
-    mapTitleLbl.Text = placeName
+    mapTitleLbl.Text = "الماب: " .. placeName
     mapTitleLbl.TextColor3 = Color3.fromRGB(255, 255, 255)
     mapTitleLbl.Font = Enum.Font.GothamBold
-    mapTitleLbl.TextSize = 13.5
+    mapTitleLbl.TextSize = 15 -- نص عريض وكبير
     mapTitleLbl.TextXAlignment = Enum.TextXAlignment.Right
-    mapTitleLbl.Parent = mapFrame
+    mapTitleLbl.Parent = cardMap
 
     local timeLbl = Instance.new("TextLabel")
-    timeLbl.Size = UDim2.new(1, -15, 0, 22)
-    timeLbl.Position = UDim2.new(0, 5, 0, 30)
+    timeLbl.Size = UDim2.new(1, -20, 0, 22)
+    timeLbl.Position = UDim2.new(0, 10, 0, 34)
     timeLbl.BackgroundTransparency = 1
     timeLbl.Text = "الوقت بالداخل: 0 دقيقة"
     timeLbl.TextColor3 = Color3.fromRGB(210, 190, 255)
     timeLbl.Font = Enum.Font.Gotham
-    timeLbl.TextSize = 11.5
+    timeLbl.TextSize = 13
     timeLbl.TextXAlignment = Enum.TextXAlignment.Right
-    timeLbl.Parent = mapFrame
+    timeLbl.Parent = cardMap
 
     task.spawn(function()
         local startT = os.time()
@@ -603,7 +609,7 @@ BtnMainHome.MouseButton1Click:Connect(function()
         end
     end)
 
-    addCategoryHeader("روابط التواصل والسكربتات")
+    addCategoryHeader("مجتمعات السكربت الرسمية")
     addDirectAction("سيرفر الديسكورد الرسمي", function()
         if setclipboard then setclipboard("https://discord.gg/benhub") end
     end)
@@ -616,7 +622,7 @@ BtnMainHome.MouseButton1Click:Connect(function()
         if st then loadstring(game:HttpGet("https://raw.githubusercontent.com/tienkhanh1/spicy/main/Chilli.lua"))() end
     end)
 
-    CenterScroll.CanvasSize = UDim2.new(0, 0, 0, CenterLayout.AbsoluteContentSize.Y + 10)
+    CenterScroll.CanvasSize = UDim2.new(0, 0, 0, CenterLayout.AbsoluteContentSize.Y + 12)
 end)
 
 -- 2. مابات عامة
@@ -633,7 +639,7 @@ BtnPlayer.MouseButton1Click:Connect(function()
         loadstring(game:HttpGet("https://raw.githubusercontent.com/UCT-hub/main/refs/heads/main/redz-v2"))()
     end)
 
-    CenterScroll.CanvasSize = UDim2.new(0, 0, 0, CenterLayout.AbsoluteContentSize.Y + 10)
+    CenterScroll.CanvasSize = UDim2.new(0, 0, 0, CenterLayout.AbsoluteContentSize.Y + 12)
 end)
 
 -- 3. المتواجدون
@@ -660,10 +666,10 @@ BtnServer.MouseButton1Click:Connect(function()
             end
         end
     end)
-    CenterScroll.CanvasSize = UDim2.new(0, 0, 0, CenterLayout.AbsoluteContentSize.Y + 10)
+    CenterScroll.CanvasSize = UDim2.new(0, 0, 0, CenterLayout.AbsoluteContentSize.Y + 12)
 end)
 
--- 4. الأجنحة الجانبية والإعدادات (تتضمن الخيارات الشاملة للخلفيات Pro)
+-- 4. الأجنحة الجانبية والإعدادات
 local BtnAdmin = createProStyleBtn("لوحة الأدمن", "right")
 BtnAdmin.MouseButton1Click:Connect(function()
     playUiSound(SOUND_CLICK, 1)
@@ -736,7 +742,7 @@ BtnSettings.MouseButton1Click:Connect(function()
         TeleportService:Teleport(game.PlaceId, LocalPlayer)
     end)
 
-    CenterScroll.CanvasSize = UDim2.new(0, 0, 0, CenterLayout.AbsoluteContentSize.Y + 10)
+    CenterScroll.CanvasSize = UDim2.new(0, 0, 0, CenterLayout.AbsoluteContentSize.Y + 12)
 end)
 
 -- الاستماع للرسائل المباشرة
