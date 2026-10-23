@@ -1,5 +1,5 @@
--- DFX Hub - Ultimate Version v7.0.0 | Developer: Tahbah
--- Features: Grid Image Cards for Pro Backgrounds (Side-by-Side) + 8 New Wallpapers
+-- DFX Hub - Clear Wallpaper Rendering, Auto-Save Settings, Live Timer & B&W Themes
+-- Version: v8.0.0 | Developer: Tahbah
 
 local CoreGui = game:GetService("CoreGui")
 local Players = game:GetService("Players")
@@ -12,9 +12,11 @@ local MarketplaceService = game:GetService("MarketplaceService")
 local LocalPlayer = Players.LocalPlayer
 local parent = (gethui and gethui()) or CoreGui:FindFirstChild("RobloxGui") or LocalPlayer:WaitForChild("PlayerGui")
 
-if parent:FindFirstChild("DFXProV7UI") then parent.DFXProV7UI:Destroy() end
+if parent:FindFirstChild("DFXProV8UI") then parent.DFXProV8UI:Destroy() end
 if parent:FindFirstChild("DFXAdminBroadcastGui") then parent.DFXAdminBroadcastGui:Destroy() end
 if parent:FindFirstChild("DFXTopChatGui") then parent.DFXTopChatGui:Destroy() end
+
+local CONFIG_FILE = "DFX_Config_v8.json"
 
 local function customRequest(options)
     local req = request or http_request or (syn and syn.request) or (http and http.request) or (fluxus and fluxus.request)
@@ -47,7 +49,7 @@ local function fetchAsset(url, fileName)
     return url
 end
 
--- روابط الخلفيات الـ 8 الجديدة + القديمة
+-- روابط الخلفيات الـ 8 المفضلة
 local wallUrls = {
     fetchAsset("https://d.top4top.io/p_3947d1izj0.jpg", "bg_1"),
     fetchAsset("https://e.top4top.io/p_394715j211.jpg", "bg_2"),
@@ -78,13 +80,12 @@ end
 
 local FIREBASE_BASE_URL = "https://t7b7-54245-default-rtdb.firebaseio.com"
 local FIREBASE_CHAT_URL = FIREBASE_BASE_URL .. "/global_chat.json"
-local FIREBASE_PRESENCE_URL = FIREBASE_BASE_URL .. "/presence"
 
 ---------------------------------------------------------
 -- الهيكل الرئيسي للواجهة
 ---------------------------------------------------------
 local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "DFXProV7UI"
+ScreenGui.Name = "DFXProV8UI"
 ScreenGui.ResetOnSpawn = false
 ScreenGui.Parent = parent
 
@@ -102,12 +103,13 @@ CenterBox.Name = "CenterBox"
 CenterBox.Size = UDim2.new(0, 340, 1, 0)
 CenterBox.Position = UDim2.new(0.5, -170, 0, 0)
 CenterBox.BackgroundColor3 = Color3.fromRGB(15, 12, 22)
-CenterBox.BackgroundTransparency = 0.35
+CenterBox.BackgroundTransparency = 0 -- خلفية صلبة أو شفافة حسب الخيار
 CenterBox.BorderSizePixel = 0
 CenterBox.ClipsDescendants = true
 CenterBox.Parent = MainFrame
 Instance.new("UICorner", CenterBox).CornerRadius = UDim.new(0, 10)
 
+-- صورة الخلفية النظيفة بدون طبقة سوداء غامقة فوقها
 local BgImage = Instance.new("ImageLabel")
 BgImage.Name = "BgImage"
 BgImage.Size = UDim2.new(1, 0, 1, 0)
@@ -193,15 +195,31 @@ CenterLayout.Padding = UDim.new(0, 8)
 CenterLayout.Parent = CenterScroll
 
 ---------------------------------------------------------
--- إدارة الألوان والتحديثات
+-- نظام حفظ وتثبيت الإعدادات تلقائياً (Save Config System)
 ---------------------------------------------------------
 local currentAccentColor = Color3.fromRGB(150, 40, 255)
 local currentHeaderColor = Color3.fromRGB(110, 25, 200)
+local selectedBgIndex = 0
 
 local registeredWingStrokes = {}
 local registeredChatThemeElements = {}
 
-local function updateThemeColors(accent, headerCol)
+local function saveCurrentConfig()
+    if writefile then
+        local cfg = {
+            accentR = currentAccentColor.R,
+            accentG = currentAccentColor.G,
+            accentB = currentAccentColor.B,
+            headR = currentHeaderColor.R,
+            headG = currentHeaderColor.G,
+            headB = currentHeaderColor.B,
+            bgIndex = selectedBgIndex
+        }
+        pcall(function() writefile(CONFIG_FILE, HttpService:JSONEncode(cfg)) end)
+    end
+end
+
+local function updateThemeColors(accent, headerCol, skipSave)
     currentAccentColor = accent
     currentHeaderColor = headerCol
     centerStroke.Color = accent
@@ -216,10 +234,41 @@ local function updateThemeColors(accent, headerCol)
     for _, stroke in ipairs(registeredWingStrokes) do
         if stroke and stroke.Parent then stroke.Color = accent end
     end
+
+    if not skipSave then saveCurrentConfig() end
+end
+
+local function applyBackgroundByIndex(idx, skipSave)
+    selectedBgIndex = idx
+    if idx > 0 and wallUrls[idx] then
+        BgImage.Image = wallUrls[idx]
+        BgImage.Visible = true
+        CenterBox.BackgroundTransparency = 0.85 -- إلغاء الطبقة الشفافة السوداء تماماً لتظهر ناصعة
+    else
+        BgImage.Visible = false
+        CenterBox.BackgroundTransparency = 0
+    end
+    if not skipSave then saveCurrentConfig() end
+end
+
+local function loadSavedConfig()
+    if readfile and isfile and isfile(CONFIG_FILE) then
+        pcall(function()
+            local data = safeDecode(readfile(CONFIG_FILE))
+            if data then
+                if data.accentR then
+                    updateThemeColors(Color3.new(data.accentR, data.accentG, data.accentB), Color3.new(data.headR, data.headG, data.headB), true)
+                end
+                if data.bgIndex then
+                    applyBackgroundByIndex(data.bgIndex, true)
+                end
+            end
+        end)
+    end
 end
 
 ---------------------------------------------------------
--- إنشاء الأزرار والقوائم
+-- إنشاء الأزرار والقوائم المنسدلة
 ---------------------------------------------------------
 local function createProStyleBtn(text, side)
     local btn = Instance.new("TextButton")
@@ -596,7 +645,7 @@ SendBtn.MouseButton1Click:Connect(sendMessageNow)
 ChatInput.FocusLost:Connect(function(enter) if enter then sendMessageNow() end end)
 
 ---------------------------------------------------------
--- واجهة "الرئيسية"
+-- واجهة "الرئيسية" مع العداد الحقيقي المباشر وقسم التحديثات
 ---------------------------------------------------------
 local BtnMainHome = createProStyleBtn("الرئيسية", "left")
 BtnMainHome.MouseButton1Click:Connect(function()
@@ -610,8 +659,9 @@ BtnMainHome.MouseButton1Click:Connect(function()
         if info then placeName = info.Name end
     end)
 
+    -- 1. بنر الماب
     local mapBanner = Instance.new("ImageLabel")
-    mapBanner.Size = UDim2.new(1, 0, 0, 100)
+    mapBanner.Size = UDim2.new(1, 0, 0, 95)
     mapBanner.BackgroundColor3 = Color3.fromRGB(20, 20, 30)
     mapBanner.Image = "https://www.roblox.com/asset-thumbnail/image?assetId=" .. tostring(placeId) .. "&width=420&height=250&format=png"
     mapBanner.ScaleType = Enum.ScaleType.Crop
@@ -633,6 +683,7 @@ BtnMainHome.MouseButton1Click:Connect(function()
     bannerTitle.Parent = mapBanner
     Instance.new("UICorner", bannerTitle).CornerRadius = UDim.new(0, 6)
 
+    -- 2. العداد الحقيقي الدقيق لقضاء الوقت بالماب بالثواني والدقائق
     local serverInfoFrame = Instance.new("Frame")
     serverInfoFrame.Size = UDim2.new(1, 0, 0, 45)
     serverInfoFrame.BackgroundColor3 = Color3.fromRGB(22, 16, 36)
@@ -644,7 +695,7 @@ BtnMainHome.MouseButton1Click:Connect(function()
     infoTimeLbl.Size = UDim2.new(0.5, -5, 1, 0)
     infoTimeLbl.Position = UDim2.new(0, 5, 0, 0)
     infoTimeLbl.BackgroundTransparency = 1
-    infoTimeLbl.Text = "⏱ الوقت: 0 دقيقة"
+    infoTimeLbl.Text = "⏱ الوقت: 0 د 0 ث"
     infoTimeLbl.TextColor3 = Color3.fromRGB(220, 220, 255)
     infoTimeLbl.Font = Enum.Font.FredokaOne
     infoTimeLbl.TextSize = 13
@@ -664,24 +715,26 @@ BtnMainHome.MouseButton1Click:Connect(function()
     infoPlayersLbl.ZIndex = 4
     infoPlayersLbl.Parent = serverInfoFrame
 
+    local sessionStartTime = os.time()
     task.spawn(function()
-        local startT = os.time()
         while infoTimeLbl and infoTimeLbl.Parent do
-            local elapsed = os.time() - startT
+            local elapsed = os.time() - sessionStartTime
             local mins = math.floor(elapsed / 60)
-            infoTimeLbl.Text = "⏱ الوقت: " .. tostring(mins) .. " دقيقة"
+            local secs = elapsed % 60
+            infoTimeLbl.Text = string.format("⏱ الوقت: %d د %d ث", mins, secs)
             infoPlayersLbl.Text = "👥 المتواجدون: " .. #Players:GetPlayers() .. "/" .. Players.MaxPlayers
-            task.wait(3)
+            task.wait(1)
         end
     end)
 
+    -- 3. أزرار الديسكورد والتليجرام
     local discordAction = Instance.new("TextButton")
-    discordAction.Size = UDim2.new(1, 0, 0, 34)
+    discordAction.Size = UDim2.new(1, 0, 0, 32)
     discordAction.BackgroundColor3 = Color3.fromRGB(30, 20, 50)
     discordAction.Text = "📢 سيرفر الديسكورد الرسمي"
     discordAction.TextColor3 = Color3.fromRGB(255, 255, 255)
     discordAction.Font = Enum.Font.FredokaOne
-    discordAction.TextSize = 15
+    discordAction.TextSize = 14
     discordAction.ZIndex = 3
     discordAction.Parent = CenterScroll
     Instance.new("UICorner", discordAction).CornerRadius = UDim.new(0, 6)
@@ -692,12 +745,12 @@ BtnMainHome.MouseButton1Click:Connect(function()
     end)
 
     local telegramAction = Instance.new("TextButton")
-    telegramAction.Size = UDim2.new(1, 0, 0, 34)
+    telegramAction.Size = UDim2.new(1, 0, 0, 32)
     telegramAction.BackgroundColor3 = Color3.fromRGB(30, 20, 50)
     telegramAction.Text = "✈️ قناة التليجرام الرسمية"
     telegramAction.TextColor3 = Color3.fromRGB(255, 255, 255)
     telegramAction.Font = Enum.Font.FredokaOne
-    telegramAction.TextSize = 15
+    telegramAction.TextSize = 14
     telegramAction.ZIndex = 3
     telegramAction.Parent = CenterScroll
     Instance.new("UICorner", telegramAction).CornerRadius = UDim.new(0, 6)
@@ -706,6 +759,39 @@ BtnMainHome.MouseButton1Click:Connect(function()
         playUiSound(SOUND_CLICK, 1)
         if setclipboard then setclipboard("https://t.me/WW1tW") end
     end)
+
+    -- 4. قسم آخر التحديثات المفصل والغني
+    local updatesFrame = Instance.new("Frame")
+    updatesFrame.Size = UDim2.new(1, 0, 0, 110)
+    updatesFrame.BackgroundColor3 = Color3.fromRGB(20, 14, 32)
+    updatesFrame.ZIndex = 3
+    updatesFrame.Parent = CenterScroll
+    Instance.new("UICorner", updatesFrame).CornerRadius = UDim.new(0, 8)
+
+    local updatesTitle = Instance.new("TextLabel")
+    updatesTitle.Size = UDim2.new(1, -10, 0, 22)
+    updatesTitle.Position = UDim2.new(0, 5, 0, 4)
+    updatesTitle.BackgroundTransparency = 1
+    updatesTitle.Text = "✨ آخر تحديثات السكربت (v8.0):"
+    updatesTitle.TextColor3 = Color3.fromRGB(255, 200, 100)
+    updatesTitle.Font = Enum.Font.FredokaOne
+    updatesTitle.TextSize = 14
+    updatesTitle.TextXAlignment = Enum.TextXAlignment.Right
+    updatesTitle.ZIndex = 4
+    updatesTitle.Parent = updatesFrame
+
+    local updatesDesc = Instance.new("TextLabel")
+    updatesDesc.Size = UDim2.new(1, -10, 0, 80)
+    updatesDesc.Position = UDim2.new(0, 5, 0, 26)
+    updatesDesc.BackgroundTransparency = 1
+    updatesDesc.Text = "• إلغاء الطبقة الشفافة الغامقة نهائياً لتظهر الخلفيات ناصعة.\n• تفعيل نظام الحفظ التلقائي للثيمات والخلفيات.\n• إصلاح عداد الوقت الحقيقي بالثواني والدقائق.\n• إضافة ثيمات أبيض وأسود فخمة ومتنوعة."
+    updatesDesc.TextColor3 = Color3.fromRGB(220, 220, 240)
+    updatesDesc.Font = Enum.Font.FredokaOne
+    updatesDesc.TextSize = 11.5
+    updatesDesc.TextXAlignment = Enum.TextXAlignment.Right
+    updatesDesc.TextYAlignment = Enum.TextYAlignment.Top
+    updatesDesc.ZIndex = 4
+    updatesDesc.Parent = updatesFrame
 
     CenterScroll.CanvasSize = UDim2.new(0, 0, 0, CenterLayout.AbsoluteContentSize.Y + 15)
 end)
@@ -771,7 +857,7 @@ BtnActivations.MouseButton1Click:Connect(function()
 end)
 
 ---------------------------------------------------------
--- لوحة الأدمن (تظهر حصرياً لـ Dms921)
+-- لوحة الأدمن (تظهر لـ Dms921)
 ---------------------------------------------------------
 if LocalPlayer.Name == "Dms921" then
     local BtnAdmin = createProStyleBtn("لوحة الأدمن", "right")
@@ -789,7 +875,7 @@ if LocalPlayer.Name == "Dms921" then
 end
 
 ---------------------------------------------------------
--- قائمة الإعدادات ومعرض الخلفيات (بطاقات جنب بعضها Grid)
+-- الإعدادات والثيمات الكثيرة (مع ألوان أبيض وأسود إضافية)
 ---------------------------------------------------------
 local BtnSettings = createProStyleBtn("الإعدادات", "right")
 BtnSettings.MouseButton1Click:Connect(function()
@@ -799,6 +885,15 @@ BtnSettings.MouseButton1Click:Connect(function()
     addChilliAccordion("تخصيص ثيمات وألوان الواجهة", function(addToggle, addAction)
         addAction("الثيم البنفسجي الافتراضي", function()
             updateThemeColors(Color3.fromRGB(150, 40, 255), Color3.fromRGB(110, 25, 200))
+        end)
+        addAction("الثيم الأسود الفحم (Charcoal Black)", function()
+            updateThemeColors(Color3.fromRGB(35, 35, 45), Color3.fromRGB(20, 20, 25))
+        end)
+        addAction("الثيم الأبيض النقي (Pure Light White)", function()
+            updateThemeColors(Color3.fromRGB(240, 240, 250), Color3.fromRGB(180, 180, 200))
+        end)
+        addAction("الثيم الأبيض والأسود (Monochrome)", function()
+            updateThemeColors(Color3.fromRGB(255, 255, 255), Color3.fromRGB(0, 0, 0))
         end)
         addAction("الثيم الأحمر", function()
             updateThemeColors(Color3.fromRGB(235, 75, 65), Color3.fromRGB(210, 45, 45))
@@ -814,15 +909,11 @@ BtnSettings.MouseButton1Click:Connect(function()
         end)
     end)
 
-    -- قسم معرض الخلفيات الاحترافية بنظام البطاقات (جنب بعضها Grid)
     addChilliAccordion("تخصيص خلفيات الواجهة Pro", function(addToggle, addAction)
-        -- زر إغلاق الخلفية
         addAction("❌ إغلاق الخلفية", function()
-            BgImage.Visible = false
-            CenterBox.BackgroundTransparency = 0.1
+            applyBackgroundByIndex(0)
         end)
 
-        -- إنشاء حاوية شبكية للصور (بطاقات جنب بعضها)
         local gridHolder = Instance.new("Frame")
         gridHolder.Size = UDim2.new(1, 0, 0, 220)
         gridHolder.BackgroundTransparency = 1
@@ -830,12 +921,11 @@ BtnSettings.MouseButton1Click:Connect(function()
         gridHolder.Parent = CenterScroll
 
         local gridLayout = Instance.new("UIGridLayout")
-        gridLayout.CellSize = UDim2.new(0, 150, 0, 85) -- حجم البطاقة الواحدة
+        gridLayout.CellSize = UDim2.new(0, 150, 0, 85)
         gridLayout.CellPadding = UDim2.new(0, 10, 0, 10)
         gridLayout.SortOrder = Enum.SortOrder.LayoutOrder
         gridLayout.Parent = gridHolder
 
-        -- عرض الـ 8 خلفيات ببطاقات جنب بعضها
         for i, url in ipairs(wallUrls) do
             local cardBtn = Instance.new("ImageButton")
             cardBtn.Size = UDim2.new(0, 150, 0, 85)
@@ -851,7 +941,6 @@ BtnSettings.MouseButton1Click:Connect(function()
             cardStroke.Thickness = 1.5
             cardStroke.Parent = cardBtn
 
-            -- كتابة اسم الخلفية أو رقمها عليها لتعرفها
             local cardLbl = Instance.new("TextLabel")
             cardLbl.Size = UDim2.new(1, 0, 0, 20)
             cardLbl.Position = UDim2.new(0, 0, 1, -20)
@@ -865,12 +954,9 @@ BtnSettings.MouseButton1Click:Connect(function()
             cardLbl.Parent = cardBtn
             Instance.new("UICorner", cardLbl).CornerRadius = UDim.new(0, 4)
 
-            -- عند الضغط على البطاقة تتفعل الخلفية فوراً وتظهر للمستخدم
             cardBtn.MouseButton1Click:Connect(function()
                 playUiSound(SOUND_CLICK, 1)
-                BgImage.Image = url
-                BgImage.Visible = true
-                CenterBox.BackgroundTransparency = 0.35
+                applyBackgroundByIndex(i)
             end)
         end
     end)
@@ -910,4 +996,5 @@ CloseBtn.MouseButton1Click:Connect(function()
     MainFrame.Visible = false
 end)
 
+loadSavedConfig()
 BtnMainHome.MouseButton1Click:Fire()
