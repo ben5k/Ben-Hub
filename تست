@@ -1,12 +1,11 @@
--- DFX Hub - Pro UI, Custom Emojis & Sleek Modern Buttons
--- Version: v2.2.0 (Developer: Tahbah)
+-- DFX Hub - Stable Fixed Version (v2.2.1)
+-- Developer: Tahbah
 
 local CoreGui = game:GetService("CoreGui")
 local Players = game:GetService("Players")
 local TweenService = game:GetService("TweenService")
 local TeleportService = game:GetService("TeleportService")
 local HttpService = game:GetService("HttpService")
-local RunService = game:GetService("RunService")
 local SoundService = game:GetService("SoundService")
 local MarketplaceService = game:GetService("MarketplaceService")
 
@@ -37,30 +36,15 @@ local function safeDecode(jsonStr)
     return nil
 end
 
-local function fetchAsset(url, fileName)
-    if writefile and getcustomasset and readfile then
-        local file = "DFXHub_" .. fileName .. ".jpg"
-        if not isfile(file) then
-            pcall(function() writefile(file, game:HttpGet(url)) end)
-        end
-        if isfile(file) then return getcustomasset(file) end
-    end
-    return url
-end
-
-local bg1Url = fetchAsset("https://j.top4top.io/p_3947namvl1.jpg", "bg_custom_1")
-local bg2Url = fetchAsset("https://i.top4top.io/p_3947szrlj0.jpg", "bg_custom_2")
-
 local SOUND_CLICK = "rbxassetid://6895079853"
 local SOUND_BROADCAST = "rbxassetid://17208361335"
-local SOUND_EGG_ALERT = "rbxassetid://127213343505462"
 
 local function playUiSound(soundId, pitch)
     task.spawn(function()
         pcall(function()
             local snd = Instance.new("Sound")
             snd.SoundId = soundId
-            snd.Volume = 8
+            snd.Volume = 5
             snd.Pitch = pitch or 1
             snd.Parent = SoundService
             if not snd.IsLoaded then snd.Loaded:Wait() end
@@ -70,7 +54,6 @@ local function playUiSound(soundId, pitch)
     end)
 end
 
--- قاعدة البيانات t7b7
 local FIREBASE_BASE_URL = "https://t7b7-54245-default-rtdb.firebaseio.com"
 local FIREBASE_CHAT_URL = FIREBASE_BASE_URL .. "/global_chat.json"
 local FIREBASE_PRESENCE_URL = FIREBASE_BASE_URL .. "/presence"
@@ -93,7 +76,6 @@ MainFrame.Active = true
 MainFrame.Draggable = true
 MainFrame.Parent = ScreenGui
 
--- الصندوق الأوسط
 local CenterBox = Instance.new("Frame")
 CenterBox.Name = "CenterBox"
 CenterBox.Size = UDim2.new(0, 330, 1, 0)
@@ -117,7 +99,6 @@ centerStroke.Color = Color3.fromRGB(150, 40, 255)
 centerStroke.Thickness = 2
 centerStroke.Parent = CenterBox
 
--- الهيدر العلوي
 local Header = Instance.new("Frame")
 Header.Size = UDim2.new(1, 0, 0, 38)
 Header.BackgroundColor3 = Color3.fromRGB(110, 25, 200)
@@ -149,7 +130,6 @@ CloseBtn.ZIndex = 4
 CloseBtn.Parent = Header
 Instance.new("UICorner", CloseBtn).CornerRadius = UDim.new(0, 4)
 
--- الأجنحة الجانبية
 local LeftWing = Instance.new("Frame")
 LeftWing.Size = UDim2.new(0, 100, 1, -42)
 LeftWing.Position = UDim2.new(0.5, -270, 0, 42)
@@ -170,7 +150,6 @@ local RightLayout = Instance.new("UIListLayout")
 RightLayout.Padding = UDim.new(0, 6)
 RightLayout.Parent = RightWing
 
--- محتوى التمرير الأوسط
 local CenterScroll = Instance.new("ScrollingFrame")
 CenterScroll.Size = UDim2.new(1, -12, 1, -48)
 CenterScroll.Position = UDim2.new(0, 6, 0, 42)
@@ -186,7 +165,7 @@ CenterLayout.Padding = UDim.new(0, 6)
 CenterLayout.Parent = CenterScroll
 
 ---------------------------------------------------------
--- نظام الثيمات المترابط والشامل
+-- إدارة الثيمات والألوان
 ---------------------------------------------------------
 local currentAccentColor = Color3.fromRGB(150, 40, 255)
 local currentHeaderColor = Color3.fromRGB(110, 25, 200)
@@ -219,7 +198,7 @@ local function updateThemeColors(accent, headerCol)
 end
 
 ---------------------------------------------------------
--- أزرار احترافية متناسقة ومرتبة
+-- دالة تصاميم الأزرار
 ---------------------------------------------------------
 local function createProStyleBtn(text, side)
     local btn = Instance.new("TextButton")
@@ -244,7 +223,7 @@ end
 
 local function addDirectToggle(nameText, descText, defaultState, onToggle)
     local rowFrame = Instance.new("Frame")
-    rowFrame.Size = UDim2.new(1, 0, 0, descText ~= "" and 46 || 34)
+    rowFrame.Size = UDim2.new(1, 0, 0, descText ~= "" and 46 or 34)
     rowFrame.BackgroundColor3 = Color3.fromRGB(24, 14, 42)
     rowFrame.BackgroundTransparency = 0.25
     rowFrame.BorderSizePixel = 0
@@ -367,7 +346,7 @@ local function clearCenter()
 end
 
 ---------------------------------------------------------
--- نافذة الشات المطورة مع الـ Emojis المطلوبة (💬, ⭐, 🚀)
+-- نافذة الشات المباشر
 ---------------------------------------------------------
 local ChatScreenGui = Instance.new("ScreenGui")
 ChatScreenGui.Name = "DFXExactChatGui"
@@ -547,7 +526,7 @@ SendBtn.MouseButton1Click:Connect(sendMessageNow)
 ChatInput.FocusLost:Connect(function(enter) if enter then sendMessageNow() end end)
 
 ---------------------------------------------------------
--- التبويبات والمكونات الداخلية المرتبة
+-- بناء الأقسام
 ---------------------------------------------------------
 
 -- 1. الرئيسية
@@ -578,17 +557,8 @@ BtnMainHome.MouseButton1Click:Connect(function()
     mapStroke.Parent = mapFrame
     table.insert(registeredRowStrokes, mapStroke)
 
-    local mapImg = Instance.new("ImageLabel")
-    mapImg.Size = UDim2.new(0, 50, 0, 50)
-    mapImg.Position = UDim2.new(1, -55, 0, 5)
-    mapImg.BackgroundTransparency = 1
-    mapImg.Image = "rbxassetid://0"
-    pcall(function() mapImg.Image = "https://www.roblox.com/asset-thumbnail/image?assetId=" .. tostring(placeId) .. "&width=150&height=150&format=png" end)
-    mapImg.Parent = mapFrame
-    Instance.new("UICorner", mapImg).CornerRadius = UDim.new(0, 6)
-
     local mapTitleLbl = Instance.new("TextLabel")
-    mapTitleLbl.Size = UDim2.new(1, -65, 0, 22)
+    mapTitleLbl.Size = UDim2.new(1, -15, 0, 22)
     mapTitleLbl.Position = UDim2.new(0, 5, 0, 6)
     mapTitleLbl.BackgroundTransparency = 1
     mapTitleLbl.Text = "🎮 " .. placeName
@@ -599,7 +569,7 @@ BtnMainHome.MouseButton1Click:Connect(function()
     mapTitleLbl.Parent = mapFrame
 
     local timeLbl = Instance.new("TextLabel")
-    timeLbl.Size = UDim2.new(1, -65, 0, 22)
+    timeLbl.Size = UDim2.new(1, -15, 0, 22)
     timeLbl.Position = UDim2.new(0, 5, 0, 30)
     timeLbl.BackgroundTransparency = 1
     timeLbl.Text = "⏱ الوقت بالداخل: 0 دقيقة"
@@ -631,7 +601,6 @@ BtnMainHome.MouseButton1Click:Connect(function()
     addDirectToggle("سرقة البيض التلقائية", "تلقائياً يقوم بسرقة كافة البيض المحيط", false, function(st)
         if st then loadstring(game:HttpGet("https://raw.githubusercontent.com/tienkhanh1/spicy/main/Chilli.lua"))() end
     end)
-    addDirectToggle("سرقة بيض فورية", "ينقل البيضة إلى المنطقة الآمنة بسرعة فائقة", false, function(st) end)
 
     CenterScroll.CanvasSize = UDim2.new(0, 0, 0, CenterLayout.AbsoluteContentSize.Y + 10)
 end)
@@ -648,12 +617,6 @@ BtnPlayer.MouseButton1Click:Connect(function()
     end)
     addDirectAction("بلوكس فروت - ريدز V2", function()
         loadstring(game:HttpGet("https://raw.githubusercontent.com/UCT-hub/main/refs/heads/main/redz-v2"))()
-    end)
-    addDirectAction("ماب كيبورد - هوشي هوب", function()
-        loadstring(game:HttpGet("https://hoshihub.site/loader.lua"))()
-    end)
-    addDirectAction("ركوب حيوانات - Mystrix Hub", function()
-        loadstring(game:HttpGet("https://raw.githubusercontent.com/ummarxfarooq/mystrix-hub/refs/heads/main/loader"))()
     end)
 
     CenterScroll.CanvasSize = UDim2.new(0, 0, 0, CenterLayout.AbsoluteContentSize.Y + 10)
@@ -686,9 +649,7 @@ BtnServer.MouseButton1Click:Connect(function()
     CenterScroll.CanvasSize = UDim2.new(0, 0, 0, CenterLayout.AbsoluteContentSize.Y + 10)
 end)
 
----------------------------------------------------------
--- الجناح الأيمن
----------------------------------------------------------
+-- 4. الأجنحة الجانبية الأخرى
 local BtnAdmin = createProStyleBtn("لوحة الأدمن 👑", "right")
 BtnAdmin.MouseButton1Click:Connect(function()
     playUiSound(SOUND_CLICK, 1)
@@ -707,23 +668,6 @@ BtnAdmin.MouseButton1Click:Connect(function()
                         senderUserId = LocalPlayer.UserId,
                         targetUserId = 0,
                         text = "تنبيه هام جداً من المطور طحبح!",
-                        time = os.time()
-                    })
-                })
-            end)
-        end)
-        addDirectAction("🚨 تنبيه بيضة ديفاين حوت", function()
-            pcall(function()
-                customRequest({
-                    Url = FIREBASE_BROADCAST_URL,
-                    Method = "POST",
-                    Headers = {["Content-Type"] = "application/json"},
-                    Body = HttpService:JSONEncode({
-                        senderName = "DFX Alert",
-                        senderUserId = LocalPlayer.UserId,
-                        targetUserId = 0,
-                        text = "DFX: لحقو نزلت بيضة ديفاين حوت كبيرة!",
-                        eggType = "DIVINE",
                         time = os.time()
                     })
                 })
@@ -760,19 +704,6 @@ BtnSettings.MouseButton1Click:Connect(function()
         updateThemeColors(Color3.fromRGB(255, 200, 50), Color3.fromRGB(210, 150, 20))
     end)
 
-    addCategoryHeader("🖼️ تخصيص خلفية الواجهة")
-    addDirectAction("🖼️ تفعيل الخلفية الأولى (1)", function()
-        BgImage.Image = bg1Url
-        BgImage.Visible = true
-    end)
-    addDirectAction("🖼️ تفعيل الخلفية الثانية (2)", function()
-        BgImage.Image = bg2Url
-        BgImage.Visible = true
-    end)
-    addDirectAction("🫥 جعل الخلفية شفافة تماماً", function()
-        BgImage.Visible = false
-    end)
-
     addCategoryHeader("🌐 خيارات السيرفر والأداء")
     addDirectAction("🔄 إعادة دخول السيرفر Rejoin", function()
         TeleportService:Teleport(game.PlaceId, LocalPlayer)
@@ -781,9 +712,7 @@ BtnSettings.MouseButton1Click:Connect(function()
     CenterScroll.CanvasSize = UDim2.new(0, 0, 0, CenterLayout.AbsoluteContentSize.Y + 10)
 end)
 
----------------------------------------------------------
--- الاستماع للشات والبث
----------------------------------------------------------
+-- الاستماع للرسائل
 task.spawn(function()
     while true do
         pcall(function()
@@ -800,84 +729,7 @@ task.spawn(function()
                 end
             end
         end)
-        task.wait(2)
-    end
-end)
-
-local BroadcastGui = Instance.new("ScreenGui")
-BroadcastGui.Name = "DFXAdminBroadcastGui"
-BroadcastGui.ResetOnSpawn = false
-BroadcastGui.DisplayOrder = 999999
-BroadcastGui.Parent = parent
-
-local processedBroadcasts = {}
-task.spawn(function()
-    while true do
-        pcall(function()
-            local res = customRequest({Url = FIREBASE_BROADCAST_URL, Method = "GET"})
-            if res and res.StatusCode == 200 then
-                local data = safeDecode(res.Body)
-                if data then
-                    for bKey, bData in pairs(data) do
-                        if type(bData) == "table" and not processedBroadcasts[bKey] then
-                            processedBroadcasts[bKey] = true
-                            
-                            local popFrame = Instance.new("Frame")
-                            popFrame.Size = UDim2.new(0, 500, 0, 70)
-                            popFrame.Position = UDim2.new(0.5, -250, 0, 20)
-                            popFrame.BackgroundColor3 = Color3.fromRGB(20, 10, 30)
-                            popFrame.Parent = BroadcastGui
-                            Instance.new("UICorner", popFrame).CornerRadius = UDim.new(0, 8)
-
-                            local pStroke = Instance.new("UIStroke")
-                            pStroke.Color = currentAccentColor
-                            pStroke.Thickness = 2
-                            pStroke.Parent = popFrame
-
-                            local pLbl = Instance.new("TextLabel")
-                            pLbl.Size = UDim2.new(1, -20, 1, 0)
-                            pLbl.Position = UDim2.new(0, 10, 0, 0)
-                            pLbl.BackgroundTransparency = 1
-                            pLbl.Text = tostring(bData.senderName or "DFX") .. ": " .. tostring(bData.text or "")
-                            pLbl.TextColor3 = Color3.fromRGB(255, 255, 255)
-                            pLbl.Font = Enum.Font.GothamBold
-                            pLbl.TextSize = 16
-                            pLbl.TextWrapped = true
-                            pLbl.Parent = popFrame
-
-                            playUiSound(bData.eggType and SOUND_EGG_ALERT or SOUND_BROADCAST, 1)
-
-                            task.delay(7, function()
-                                if popFrame then popFrame:Destroy() end
-                            end)
-                        end
-                    end
-                end
-            end
-        end)
-        task.wait(2)
-    end
-end)
-
--- تحديث الحضور
-task.spawn(function()
-    while true do
-        pcall(function()
-            customRequest({
-                Url = FIREBASE_PRESENCE_URL .. "/" .. tostring(LocalPlayer.UserId) .. ".json",
-                Method = "PUT",
-                Headers = {["Content-Type"] = "application/json"},
-                Body = HttpService:JSONEncode({
-                    userId = LocalPlayer.UserId,
-                    name = LocalPlayer.Name,
-                    displayName = LocalPlayer.DisplayName ~= "" and LocalPlayer.DisplayName or LocalPlayer.Name,
-                    jobId = game.JobId,
-                    placeId = game.PlaceId,
-                    time = os.time()
-                })
-            })
-        end)
-        task.wait(10)
+        task.wait(2.5)
     end
 end)
 
