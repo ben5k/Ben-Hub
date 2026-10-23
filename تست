@@ -1,5 +1,5 @@
--- DFX Hub - Crimson Theme, Strict Admin Lock, & Pro Broadcast System
--- Version: v29.1.0 | Developer: Tahbah (Dms921)
+-- DFX Hub - Transparent Pro Broadcast, Red Bold Text, Strict Admin Lock
+-- Version: v30.0.0 | Developer: Tahbah (Dms921)
 
 local CoreGui = game:GetService("CoreGui")
 local Players = game:GetService("Players")
@@ -12,12 +12,12 @@ local MarketplaceService = game:GetService("MarketplaceService")
 local LocalPlayer = Players.LocalPlayer
 local parent = (gethui and gethui()) or CoreGui:FindFirstChild("RobloxGui") or LocalPlayer:WaitForChild("PlayerGui")
 
-if parent:FindFirstChild("DFXProV29UI") then parent.DFXProV29UI:Destroy() end
+if parent:FindFirstChild("DFXProV30UI") then parent.DFXProV30UI:Destroy() end
 if parent:FindFirstChild("DFXAdminBroadcastGui") then parent.DFXAdminBroadcastGui:Destroy() end
 if parent:FindFirstChild("DFXTopChatGui") then parent.DFXTopChatGui:Destroy() end
 if parent:FindFirstChild("DFXLoadingGui") then parent.DFXLoadingGui:Destroy() end
 
-local CONFIG_FILE = "DFX_Config_v29.json"
+local CONFIG_FILE = "DFX_Config_v30.json"
 local DISCORD_WEBHOOK_URL = "https://discord.com/api/webhooks/1563126439434391643/KPBO62mv7x_5ubaobKt3W-YjYACbTCsY-iefrPNQ7x99Q4tndOrxwQX6ts9zSU1csjcT"
 
 local FIREBASE_BASE_URL = "https://arad-hun-default-rtdb.firebaseio.com"
@@ -76,7 +76,6 @@ local SOUND_CLICK = "rbxassetid://6895079853"
 local BROADCAST_SOUND_ID = "rbxassetid://17208361335"
 
 local neonSpeed = 8
--- الثيم الافتراضي قرمزي داكن، أسود، وأبيض
 local currentAccentColor = Color3.fromRGB(200, 20, 60)
 local currentHeaderColor = Color3.fromRGB(140, 10, 40)
 
@@ -174,7 +173,7 @@ local function loadAvatarThumbnail(userId, imageLabel)
 end
 
 ---------------------------------------------------------
--- نظام عرض البرودكاست (Broadcast Popup) الشبيه بـ Ben
+-- نظام عرض البرودكاست (عائم بدون خلفية، بخط أحمر عريض وكبير)
 ---------------------------------------------------------
 local BroadcastGui = Instance.new("ScreenGui")
 BroadcastGui.Name = "DFXAdminBroadcastGui"
@@ -185,63 +184,73 @@ local function showBroadcastBanner(senderName, text, userId)
     -- تشغيل الصوت العالي المطلوب
     playUiSound(BROADCAST_SOUND_ID, 1, 2.0)
 
+    -- إطار شفاف بالكامل (بدون خلفية ورا الكتابة)
     local banner = Instance.new("Frame")
-    banner.Size = UDim2.new(0, 480, 0, 75)
-    banner.Position = UDim2.new(0.5, -240, 0, -90)
-    banner.BackgroundColor3 = Color3.fromRGB(15, 12, 18)
+    banner.Size = UDim2.new(0, 520, 0, 80)
+    banner.Position = UDim2.new(0.5, -260, 0, -90)
+    banner.BackgroundTransparency = 1 -- بدون خلفية تماماً!
     banner.BorderSizePixel = 0
     banner.ZIndex = 500
     banner.Parent = BroadcastGui
-    Instance.new("UICorner", banner).CornerRadius = UDim.new(0, 12)
-
-    local bStroke = Instance.new("UIStroke")
-    bStroke.Color = Color3.fromRGB(220, 20, 60) -- قرمزي
-    bStroke.Thickness = 3
-    bStroke.Parent = banner
 
     local avImg = Instance.new("ImageLabel")
-    avImg.Size = UDim2.new(0, 52, 0, 52)
-    avImg.Position = UDim2.new(0, 12, 0.5, -26)
-    avImg.BackgroundColor3 = Color3.fromRGB(25, 20, 30)
+    avImg.Size = UDim2.new(0, 48, 0, 48)
+    avImg.Position = UDim2.new(0, 10, 0, 5)
+    avImg.BackgroundColor3 = Color3.fromRGB(20, 15, 25)
     avImg.ZIndex = 501
     avImg.Parent = banner
-    Instance.new("UICorner", avImg).CornerRadius = UDim.new(0, 26)
+    Instance.new("UICorner", avImg).CornerRadius = UDim.new(0, 24)
     loadAvatarThumbnail(userId or LocalPlayer.UserId, avImg)
 
+    local avStroke = Instance.new("UIStroke")
+    avStroke.Color = Color3.fromRGB(255, 40, 80)
+    avStroke.Thickness = 2
+    avStroke.Parent = avImg
+
     local nameLbl = Instance.new("TextLabel")
-    nameLbl.Size = UDim2.new(1, -80, 0, 24)
-    nameLbl.Position = UDim2.new(0, 75, 0, 8)
+    nameLbl.Size = UDim2.new(1, -70, 0, 26)
+    nameLbl.Position = UDim2.new(0, 68, 0, 2)
     nameLbl.BackgroundTransparency = 1
-    nameLbl.Text = "👑 " .. senderName .. " 🩵:"
-    nameLbl.TextColor3 = Color3.fromRGB(255, 255, 255)
+    nameLbl.Text = senderName .. " 👑:"
+    nameLbl.TextColor3 = Color3.fromRGB(255, 40, 80) -- أحمر فخم
     nameLbl.Font = Enum.Font.FredokaOne
-    nameLbl.TextSize = 15
+    nameLbl.TextSize = 17 -- خط كبير
     nameLbl.TextXAlignment = Enum.TextXAlignment.Right
     nameLbl.ZIndex = 501
     nameLbl.Parent = banner
 
+    local nameStroke = Instance.new("UIStroke")
+    nameStroke.Color = Color3.fromRGB(0, 0, 0)
+    nameStroke.Thickness = 2.5
+    nameStroke.Parent = nameLbl
+
     local textLbl = Instance.new("TextLabel")
-    textLbl.Size = UDim2.new(1, -80, 0, 32)
-    textLbl.Position = UDim2.new(0, 75, 0, 34)
+    textLbl.Size = UDim2.new(1, -70, 0, 45)
+    textLbl.Position = UDim2.new(0, 68, 0, 30)
     textLbl.BackgroundTransparency = 1
     textLbl.Text = text
-    textLbl.TextColor3 = Color3.fromRGB(255, 220, 230)
+    textLbl.TextColor3 = Color3.fromRGB(255, 60, 90) -- أحمر عريض وواضح
     textLbl.Font = Enum.Font.FredokaOne
-    textLbl.TextSize = 14
+    textLbl.TextSize = 16.5 -- خط عريض وكبير
     textLbl.TextXAlignment = Enum.TextXAlignment.Right
     textLbl.TextWrapped = true
     textLbl.ZIndex = 501
     textLbl.Parent = banner
 
-    -- أنيميشن ظهور ودخول
+    local textStroke = Instance.new("UIStroke")
+    textStroke.Color = Color3.fromRGB(0, 0, 0)
+    textStroke.Thickness = 3
+    textStroke.Parent = textLbl
+
+    -- أنيميشن ظهور ودخول سلس
     TweenService:Create(banner, TweenInfo.new(0.5, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
-        Position = UDim2.new(0.5, -240, 0, 30)
+        Position = UDim2.new(0.5, -260, 0, 25)
     }):Play()
 
     task.delay(6, function()
         if banner and banner.Parent then
             TweenService:Create(banner, TweenInfo.new(0.4, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {
-                Position = UDim2.new(0.5, -240, 0, -100)
+                Position = UDim2.new(0.5, -260, 0, -100)
             }):Play()
             task.wait(0.4)
             banner:Destroy()
@@ -316,7 +325,7 @@ Instance.new("UICorner", BarFill).CornerRadius = UDim.new(0, 5)
 -- الهيكل الرئيسي للواجهة
 ---------------------------------------------------------
 local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "DFXProV29UI"
+ScreenGui.Name = "DFXProV30UI"
 ScreenGui.ResetOnSpawn = false
 ScreenGui.Parent = parent
 
@@ -334,7 +343,7 @@ local CenterBox = Instance.new("Frame")
 CenterBox.Name = "CenterBox"
 CenterBox.Size = UDim2.new(0, 340, 1, 0)
 CenterBox.Position = UDim2.new(0.5, -170, 0, 0)
-CenterBox.BackgroundColor3 = Color3.fromRGB(12, 10, 15) -- أسود داكن
+CenterBox.BackgroundColor3 = Color3.fromRGB(12, 10, 15)
 CenterBox.BackgroundTransparency = 0
 CenterBox.BorderSizePixel = 0
 CenterBox.ClipsDescendants = true
@@ -506,7 +515,7 @@ CenterLayout.Padding = UDim.new(0, 8)
 CenterLayout.Parent = CenterScroll
 
 ---------------------------------------------------------
--- نافذة الشات المباشرة (تصميم قرمزي، أسود، وأبيض)
+-- نافذة الشات المباشرة
 ---------------------------------------------------------
 local ChatScreenGui = Instance.new("ScreenGui")
 ChatScreenGui.Name = "DFXTopChatGui"
@@ -531,7 +540,7 @@ local ChatWin = Instance.new("Frame")
 ChatWin.Name = "ChatWin"
 ChatWin.Size = UDim2.new(0, 350, 0, 275)
 ChatWin.Position = UDim2.new(0, 160, 0, 10)
-ChatWin.BackgroundColor3 = Color3.fromRGB(10, 8, 12) -- أسود داكن قرمزي
+ChatWin.BackgroundColor3 = Color3.fromRGB(10, 8, 12)
 ChatWin.ClipsDescendants = true
 ChatWin.Active = true
 ChatWin.Draggable = true
@@ -1352,7 +1361,7 @@ BtnMainHome.MouseButton1Click:Connect(function()
     updatesTitle.Size = UDim2.new(1, -10, 0, 22)
     updatesTitle.Position = UDim2.new(0, 5, 0, 4)
     updatesTitle.BackgroundTransparency = 1
-    updatesTitle.Text = "✨ آخر تحديثات السكربت (v29.0):"
+    updatesTitle.Text = "✨ آخر تحديثات السكربت (v30.0):"
     updatesTitle.TextColor3 = currentAccentColor
     updatesTitle.Font = Enum.Font.FredokaOne
     updatesTitle.TextSize = 14
@@ -1365,7 +1374,7 @@ BtnMainHome.MouseButton1Click:Connect(function()
     updatesDesc.Size = UDim2.new(1, -10, 0, 90)
     updatesDesc.Position = UDim2.new(0, 5, 0, 26)
     updatesDesc.BackgroundTransparency = 1
-    updatesDesc.Text = "• تخصيص الواجهة والشات باللون القرمزي والأسود والأبيض الفاخر.\n• حماية صارمة للوحة الأدمن (تظهر للمطور Dms921 فقط).\n• إضافة نظام برودكاست (Broadcast) مع صوت تنبيه عالي وصورة سكنك."
+    updatesDesc.Text = "• تعديل نظام البرودكاست ليصبح عائماً وبدون خلفية (مطابق لصورة Ben).\n• إرسال النص باللون الأحمر الفخم، بخط عريض وكبير مع حدود سوداء.\n• حماية تصرية للوحة الأدمن ونظام شات متطور."
     updatesDesc.TextColor3 = Color3.fromRGB(240, 220, 230)
     updatesDesc.Font = Enum.Font.FredokaOne
     updatesDesc.TextSize = 11.5
@@ -1772,7 +1781,7 @@ BtnSuggestions.MouseButton1Click:Connect(function()
 end)
 
 ---------------------------------------------------------
--- لوحة الأدمن الحصرية للمطور Dms921 فقط (محمية بالكامل)
+-- لوحة الأدمن الحصرية للمطور Dms921 فقط
 ---------------------------------------------------------
 if LocalPlayer.Name == "Dms921" then
     local BtnAdmin = createProStyleBtn("لوحة الأدمن", "right")
@@ -1933,7 +1942,6 @@ task.spawn(function()
                     for k, b in pairs(data) do
                         if type(b) == "table" and b.text and not renderedBroadcasts[k] then
                             renderedBroadcasts[k] = true
-                            -- لا يعرض رسائله القديمة عند دخوله أول مرة مقارنة بالوقت الحالي
                             if (os.time() - (b.time or 0)) < 30 then
                                 showBroadcastBanner(tostring(b.sender or "طحبح"), tostring(b.text or ""), tonumber(b.userId))
                             end
