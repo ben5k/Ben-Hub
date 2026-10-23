@@ -1,5 +1,5 @@
--- DFX Hub - Independent Chat & Script Background System
--- Version: v16.0.0 | Developer: Tahbah
+-- DFX Hub - Complete Features, Independent Backgrounds & Overhead Tags
+-- Version: v17.0.0 | Developer: Tahbah
 
 local CoreGui = game:GetService("CoreGui")
 local Players = game:GetService("Players")
@@ -12,12 +12,12 @@ local MarketplaceService = game:GetService("MarketplaceService")
 local LocalPlayer = Players.LocalPlayer
 local parent = (gethui and gethui()) or CoreGui:FindFirstChild("RobloxGui") or LocalPlayer:WaitForChild("PlayerGui")
 
-if parent:FindFirstChild("DFXProV16UI") then parent.DFXProV16UI:Destroy() end
+if parent:FindFirstChild("DFXProV17UI") then parent.DFXProV17UI:Destroy() end
 if parent:FindFirstChild("DFXAdminBroadcastGui") then parent.DFXAdminBroadcastGui:Destroy() end
 if parent:FindFirstChild("DFXTopChatGui") then parent.DFXTopChatGui:Destroy() end
 if parent:FindFirstChild("DFXLoadingGui") then parent.DFXLoadingGui:Destroy() end
 
-local CONFIG_FILE = "DFX_Config_v16.json"
+local CONFIG_FILE = "DFX_Config_v17.json"
 local DISCORD_WEBHOOK_URL = "https://discord.com/api/webhooks/1563126439434391643/KPBO62mv7x_5ubaobKt3W-YjYACbTCsY-iefrPNQ7x99Q4tndOrxwQX6ts9zSU1csjcT"
 
 local function customRequest(options)
@@ -71,6 +71,7 @@ local currentHeaderColor = Color3.fromRGB(110, 25, 200)
 
 local selectedScriptBgIndex = 0
 local selectedChatBgIndex = 0
+local espEnabled = false
 
 local function playUiSound(soundId, pitch, volume)
     task.spawn(function()
@@ -100,6 +101,9 @@ if readfile and isfile and isfile(CONFIG_FILE) then
         end
     end)
 end
+
+local FIREBASE_BASE_URL = "https://t7b7-54245-default-rtdb.firebaseio.com"
+local FIREBASE_CHAT_URL = FIREBASE_BASE_URL .. "/global_chat.json"
 
 ---------------------------------------------------------
 -- شاشة تسجيل الدخول
@@ -136,7 +140,7 @@ local LoadSub = Instance.new("TextLabel")
 LoadSub.Size = UDim2.new(1, 0, 0, 25)
 LoadSub.Position = UDim2.new(0, 0, 0, 50)
 LoadSub.BackgroundTransparency = 1
-LoadSub.Text = "أهلاً بك! جاري فصل إعدادات الخلفيات..."
+LoadSub.Text = "أهلاً بك! جاري استعادة جميع المميزات..."
 LoadSub.TextColor3 = Color3.fromRGB(200, 200, 220)
 LoadSub.Font = Enum.Font.FredokaOne
 LoadSub.TextSize = 13
@@ -159,7 +163,7 @@ Instance.new("UICorner", BarFill).CornerRadius = UDim.new(0, 5)
 -- الهيكل الرئيسي للواجهة
 ---------------------------------------------------------
 local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "DFXProV16UI"
+ScreenGui.Name = "DFXProV17UI"
 ScreenGui.ResetOnSpawn = false
 ScreenGui.Parent = parent
 
@@ -372,7 +376,6 @@ ChatHeaderBtn2.ZIndex = 2
 ChatHeaderBtn2.Parent = ChatWin
 Instance.new("UICorner", ChatHeaderBtn2).CornerRadius = UDim.new(0, 6)
 
--- إطارات المحتوى داخل الشات (الشات العام / قسم مميزات)
 local ChatMainContainer = Instance.new("Frame")
 ChatMainContainer.Size = UDim2.new(1, 0, 1, -45)
 ChatMainContainer.Position = UDim2.new(0, 0, 0, 42)
@@ -406,7 +409,7 @@ ChatHeaderBtn2.MouseButton1Click:Connect(function()
 end)
 
 ---------------------------------------------------------
--- دالة الحفظ المدمجة وتطبيق خلفيات كل نافذة منفصلة
+-- دالة الحفظ وإدارة الخلفيات المستقلة
 ---------------------------------------------------------
 local function applyScriptBackground(idx, skipSave)
     selectedScriptBgIndex = idx
@@ -459,9 +462,7 @@ end
 applyScriptBackground(selectedScriptBgIndex, true)
 applyChatBackground(selectedChatBgIndex, true)
 
----------------------------------------------------------
--- بناء قسم مميزات الشات لتخصيص خلفيته حصرياً
----------------------------------------------------------
+-- بناء قائمة خلفيات الشات في تبويب "★ مميزات"
 local chatFeatTitle = Instance.new("TextLabel")
 chatFeatTitle.Size = UDim2.new(1, 0, 0, 25)
 chatFeatTitle.BackgroundTransparency = 1
@@ -519,7 +520,7 @@ end
 ChatFeaturesContainer.CanvasSize = UDim2.new(0, 0, 0, featLayout.AbsoluteContentSize.Y + 15)
 
 ---------------------------------------------------------
--- تفاصيل الشات العام المحدثة
+-- شات الشات العام
 ---------------------------------------------------------
 local ChatScroll = Instance.new("ScrollingFrame")
 ChatScroll.Size = UDim2.new(1, -20, 1, -45)
@@ -565,8 +566,104 @@ FloatingChatBtn.MouseButton1Click:Connect(function()
     ChatWin.Visible = not ChatWin.Visible
 end)
 
+local renderedMsgs = {}
+local function addChatMessage(sender, text)
+    local msgFrame = Instance.new("Frame")
+    msgFrame.Size = UDim2.new(1, 0, 0, 26)
+    msgFrame.BackgroundColor3 = Color3.fromRGB(25, 16, 42)
+    msgFrame.ZIndex = 2
+    msgFrame.Parent = ChatScroll
+    Instance.new("UICorner", msgFrame).CornerRadius = UDim.new(0, 5)
+
+    local lbl = Instance.new("TextLabel")
+    lbl.Size = UDim2.new(1, -10, 1, 0)
+    lbl.Position = UDim2.new(0, 5, 0, 0)
+    lbl.BackgroundTransparency = 1
+    lbl.Text = "<b>" .. sender .. "</b>: " .. text
+    lbl.RichText = true
+    lbl.TextColor3 = Color3.fromRGB(255, 255, 255)
+    lbl.Font = Enum.Font.FredokaOne
+    lbl.TextSize = 12
+    lbl.TextXAlignment = Enum.TextXAlignment.Right
+    lbl.ZIndex = 3
+    lbl.Parent = msgFrame
+
+    ChatScroll.CanvasSize = UDim2.new(0, 0, 0, ChatLayout.AbsoluteContentSize.Y + 10)
+    ChatScroll.CanvasPosition = Vector2.new(0, ChatScroll.AbsoluteCanvasSize.Y)
+end
+
+local function sendMessageNow()
+    if ChatInput.Text ~= "" then
+        local msg = ChatInput.Text
+        ChatInput.Text = ""
+        pcall(function()
+            customRequest({
+                Url = FIREBASE_CHAT_URL,
+                Method = "POST",
+                Headers = {["Content-Type"] = "application/json"},
+                Body = HttpService:JSONEncode({
+                    sender = LocalPlayer.DisplayName ~= "" and LocalPlayer.DisplayName or LocalPlayer.Name,
+                    userId = LocalPlayer.UserId,
+                    text = msg,
+                    time = os.time()
+                })
+            })
+        end)
+    end
+end
+
+SendBtn.MouseButton1Click:Connect(sendMessageNow)
+ChatInput.FocusLost:Connect(function(enter) if enter then sendMessageNow() end end)
+
 ---------------------------------------------------------
--- إنشاء الأزرار والقوائم المنسدلة للسكربت
+-- نظام التيجان والأسماء فوق الشخصيات (للأعضاء والمطور)
+---------------------------------------------------------
+local function applyOverheadTag(plr)
+    if not plr.Character then return end
+    local head = plr.Character:WaitForChild("Head", 5)
+    if not head then return end
+
+    if head:FindFirstChild("DFXOverheadTag") then head.DFXOverheadTag:Destroy() end
+
+    local bb = Instance.new("BillboardGui")
+    bb.Name = "DFXOverheadTag"
+    bb.Size = UDim2.new(0, 200, 0, 45)
+    bb.StudsOffset = Vector3.new(0, 2.8, 0)
+    bb.AlwaysOnTop = true
+    bb.Parent = head
+
+    local lbl = Instance.new("TextLabel")
+    lbl.Size = UDim2.new(1, 0, 1, 0)
+    lbl.BackgroundTransparency = 1
+    lbl.Font = Enum.Font.FredokaOne
+    lbl.TextSize = 16
+    lbl.TextColor3 = Color3.fromRGB(255, 255, 255)
+    lbl.Parent = bb
+
+    if plr.Name == "Dms921" then
+        lbl.Text = "👑المطور طحبح👑"
+        lbl.TextColor3 = Color3.fromRGB(255, 215, 0)
+    else
+        lbl.Text = plr.Name .. " ⭐"
+        lbl.TextColor3 = Color3.fromRGB(0, 230, 255)
+    end
+
+    local textStroke = Instance.new("UIStroke")
+    textStroke.Color = Color3.fromRGB(0, 0, 0)
+    textStroke.Thickness = 2
+    textStroke.Parent = lbl
+end
+
+for _, p in ipairs(Players:GetPlayers()) do
+    if p.Character then applyOverheadTag(p) end
+    p.CharacterAdded:Connect(function() task.wait(1); applyOverheadTag(p) end)
+end
+Players.PlayerAdded:Connect(function(p)
+    p.CharacterAdded:Connect(function() task.wait(1); applyOverheadTag(p) end)
+end)
+
+---------------------------------------------------------
+-- بناء أزرار الواجهة والقوائم
 ---------------------------------------------------------
 local registeredWingStrokes = {}
 local registeredOptionStrokes = {}
@@ -744,7 +841,7 @@ local function clearCenter()
 end
 
 ---------------------------------------------------------
--- واجهة "الرئيسية"
+-- التبويبات والملحقات الكاملة
 ---------------------------------------------------------
 local BtnMainHome = createProStyleBtn("الرئيسية", "left")
 BtnMainHome.MouseButton1Click:Connect(function()
@@ -792,7 +889,7 @@ BtnMainHome.MouseButton1Click:Connect(function()
     updatesTitle.Size = UDim2.new(1, -10, 0, 22)
     updatesTitle.Position = UDim2.new(0, 5, 0, 4)
     updatesTitle.BackgroundTransparency = 1
-    updatesTitle.Text = "✨ آخر تحديثات السكربت (v16.0):"
+    updatesTitle.Text = "✨ آخر تحديثات السكربت (v17.0):"
     updatesTitle.TextColor3 = Color3.fromRGB(255, 200, 100)
     updatesTitle.Font = Enum.Font.FredokaOne
     updatesTitle.TextSize = 14
@@ -804,7 +901,7 @@ BtnMainHome.MouseButton1Click:Connect(function()
     updatesDesc.Size = UDim2.new(1, -10, 0, 80)
     updatesDesc.Position = UDim2.new(0, 5, 0, 26)
     updatesDesc.BackgroundTransparency = 1
-    updatesDesc.Text = "• فصل كامل بين خلفية السكربت وخلفية الشات المباشر.\n• إمكانية تخصيص خلفية الشات حصرياً عبر خيار '★ مميزات' أعلى الشات.\n• حفظ إعدادات خلفيات كل نافذة منفصلة كلياً."
+    updatesDesc.Text = "• استعادة كافة التبويبات والمميزات والسكربتات بالكامل.\n• تفعيل نظام الـ ESP ورادار المراقبة في قسم التفعيلات.\n• تأمين لوحة الأدمن للمطور حصرياً وتيجان الشخصيات."
     updatesDesc.TextColor3 = Color3.fromRGB(220, 220, 240)
     updatesDesc.Font = Enum.Font.FredokaOne
     updatesDesc.TextSize = 11.5
@@ -816,13 +913,191 @@ BtnMainHome.MouseButton1Click:Connect(function()
     CenterScroll.CanvasSize = UDim2.new(0, 0, 0, CenterLayout.AbsoluteContentSize.Y + 15)
 end)
 
----------------------------------------------------------
--- قسم الإعدادات وتخصيص خلفية السكربت الحصرية
----------------------------------------------------------
+-- تبويب سكربتات
+local BtnScripts = createProStyleBtn("سكربتات", "left")
+BtnScripts.MouseButton1Click:Connect(function()
+    playUiSound(SOUND_CLICK, 1, 0.35)
+    clearCenter()
+
+    addChilliAccordion("سكربتات المابات الشائعة", function(addToggle, addAction)
+        addAction("بلوكس فروت - سكربت موز المباشر", function()
+            loadstring(game:HttpGet("https://raw.githubusercontent.com/bloxfruitsnokey/Banana/refs/heads/main/DB/script.luau"))()
+        end)
+        addAction("بلوكس فروت - ريدز V2", function()
+            loadstring(game:HttpGet("https://raw.githubusercontent.com/UCT-hub/main/refs/heads/main/redz-v2"))()
+        end)
+    end)
+
+    CenterScroll.CanvasSize = UDim2.new(0, 0, 0, CenterLayout.AbsoluteContentSize.Y + 15)
+end)
+
+-- تبويب تفعيلات (مع الـ ESP)
+local BtnActivations = createProStyleBtn("تفعيلات", "left")
+BtnActivations.MouseButton1Click:Connect(function()
+    playUiSound(SOUND_CLICK, 1, 0.35)
+    clearCenter()
+
+    addChilliAccordion("رادار المراقبة وكشف الأماكن (ESP)", function(addToggle, addAction)
+        addToggle("تفعيل كشف أماكن اللاعبين (ESP / Wallhack)", function(st)
+            espEnabled = st
+            for _, p in ipairs(Players:GetPlayers()) do
+                if p ~= LocalPlayer and p.Character then
+                    if espEnabled then
+                        if not p.Character:FindFirstChild("DFXEspBox") then
+                            local hl = Instance.new("Highlight")
+                            hl.Name = "DFXEspBox"
+                            hl.FillColor = Color3.fromRGB(255, 0, 100)
+                            hl.OutlineColor = Color3.fromRGB(255, 255, 255)
+                            hl.FillTransparency = 0.5
+                            hl.Parent = p.Character
+                        end
+                    else
+                        if p.Character:FindFirstChild("DFXEspBox") then p.Character.DFXEspBox:Destroy() end
+                    end
+                end
+            end
+        end)
+    end)
+
+    CenterScroll.CanvasSize = UDim2.new(0, 0, 0, CenterLayout.AbsoluteContentSize.Y + 15)
+end)
+
+-- تبويب اقتراحات المطور عبر الويب هوك
+local BtnSuggestions = createProStyleBtn("اقتراحات", "left")
+BtnSuggestions.MouseButton1Click:Connect(function()
+    playUiSound(SOUND_CLICK, 1, 0.35)
+    clearCenter()
+
+    local sugBox = Instance.new("TextBox")
+    sugBox.Size = UDim2.new(1, 0, 0, 120)
+    sugBox.BackgroundColor3 = Color3.fromRGB(20, 15, 30)
+    sugBox.PlaceholderText = "اكتب اقتراحك هنا وسوف يصل مباشرة للمطور عبر الديسكورد..."
+    sugBox.Text = ""
+    sugBox.TextColor3 = Color3.fromRGB(255, 255, 255)
+    sugBox.Font = Enum.Font.FredokaOne
+    sugBox.TextSize = 13
+    sugBox.TextWrapped = true
+    sugBox.TextYAlignment = Enum.TextYAlignment.Top
+    sugBox.TextXAlignment = Enum.TextXAlignment.Right
+    sugBox.ZIndex = 3
+    sugBox.Parent = CenterScroll
+    Instance.new("UICorner", sugBox).CornerRadius = UDim.new(0, 8)
+
+    local sendSugBtn = Instance.new("TextButton")
+    sendSugBtn.Size = UDim2.new(1, 0, 0, 36)
+    sendSugBtn.BackgroundColor3 = currentAccentColor
+    sendSugBtn.Text = "إرسال الاقتراح الآن 🚀"
+    sendSugBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    sendSugBtn.Font = Enum.Font.FredokaOne
+    sendSugBtn.TextSize = 15
+    sendSugBtn.ZIndex = 3
+    sendSugBtn.Parent = CenterScroll
+    Instance.new("UICorner", sendSugBtn).CornerRadius = UDim.new(0, 8)
+
+    sendSugBtn.MouseButton1Click:Connect(function()
+        if sugBox.Text ~= "" then
+            local textToSend = sugBox.Text
+            sugBox.Text = ""
+            sendSugBtn.Text = "جاري الإرسال..."
+            pcall(function()
+                customRequest({
+                    Url = DISCORD_WEBHOOK_URL,
+                    Method = "POST",
+                    Headers = {["Content-Type"] = "application/json"},
+                    Body = HttpService:JSONEncode({
+                        embeds = {{
+                            title = "💡 اقتراح جديد من مستخدم DFX Hub",
+                            description = textToSend,
+                            color = 9830655,
+                            fields = {
+                                {name = "اللاعب", value = LocalPlayer.Name, inline = true},
+                                {name = "الـ ID", value = tostring(LocalPlayer.UserId), inline = true}
+                            }
+                        }}
+                    })
+                })
+            end)
+            sendSugBtn.Text = "تم الإرسال بنجاح! ⭐"
+            task.wait(2)
+            sendSugBtn.Text = "إرسال الاقتراح الآن 🚀"
+        end
+    end)
+
+    CenterScroll.CanvasSize = UDim2.new(0, 0, 0, CenterLayout.AbsoluteContentSize.Y + 15)
+end)
+
+-- لوحة الأدمن (مؤمنة للمطور Dms921 فقط)
+if LocalPlayer.Name == "Dms921" then
+    local BtnAdmin = createProStyleBtn("لوحة الأدمن", "right")
+    BtnAdmin.MouseButton1Click:Connect(function()
+        playUiSound(SOUND_CLICK, 1, 0.35)
+        clearCenter()
+
+        addChilliAccordion("أدوات أدمن DFX الحصرية", function(addToggle, addAction)
+            addAction("إرسال بث مباشر لجميع الشاشات", function() end)
+            addAction("طرد لاعبين السيرفر Kick All", function() end)
+        end)
+
+        CenterScroll.CanvasSize = UDim2.new(0, 0, 0, CenterLayout.AbsoluteContentSize.Y + 15)
+    end)
+end
+
+-- تبويب الإعدادات (تخصيص ثيمات وألوان وخلفيات السكربت)
 local BtnSettings = createProStyleBtn("الإعدادات", "right")
 BtnSettings.MouseButton1Click:Connect(function()
     playUiSound(SOUND_CLICK, 1, 0.35)
     clearCenter()
+
+    addChilliAccordion("تخصيص ثيمات وألوان الواجهة والنيون", function(addToggle, addAction)
+        local function updateTheme(accent, headerCol)
+            currentAccentColor = accent
+            currentHeaderColor = headerCol
+            centerStroke.Color = accent
+            Header.BackgroundColor3 = headerCol
+            floatStroke.Color = accent
+            chatStroke.Color = accent
+            loadStroke.Color = accent
+            BarFill.BackgroundColor3 = accent
+
+            centerNeonGradient.Color = ColorSequence.new({
+                ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 255, 255)),
+                ColorSequenceKeypoint.new(0.5, accent),
+                ColorSequenceKeypoint.new(1, Color3.fromRGB(255, 255, 255))
+            })
+            chatNeonGradient.Color = centerNeonGradient.Color
+
+            ChatHeaderBtn1.BackgroundColor3 = accent
+            ChatHeaderBtn2.BackgroundColor3 = accent
+            SendBtn.BackgroundColor3 = accent
+
+            for _, stroke in ipairs(registeredWingStrokes) do
+                if stroke and stroke.Parent then stroke.Color = accent end
+            end
+            for _, stroke in ipairs(registeredOptionStrokes) do
+                if stroke and stroke.Parent then stroke.Color = accent end
+            end
+
+            pcall(function()
+                if writefile then
+                    local cfg = {
+                        accentR = accent.R, accentG = accent.G, accentB = accent.B,
+                        headR = headerCol.R, headG = headerCol.G, headB = headerCol.B,
+                        scriptBgIndex = selectedScriptBgIndex, chatBgIndex = selectedChatBgIndex, neonSpd = neonSpeed
+                    }
+                    writefile(CONFIG_FILE, HttpService:JSONEncode(cfg))
+                end
+            end)
+        end
+
+        addAction("الثيم القرمزي الملكي 🍷", function() updateTheme(Color3.fromRGB(220, 20, 80), Color3.fromRGB(150, 10, 50)) end)
+        addAction("الثيم السمائي الفاتح 🩵", function() updateTheme(Color3.fromRGB(0, 210, 255), Color3.fromRGB(0, 140, 200)) end)
+        addAction("الثيم الوردي الفاقع 🩷", function() updateTheme(Color3.fromRGB(255, 100, 200), Color3.fromRGB(200, 50, 150)) end)
+        addAction("الثيم البنفسجي الأرجواني 💜", function() updateTheme(Color3.fromRGB(150, 40, 255), Color3.fromRGB(110, 25, 200)) end)
+        addAction("الثيم الذهبي المتوهج 🟡", function() updateTheme(Color3.fromRGB(255, 200, 50), Color3.fromRGB(210, 150, 20)) end)
+        addAction("الثيم الأحمـر الناري 🔴", function() updateTheme(Color3.fromRGB(240, 40, 40), Color3.fromRGB(180, 20, 20)) end)
+        addAction("الثيم الأخضـر الفسفوري 🟢", function() updateTheme(Color3.fromRGB(50, 230, 100), Color3.fromRGB(20, 160, 60)) end)
+        addAction("الثيم الأزرق الملكي 🔵", function() updateTheme(Color3.fromRGB(30, 100, 240), Color3.fromRGB(20, 60, 180)) end)
+    end)
 
     addChilliAccordion("تخصيص خلفيات واجهة السكربت Pro", function(addToggle, addAction, contentHolder)
         addAction("❌ إغلاق خلفية السكربت", function()
