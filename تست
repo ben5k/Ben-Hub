@@ -1,5 +1,5 @@
--- DFX Hub - Auto Save Settings (Backgrounds/Themes), Admin Locked to Dms921, Fixed Map Image, Player Monitor & Server Hop
--- Version: v25.0.0 | Developer: Tahbah
+-- DFX Hub - Interactive Map Cards System & Chili Script Execution
+-- Version: v26.0.0 | Developer: Tahbah
 
 local CoreGui = game:GetService("CoreGui")
 local Players = game:GetService("Players")
@@ -12,12 +12,12 @@ local MarketplaceService = game:GetService("MarketplaceService")
 local LocalPlayer = Players.LocalPlayer
 local parent = (gethui and gethui()) or CoreGui:FindFirstChild("RobloxGui") or LocalPlayer:WaitForChild("PlayerGui")
 
-if parent:FindFirstChild("DFXProV25UI") then parent.DFXProV25UI:Destroy() end
+if parent:FindFirstChild("DFXProV26UI") then parent.DFXProV26UI:Destroy() end
 if parent:FindFirstChild("DFXAdminBroadcastGui") then parent.DFXAdminBroadcastGui:Destroy() end
 if parent:FindFirstChild("DFXTopChatGui") then parent.DFXTopChatGui:Destroy() end
 if parent:FindFirstChild("DFXLoadingGui") then parent.DFXLoadingGui:Destroy() end
 
-local CONFIG_FILE = "DFX_Config_v25.json"
+local CONFIG_FILE = "DFX_Config_v26.json"
 local DISCORD_WEBHOOK_URL = "https://discord.com/api/webhooks/1563126439434391643/KPBO62mv7x_5ubaobKt3W-YjYACbTCsY-iefrPNQ7x99Q4tndOrxwQX6ts9zSU1csjcT"
 
 local FIREBASE_BASE_URL = "https://arad-hun-default-rtdb.firebaseio.com"
@@ -66,6 +66,9 @@ local wallUrls = {
     fetchAsset("https://e.top4top.io/p_39475mm3q5.jpg", "bg_8"),
 }
 
+-- صورة ماب سرقة البيض المرفقة
+local EGG_MAP_IMAGE = fetchAsset("https://k.top4top.io/p_3948flo0t0.jpg", "egg_map")
+
 local SOUND_OPEN = "rbxassetid://98797174600699"
 local SOUND_CLICK = "rbxassetid://6895079853"
 
@@ -81,9 +84,6 @@ local registeredWingStrokes = {}
 local registeredOptionStrokes = {}
 local activeNameLabels = {}
 
----------------------------------------------------------
--- حفظ واسترجاع الإعدادات تلقائياً
----------------------------------------------------------
 local function saveUserSettings()
     if writefile then
         local cfg = {
@@ -137,7 +137,7 @@ end
 
 playUiSound(SOUND_OPEN, 1, 1)
 
--- تسجيل تواجد مستخدم السكربت
+-- تسجيل مستخدم السكربت
 task.spawn(function()
     while true do
         pcall(function()
@@ -205,7 +205,7 @@ local LoadSub = Instance.new("TextLabel")
 LoadSub.Size = UDim2.new(1, 0, 0, 25)
 LoadSub.Position = UDim2.new(0, 0, 0, 50)
 LoadSub.BackgroundTransparency = 1
-LoadSub.Text = "جاري استعادة الخلفيات وإعدادات الثيم الحالية..."
+LoadSub.Text = "أهلاً بك! جاري تحميل قوائم المابات والسكربتات..."
 LoadSub.TextColor3 = Color3.fromRGB(180, 220, 255)
 LoadSub.Font = Enum.Font.FredokaOne
 LoadSub.TextSize = 13
@@ -228,7 +228,7 @@ Instance.new("UICorner", BarFill).CornerRadius = UDim.new(0, 5)
 -- الهيكل الرئيسي للواجهة
 ---------------------------------------------------------
 local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "DFXProV25UI"
+ScreenGui.Name = "DFXProV26UI"
 ScreenGui.ResetOnSpawn = false
 ScreenGui.Parent = parent
 
@@ -625,7 +625,7 @@ ChatHeaderBtn3.MouseButton1Click:Connect(function()
 end)
 
 ---------------------------------------------------------
--- إدارة خلفيات السكربت والشات مع الحفظ الأوتوماتيكي
+-- إدارة خلفيات السكربت والشات
 ---------------------------------------------------------
 local function applyScriptBackground(idx)
     selectedScriptBgIndex = idx
@@ -897,7 +897,7 @@ end
 SendBtn.MouseButton1Click:Connect(sendMessageNow)
 ChatInput.FocusLost:Connect(function(enter) if enter then sendMessageNow() end end)
 
--- تصفير وحذف رسائل الشات كل 5 دقائق
+-- تصفير الشات التلقائي كل 5 دقائق
 task.spawn(function()
     local timer = 300
     while true do
@@ -1175,7 +1175,6 @@ BtnMainHome.MouseButton1Click:Connect(function()
         if info then placeName = info.Name end
     end)
 
-    -- صورة الماب المضمونة الظهور عبر rbxassetid
     local mapBanner = Instance.new("ImageLabel")
     mapBanner.Size = UDim2.new(1, 0, 0, 95)
     mapBanner.BackgroundColor3 = Color3.fromRGB(20, 30, 50)
@@ -1210,7 +1209,7 @@ BtnMainHome.MouseButton1Click:Connect(function()
     updatesTitle.Size = UDim2.new(1, -10, 0, 22)
     updatesTitle.Position = UDim2.new(0, 5, 0, 4)
     updatesTitle.BackgroundTransparency = 1
-    updatesTitle.Text = "✨ آخر تحديثات السكربت (v25.0):"
+    updatesTitle.Text = "✨ آخر تحديثات السكربت (v26.0):"
     updatesTitle.TextColor3 = currentAccentColor
     updatesTitle.Font = Enum.Font.FredokaOne
     updatesTitle.TextSize = 14
@@ -1223,7 +1222,7 @@ BtnMainHome.MouseButton1Click:Connect(function()
     updatesDesc.Size = UDim2.new(1, -10, 0, 80)
     updatesDesc.Position = UDim2.new(0, 5, 0, 26)
     updatesDesc.BackgroundTransparency = 1
-    updatesDesc.Text = "• نظام حفظ الإعدادات تلقائياً للخلفيات والثيمات المحددة.\n• إصلاح صورة الماب الرئيسية وتأمين ظهورها بوضوح.\n• حصر لوحة الأدمن للمطور Dms921 فقط + ميزة المراقبة وتغيير السيرفر."
+    updatesDesc.Text = "• إضافة نظام بطاقات المابات التفاعلية في قسم السكربتات.\n• إضافة بطاقة 'ماب سرقة البيض' مع خيار العرض المباشر.\n• تشغيل سكربت فلفل 🌶️ (الأصلي) المحدث مباشرة بضغطة زر."
     updatesDesc.TextColor3 = Color3.fromRGB(200, 225, 255)
     updatesDesc.Font = Enum.Font.FredokaOne
     updatesDesc.TextSize = 11.5
@@ -1235,21 +1234,156 @@ BtnMainHome.MouseButton1Click:Connect(function()
     CenterScroll.CanvasSize = UDim2.new(0, 0, 0, CenterLayout.AbsoluteContentSize.Y + 15)
 end)
 
+---------------------------------------------------------
+-- دالة عرض السكربتات الخاصة بالـ "ماب سرقة البيض"
+---------------------------------------------------------
+local function openEggMapScriptsPage()
+    clearCenter()
+
+    local backBtn = Instance.new("TextButton")
+    backBtn.Size = UDim2.new(1, 0, 0, 32)
+    backBtn.BackgroundColor3 = Color3.fromRGB(25, 38, 62)
+    backBtn.Text = "⬅️ العودة لقائمة المابات"
+    backBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    backBtn.Font = Enum.Font.FredokaOne
+    backBtn.TextSize = 13
+    backBtn.ZIndex = 3
+    backBtn.Parent = CenterScroll
+    Instance.new("UICorner", backBtn).CornerRadius = UDim.new(0, 6)
+
+    backBtn.MouseButton1Click:Connect(function()
+        playUiSound(SOUND_CLICK, 1, 0.35)
+        BtnScripts.MouseButton1Click:Fire()
+    end)
+
+    -- بطاقة سكربت فلفل الاصلي
+    local scriptCard = Instance.new("Frame")
+    scriptCard.Size = UDim2.new(1, 0, 0, 95)
+    scriptCard.BackgroundColor3 = Color3.fromRGB(16, 26, 46)
+    scriptCard.ZIndex = 3
+    scriptCard.Parent = CenterScroll
+    Instance.new("UICorner", scriptCard).CornerRadius = UDim.new(0, 8)
+
+    local cardStroke = Instance.new("UIStroke")
+    cardStroke.Color = currentAccentColor
+    cardStroke.Thickness = 1.5
+    cardStroke.Parent = scriptCard
+    table.insert(registeredOptionStrokes, cardStroke)
+
+    local scriptTitle = Instance.new("TextLabel")
+    scriptTitle.Size = UDim2.new(1, -120, 0, 26)
+    scriptTitle.Position = UDim2.new(0, 10, 0, 8)
+    scriptTitle.BackgroundTransparency = 1
+    scriptTitle.Text = "🌶️ سكربت فلفل (الأصلي)"
+    scriptTitle.TextColor3 = currentAccentColor
+    scriptTitle.Font = Enum.Font.FredokaOne
+    scriptTitle.TextSize = 15
+    scriptTitle.TextXAlignment = Enum.TextXAlignment.Right
+    scriptTitle.ZIndex = 4
+    scriptTitle.Parent = scriptCard
+    table.insert(activeNameLabels, scriptTitle)
+
+    local keyTag = Instance.new("TextLabel")
+    keyTag.Size = UDim2.new(1, -120, 0, 20)
+    keyTag.Position = UDim2.new(0, 10, 0, 34)
+    keyTag.BackgroundTransparency = 1
+    keyTag.Text = "🔓 الحالة: بدون مفتاح"
+    keyTag.TextColor3 = Color3.fromRGB(80, 230, 120)
+    keyTag.Font = Enum.Font.FredokaOne
+    keyTag.TextSize = 12
+    keyTag.TextXAlignment = Enum.TextXAlignment.Right
+    keyTag.ZIndex = 4
+    keyTag.Parent = scriptCard
+
+    local runBtn = Instance.new("TextButton")
+    runBtn.Size = UDim2.new(0, 100, 0, 34)
+    runBtn.Position = UDim2.new(0, 10, 0.5, -17)
+    runBtn.BackgroundColor3 = currentAccentColor
+    runBtn.Text = "تشغيل 🚀"
+    runBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    runBtn.Font = Enum.Font.FredokaOne
+    runBtn.TextSize = 14
+    runBtn.ZIndex = 4
+    runBtn.Parent = scriptCard
+    Instance.new("UICorner", runBtn).CornerRadius = UDim.new(0, 6)
+
+    runBtn.MouseButton1Click:Connect(function()
+        playUiSound(SOUND_CLICK, 1, 0.35)
+        runBtn.Text = "جاري التفعيل..."
+        pcall(function()
+            loadstring(game:HttpGet("https://raw.githubusercontent.com/tienkhanh1/spicy/main/Chilli.lua"))()
+        end)
+        task.wait(1)
+        runBtn.Text = "تم التشغيل! ✅"
+        task.wait(2)
+        runBtn.Text = "تشغيل 🚀"
+    end)
+
+    CenterScroll.CanvasSize = UDim2.new(0, 0, 0, CenterLayout.AbsoluteContentSize.Y + 20)
+end
+
+---------------------------------------------------------
+-- تبويب "سكربتات" المعروض بنظام بطاقات المابات التفاعلية
+---------------------------------------------------------
 local BtnScripts = createProStyleBtn("سكربتات", "left")
 BtnScripts.MouseButton1Click:Connect(function()
     playUiSound(SOUND_CLICK, 1, 0.35)
     clearCenter()
 
-    addChilliAccordion("سكربتات المابات الشائعة", function(addToggle, addAction)
-        addAction("بلوكس فروت - سكربت موز المباشر", function()
-            loadstring(game:HttpGet("https://raw.githubusercontent.com/bloxfruitsnokey/Banana/refs/heads/main/DB/script.luau"))()
-        end)
-        addAction("بلوكس فروت - ريدز V2", function()
-            loadstring(game:HttpGet("https://raw.githubusercontent.com/UCT-hub/main/refs/heads/main/redz-v2"))()
-        end)
+    -- بطاقة ماب سرقة البيض
+    local mapCard = Instance.new("Frame")
+    mapCard.Size = UDim2.new(1, 0, 0, 140)
+    mapCard.BackgroundColor3 = Color3.fromRGB(16, 26, 46)
+    mapCard.ZIndex = 3
+    mapCard.Parent = CenterScroll
+    Instance.new("UICorner", mapCard).CornerRadius = UDim.new(0, 10)
+
+    local mapCardStroke = Instance.new("UIStroke")
+    mapCardStroke.Color = currentAccentColor
+    mapCardStroke.Thickness = 1.8
+    mapCardStroke.Parent = mapCard
+    table.insert(registeredOptionStrokes, mapCardStroke)
+
+    local mapImg = Instance.new("ImageLabel")
+    mapImg.Size = UDim2.new(1, -16, 0, 80)
+    mapImg.Position = UDim2.new(0, 8, 0, 8)
+    mapImg.BackgroundColor3 = Color3.fromRGB(25, 35, 55)
+    mapImg.Image = EGG_MAP_IMAGE
+    mapImg.ScaleType = Enum.ScaleType.Crop
+    mapImg.ZIndex = 4
+    mapImg.Parent = mapCard
+    Instance.new("UICorner", mapImg).CornerRadius = UDim.new(0, 8)
+
+    local mapNameLbl = Instance.new("TextLabel")
+    mapNameLbl.Size = UDim2.new(1, -110, 0, 36)
+    mapNameLbl.Position = UDim2.new(0, 100, 0, 94)
+    mapNameLbl.BackgroundTransparency = 1
+    mapNameLbl.Text = "🥚 ماب سرقة البيض"
+    mapNameLbl.TextColor3 = Color3.fromRGB(255, 255, 255)
+    mapNameLbl.Font = Enum.Font.FredokaOne
+    mapNameLbl.TextSize = 15
+    mapNameLbl.TextXAlignment = Enum.TextXAlignment.Right
+    mapNameLbl.ZIndex = 4
+    mapNameLbl.Parent = mapCard
+
+    local showBtn = Instance.new("TextButton")
+    showBtn.Size = UDim2.new(0, 85, 0, 30)
+    showBtn.Position = UDim2.new(0, 10, 0, 97)
+    showBtn.BackgroundColor3 = currentAccentColor
+    showBtn.Text = "عرض 👁️"
+    showBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    showBtn.Font = Enum.Font.FredokaOne
+    showBtn.TextSize = 13
+    showBtn.ZIndex = 4
+    showBtn.Parent = mapCard
+    Instance.new("UICorner", showBtn).CornerRadius = UDim.new(0, 6)
+
+    showBtn.MouseButton1Click:Connect(function()
+        playUiSound(SOUND_CLICK, 1, 0.35)
+        openEggMapScriptsPage()
     end)
 
-    CenterScroll.CanvasSize = UDim2.new(0, 0, 0, CenterLayout.AbsoluteContentSize.Y + 15)
+    CenterScroll.CanvasSize = UDim2.new(0, 0, 0, CenterLayout.AbsoluteContentSize.Y + 20)
 end)
 
 local BtnActivations = createProStyleBtn("تفعيلات", "left")
@@ -1280,7 +1414,6 @@ BtnActivations.MouseButton1Click:Connect(function()
         end)
     end)
 
-    -- ميزة مراقبة اللاعبين في السيرفر الحالي
     addChilliAccordion("مراقبة لاعبين السيرفر (Player Spectate)", function(addToggle, addAction, contentHolder)
         for _, p in ipairs(Players:GetPlayers()) do
             if p ~= LocalPlayer then
@@ -1347,7 +1480,6 @@ BtnActivations.MouseButton1Click:Connect(function()
         end
     end)
 
-    -- ميزة تغيير السيرفر مع التفعيلات
     addChilliAccordion("تغيير السيرفر (Server Hop)", function(addToggle, addAction)
         addAction("الانتقال لسيرفر آخر عشوائي 🔄", function()
             local Http = game:GetService("HttpService")
@@ -1436,7 +1568,7 @@ BtnSuggestions.MouseButton1Click:Connect(function()
     CenterScroll.CanvasSize = UDim2.new(0, 0, 0, CenterLayout.AbsoluteContentSize.Y + 15)
 end)
 
--- حصر لوحة الأدمن لحساب المطور Dms921 حصراً
+-- حصر لوحة الأدمن للمطور Dms921 حصراً
 if LocalPlayer.Name == "Dms921" then
     local BtnAdmin = createProStyleBtn("لوحة الأدمن", "right")
     BtnAdmin.MouseButton1Click:Connect(function()
@@ -1531,7 +1663,7 @@ BtnSettings.MouseButton1Click:Connect(function()
     CenterScroll.CanvasSize = UDim2.new(0, 0, 0, CenterLayout.AbsoluteContentSize.Y + 280)
 end)
 
--- الاستماع المباشر للرسائل
+-- الاستماع للرسائل المباشرة
 task.spawn(function()
     while true do
         pcall(function()
