@@ -1,5 +1,5 @@
--- DFX Hub - Fully Dynamic Theme Colors, 5-Min Smart Auto-Reset Chat, Non-Overlapping Features UI & Teleport Buttons
--- Version: v24.0.0 | Developer: Tahbah
+-- DFX Hub - Auto Save Settings (Backgrounds/Themes), Admin Locked to Dms921, Fixed Map Image, Player Monitor & Server Hop
+-- Version: v25.0.0 | Developer: Tahbah
 
 local CoreGui = game:GetService("CoreGui")
 local Players = game:GetService("Players")
@@ -12,12 +12,12 @@ local MarketplaceService = game:GetService("MarketplaceService")
 local LocalPlayer = Players.LocalPlayer
 local parent = (gethui and gethui()) or CoreGui:FindFirstChild("RobloxGui") or LocalPlayer:WaitForChild("PlayerGui")
 
-if parent:FindFirstChild("DFXProV24UI") then parent.DFXProV24UI:Destroy() end
+if parent:FindFirstChild("DFXProV25UI") then parent.DFXProV25UI:Destroy() end
 if parent:FindFirstChild("DFXAdminBroadcastGui") then parent.DFXAdminBroadcastGui:Destroy() end
 if parent:FindFirstChild("DFXTopChatGui") then parent.DFXTopChatGui:Destroy() end
 if parent:FindFirstChild("DFXLoadingGui") then parent.DFXLoadingGui:Destroy() end
 
-local CONFIG_FILE = "DFX_Config_v24.json"
+local CONFIG_FILE = "DFX_Config_v25.json"
 local DISCORD_WEBHOOK_URL = "https://discord.com/api/webhooks/1563126439434391643/KPBO62mv7x_5ubaobKt3W-YjYACbTCsY-iefrPNQ7x99Q4tndOrxwQX6ts9zSU1csjcT"
 
 local FIREBASE_BASE_URL = "https://arad-hun-default-rtdb.firebaseio.com"
@@ -81,6 +81,45 @@ local registeredWingStrokes = {}
 local registeredOptionStrokes = {}
 local activeNameLabels = {}
 
+---------------------------------------------------------
+-- حفظ واسترجاع الإعدادات تلقائياً
+---------------------------------------------------------
+local function saveUserSettings()
+    if writefile then
+        local cfg = {
+            scriptBg = selectedScriptBgIndex,
+            chatBg = selectedChatBgIndex,
+            r = currentAccentColor.R,
+            g = currentAccentColor.G,
+            b = currentAccentColor.B,
+            hr = currentHeaderColor.R,
+            hg = currentHeaderColor.G,
+            hb = currentHeaderColor.B
+        }
+        pcall(function() writefile(CONFIG_FILE, HttpService:JSONEncode(cfg)) end)
+    end
+end
+
+local function loadUserSettings()
+    if readfile and isfile and isfile(CONFIG_FILE) then
+        pcall(function()
+            local cfg = safeDecode(readfile(CONFIG_FILE))
+            if cfg then
+                selectedScriptBgIndex = cfg.scriptBg or 0
+                selectedChatBgIndex = cfg.chatBg or 0
+                if cfg.r and cfg.g and cfg.b then
+                    currentAccentColor = Color3.new(cfg.r, cfg.g, cfg.b)
+                end
+                if cfg.hr and cfg.hg and cfg.hb then
+                    currentHeaderColor = Color3.new(cfg.hr, cfg.hg, cfg.hb)
+                end
+            end
+        end)
+    end
+end
+
+loadUserSettings()
+
 local function playUiSound(soundId, pitch, volume)
     task.spawn(function()
         pcall(function()
@@ -98,7 +137,7 @@ end
 
 playUiSound(SOUND_OPEN, 1, 1)
 
--- تسجيل حضور لاعب السكربت
+-- تسجيل تواجد مستخدم السكربت
 task.spawn(function()
     while true do
         pcall(function()
@@ -166,7 +205,7 @@ local LoadSub = Instance.new("TextLabel")
 LoadSub.Size = UDim2.new(1, 0, 0, 25)
 LoadSub.Position = UDim2.new(0, 0, 0, 50)
 LoadSub.BackgroundTransparency = 1
-LoadSub.Text = "جاري الاتصال وتحديث ألوان النظام..."
+LoadSub.Text = "جاري استعادة الخلفيات وإعدادات الثيم الحالية..."
 LoadSub.TextColor3 = Color3.fromRGB(180, 220, 255)
 LoadSub.Font = Enum.Font.FredokaOne
 LoadSub.TextSize = 13
@@ -189,7 +228,7 @@ Instance.new("UICorner", BarFill).CornerRadius = UDim.new(0, 5)
 -- الهيكل الرئيسي للواجهة
 ---------------------------------------------------------
 local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "DFXProV24UI"
+ScreenGui.Name = "DFXProV25UI"
 ScreenGui.ResetOnSpawn = false
 ScreenGui.Parent = parent
 
@@ -459,7 +498,6 @@ local onlineLayout = Instance.new("UIListLayout")
 onlineLayout.Padding = UDim.new(0, 6)
 onlineLayout.Parent = ChatOnlineContainer
 
--- جلب مستخدمي السكربت فقط إضافة لأزرار "تتبع" و "انتقال"
 local function fetchScriptUsersOnly()
     pcall(function()
         local res = customRequest({Url = FIREBASE_USERS_URL, Method = "GET"})
@@ -512,7 +550,6 @@ local function fetchScriptUsersOnly()
                     pNameLbl.Parent = pFrame
                     table.insert(activeNameLabels, pNameLbl)
 
-                    -- أزرار تتبع وانتقال بجانب بعض
                     local viewBtn = Instance.new("TextButton")
                     viewBtn.Size = UDim2.new(0, 60, 0, 26)
                     viewBtn.Position = UDim2.new(0, 72, 0.5, -13)
@@ -588,10 +625,11 @@ ChatHeaderBtn3.MouseButton1Click:Connect(function()
 end)
 
 ---------------------------------------------------------
--- إدارة الخلفيات
+-- إدارة خلفيات السكربت والشات مع الحفظ الأوتوماتيكي
 ---------------------------------------------------------
 local function applyScriptBackground(idx)
     selectedScriptBgIndex = idx
+    saveUserSettings()
     if idx > 0 and wallUrls[idx] then
         BgImage.Image = wallUrls[idx]
         BgImage.Visible = true
@@ -604,6 +642,7 @@ end
 
 local function applyChatBackground(idx)
     selectedChatBgIndex = idx
+    saveUserSettings()
     if idx > 0 and wallUrls[idx] then
         ChatBgImage.Image = wallUrls[idx]
         ChatBgImage.Visible = true
@@ -722,7 +761,7 @@ local function showPrivateScriptUserBubble(userId, text)
 end
 
 ---------------------------------------------------------
--- شات الشات العام (تغير لون اسم المرسل ديناميكياً مع الثيم)
+-- شات الشات العام
 ---------------------------------------------------------
 local ChatScroll = Instance.new("ScrollingFrame")
 ChatScroll.Size = UDim2.new(1, -20, 1, -45)
@@ -858,7 +897,7 @@ end
 SendBtn.MouseButton1Click:Connect(sendMessageNow)
 ChatInput.FocusLost:Connect(function(enter) if enter then sendMessageNow() end end)
 
--- تصفير وحذف رسائل الشات كل 5 دقائق حقيقية (300 ثانية)
+-- تصفير وحذف رسائل الشات كل 5 دقائق
 task.spawn(function()
     local timer = 300
     while true do
@@ -1136,10 +1175,11 @@ BtnMainHome.MouseButton1Click:Connect(function()
         if info then placeName = info.Name end
     end)
 
+    -- صورة الماب المضمونة الظهور عبر rbxassetid
     local mapBanner = Instance.new("ImageLabel")
     mapBanner.Size = UDim2.new(1, 0, 0, 95)
     mapBanner.BackgroundColor3 = Color3.fromRGB(20, 30, 50)
-    mapBanner.Image = "rbxthumb://type=Asset&id=" .. tostring(placeId) .. "&w=420&h=230"
+    mapBanner.Image = "rbxthumb://type=Asset&id=" .. tostring(placeId) .. "&w=768&h=432"
     mapBanner.ScaleType = Enum.ScaleType.Crop
     mapBanner.ZIndex = 3
     mapBanner.Parent = CenterScroll
@@ -1170,7 +1210,7 @@ BtnMainHome.MouseButton1Click:Connect(function()
     updatesTitle.Size = UDim2.new(1, -10, 0, 22)
     updatesTitle.Position = UDim2.new(0, 5, 0, 4)
     updatesTitle.BackgroundTransparency = 1
-    updatesTitle.Text = "✨ آخر تحديثات السكربت (v24.0):"
+    updatesTitle.Text = "✨ آخر تحديثات السكربت (v25.0):"
     updatesTitle.TextColor3 = currentAccentColor
     updatesTitle.Font = Enum.Font.FredokaOne
     updatesTitle.TextSize = 14
@@ -1183,7 +1223,7 @@ BtnMainHome.MouseButton1Click:Connect(function()
     updatesDesc.Size = UDim2.new(1, -10, 0, 80)
     updatesDesc.Position = UDim2.new(0, 5, 0, 26)
     updatesDesc.BackgroundTransparency = 1
-    updatesDesc.Text = "• تغيير لون أصل الاسم ديناميكياً مع لون الثيم المختار.\n• ضبط مسح الشات الحقيقي والرسيت كلياً كل 5 دقائق بالضبط.\n• إصلاح قائمة المميزات وإضافة زر 'انتقال 🚀' بجانب زر 'تتبع 👀'."
+    updatesDesc.Text = "• نظام حفظ الإعدادات تلقائياً للخلفيات والثيمات المحددة.\n• إصلاح صورة الماب الرئيسية وتأمين ظهورها بوضوح.\n• حصر لوحة الأدمن للمطور Dms921 فقط + ميزة المراقبة وتغيير السيرفر."
     updatesDesc.TextColor3 = Color3.fromRGB(200, 225, 255)
     updatesDesc.Font = Enum.Font.FredokaOne
     updatesDesc.TextSize = 11.5
@@ -1217,7 +1257,7 @@ BtnActivations.MouseButton1Click:Connect(function()
     playUiSound(SOUND_CLICK, 1, 0.35)
     clearCenter()
 
-    addChilliAccordion("رادار المراقبة وكشف الأماكن المتطور (Pro ESP)", function(addToggle, addAction)
+    addChilliAccordion("رادار المراقبة وكشف الأماكن (Pro ESP)", function(addToggle, addAction)
         addToggle("تفعيل كشف أماكن اللاعبين (Box + Name ESP)", function(st)
             espEnabled = st
             for _, p in ipairs(Players:GetPlayers()) do
@@ -1237,6 +1277,96 @@ BtnActivations.MouseButton1Click:Connect(function()
                     end
                 end
             end
+        end)
+    end)
+
+    -- ميزة مراقبة اللاعبين في السيرفر الحالي
+    addChilliAccordion("مراقبة لاعبين السيرفر (Player Spectate)", function(addToggle, addAction, contentHolder)
+        for _, p in ipairs(Players:GetPlayers()) do
+            if p ~= LocalPlayer then
+                local pRow = Instance.new("Frame")
+                pRow.Size = UDim2.new(1, 0, 0, 42)
+                pRow.BackgroundColor3 = Color3.fromRGB(16, 26, 46)
+                pRow.ZIndex = 3
+                pRow.Parent = contentHolder
+                Instance.new("UICorner", pRow).CornerRadius = UDim.new(0, 6)
+
+                local pImg = Instance.new("ImageLabel")
+                pImg.Size = UDim2.new(0, 32, 0, 32)
+                pImg.Position = UDim2.new(1, -38, 0.5, -16)
+                pImg.BackgroundColor3 = Color3.fromRGB(25, 40, 70)
+                pImg.ZIndex = 4
+                pImg.Parent = pRow
+                Instance.new("UICorner", pImg).CornerRadius = UDim.new(0, 16)
+
+                loadAvatarThumbnail(p.UserId, pImg)
+
+                local pNameLbl = Instance.new("TextLabel")
+                pNameLbl.Size = UDim2.new(1, -120, 1, 0)
+                pNameLbl.Position = UDim2.new(0, 80, 0, 0)
+                pNameLbl.BackgroundTransparency = 1
+                pNameLbl.Text = p.DisplayName
+                pNameLbl.TextColor3 = Color3.fromRGB(255, 255, 255)
+                pNameLbl.Font = Enum.Font.FredokaOne
+                pNameLbl.TextSize = 13
+                pNameLbl.TextXAlignment = Enum.TextXAlignment.Right
+                pNameLbl.ZIndex = 4
+                pNameLbl.Parent = pRow
+
+                local specBtn = Instance.new("TextButton")
+                specBtn.Size = UDim2.new(0, 65, 0, 26)
+                specBtn.Position = UDim2.new(0, 8, 0.5, -13)
+                specBtn.BackgroundColor3 = currentAccentColor
+                specBtn.Text = "مراقبة 👁️"
+                specBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+                specBtn.Font = Enum.Font.FredokaOne
+                specBtn.TextSize = 11
+                specBtn.ZIndex = 4
+                specBtn.Parent = pRow
+                Instance.new("UICorner", specBtn).CornerRadius = UDim.new(0, 5)
+
+                local isCamSpectating = false
+                specBtn.MouseButton1Click:Connect(function()
+                    playUiSound(SOUND_CLICK, 1, 0.35)
+                    isCamSpectating = not isCamSpectating
+                    if isCamSpectating then
+                        specBtn.Text = "إلغاء ❌"
+                        specBtn.BackgroundColor3 = Color3.fromRGB(220, 40, 60)
+                        if p.Character and p.Character:FindFirstChild("Humanoid") then
+                            workspace.CurrentCamera.CameraSubject = p.Character.Humanoid
+                        end
+                    else
+                        specBtn.Text = "مراقبة 👁️"
+                        specBtn.BackgroundColor3 = currentAccentColor
+                        if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
+                            workspace.CurrentCamera.CameraSubject = LocalPlayer.Character.Humanoid
+                        end
+                    end
+                end)
+            end
+        end
+    end)
+
+    -- ميزة تغيير السيرفر مع التفعيلات
+    addChilliAccordion("تغيير السيرفر (Server Hop)", function(addToggle, addAction)
+        addAction("الانتقال لسيرفر آخر عشوائي 🔄", function()
+            local Http = game:GetService("HttpService")
+            local TPS = game:GetService("TeleportService")
+            local Api = "https://games.roblox.com/v1/games/"
+            local _place = game.PlaceId
+            local _servers = Api .. _place .. "/servers/Public?sortOrder=Asc&limit=100"
+            pcall(function()
+                local raw = game:HttpGet(_servers)
+                local decoded = Http:JSONDecode(raw)
+                if decoded and decoded.data then
+                    for _, s in ipairs(decoded.data) do
+                        if s.playing ~= s.maxPlayers and s.id ~= game.JobId then
+                            TPS:TeleportToPlaceInstance(_place, s.id, LocalPlayer)
+                            break
+                        end
+                    end
+                end
+            end)
         end)
     end)
 
@@ -1306,6 +1436,7 @@ BtnSuggestions.MouseButton1Click:Connect(function()
     CenterScroll.CanvasSize = UDim2.new(0, 0, 0, CenterLayout.AbsoluteContentSize.Y + 15)
 end)
 
+-- حصر لوحة الأدمن لحساب المطور Dms921 حصراً
 if LocalPlayer.Name == "Dms921" then
     local BtnAdmin = createProStyleBtn("لوحة الأدمن", "right")
     BtnAdmin.MouseButton1Click:Connect(function()
@@ -1321,7 +1452,6 @@ if LocalPlayer.Name == "Dms921" then
     end)
 end
 
--- تبويب الإعدادات المحدث لربط كافة الألوان والثيم بالكامل
 local BtnSettings = createProStyleBtn("الإعدادات", "right")
 BtnSettings.MouseButton1Click:Connect(function()
     playUiSound(SOUND_CLICK, 1, 0.35)
@@ -1331,6 +1461,8 @@ BtnSettings.MouseButton1Click:Connect(function()
         local function updateTheme(accent, headerCol)
             currentAccentColor = accent
             currentHeaderColor = headerCol
+            saveUserSettings()
+
             centerStroke.Color = accent
             Header.BackgroundColor3 = headerCol
             floatStroke.Color = accent
