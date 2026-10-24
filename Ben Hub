@@ -1,5 +1,5 @@
--- DFX Hub - Ultimate Admin Panel & Pro Audio Control Suite
--- Version: v38.0.0 | Developer: Tahbah (Dms921)
+-- DFX Hub - Ultimate Admin Panel & Fixed Live Voting System
+-- Version: v39.0.0 | Developer: Tahbah (Dms921)
 
 local CoreGui = game:GetService("CoreGui")
 local Players = game:GetService("Players")
@@ -12,13 +12,14 @@ local MarketplaceService = game:GetService("MarketplaceService")
 local LocalPlayer = Players.LocalPlayer
 local parent = (gethui and gethui()) or CoreGui:FindFirstChild("RobloxGui") or LocalPlayer:WaitForChild("PlayerGui")
 
-if parent:FindFirstChild("DFXProV36UI") then parent.DFXProV36UI:Destroy() end
+if parent:FindFirstChild("DFXProV38UI") then parent.DFXProV38UI:Destroy() end
 if parent:FindFirstChild("DFXAdminBroadcastGui") then parent.DFXAdminBroadcastGui:Destroy() end
 if parent:FindFirstChild("DFXTopChatGui") then parent.DFXTopChatGui:Destroy() end
 if parent:FindFirstChild("DFXLoadingGui") then parent.DFXLoadingGui:Destroy() end
 if parent:FindFirstChild("DFXBanScreenGui") then parent.DFXBanScreenGui:Destroy() end
+if parent:FindFirstChild("DFXVoteBannerGui") then parent.DFXVoteBannerGui:Destroy() end
 
-local CONFIG_FILE = "DFX_Config_v36.json"
+local CONFIG_FILE = "DFX_Config_v38.json"
 local DISCORD_WEBHOOK_URL = "https://discord.com/api/webhooks/1563126439434391643/KPBO62mv7x_5ubaobKt3W-YjYACbTCsY-iefrPNQ7x99Q4tndOrxwQX6ts9zSU1csjcT"
 
 local FIREBASE_BASE_URL = "https://arad-hun-default-rtdb.firebaseio.com"
@@ -26,6 +27,10 @@ local FIREBASE_CHAT_URL = FIREBASE_BASE_URL .. "/global_chat.json"
 local FIREBASE_USERS_URL = FIREBASE_BASE_URL .. "/active_users.json"
 local FIREBASE_BROADCAST_URL = FIREBASE_BASE_URL .. "/global_broadcast.json"
 local FIREBASE_ADMIN_ACTIONS_URL = FIREBASE_BASE_URL .. "/admin_actions.json"
+
+-- تم تصحيح مسارات رابط التصويت نهائياً لضمان العمل الفوري
+local FIREBASE_VOTE_BASE = FIREBASE_BASE_URL .. "/global_vote"
+local FIREBASE_VOTE_URL = FIREBASE_VOTE_BASE .. ".json"
 
 local function customRequest(options)
     local req = request or http_request or (syn and syn.request) or (http and http.request) or (fluxus and fluxus.request)
@@ -160,7 +165,228 @@ end
 
 playUiSound(SOUND_OPEN, 1, 1)
 
+local function loadAvatarThumbnail(userId, imageLabel)
+    task.spawn(function()
+        pcall(function()
+            local content, isLoaded = Players:GetUserThumbnailAsync(userId, Enum.ThumbnailType.HeadShot, Enum.ThumbnailSize.Size150x150)
+            if isLoaded and imageLabel and imageLabel.Parent then
+                imageLabel.Image = content
+            end
+        end)
+    end)
+end
+
+---------------------------------------------------------
+-- شاشة واجهة التصويت المباشر التفاعلية (Global Vote GUI)
+---------------------------------------------------------
+local VoteGui = Instance.new("ScreenGui")
+VoteGui.Name = "DFXVoteBannerGui"
+VoteGui.ResetOnSpawn = false
+VoteGui.Parent = parent
+
+local currentActiveVoteId = nil
+local userVotedOption = nil
+
+local VoteFrame = Instance.new("Frame")
+VoteFrame.Size = UDim2.new(0, 520, 0, 140)
+VoteFrame.Position = UDim2.new(0.5, -260, 0, -160)
+VoteFrame.BackgroundColor3 = Color3.fromRGB(15, 12, 20)
+VoteFrame.BackgroundTransparency = 0.1
+VoteFrame.ZIndex = 600
+VoteFrame.Visible = false
+VoteFrame.Parent = VoteGui
+Instance.new("UICorner", VoteFrame).CornerRadius = UDim.new(0, 12)
+
+local voteStroke = Instance.new("UIStroke")
+voteStroke.Color = currentAccentColor
+voteStroke.Thickness = 3
+voteStroke.Parent = VoteFrame
+
+local DevAvatarImg = Instance.new("ImageLabel")
+DevAvatarImg.Size = UDim2.new(0, 50, 0, 50)
+DevAvatarImg.Position = UDim2.new(0, 12, 0, 10)
+DevAvatarImg.BackgroundColor3 = Color3.fromRGB(25, 20, 30)
+DevAvatarImg.ZIndex = 601
+DevAvatarImg.Parent = VoteFrame
+Instance.new("UICorner", DevAvatarImg).CornerRadius = UDim.new(0, 25)
+
+local voteDevStroke = Instance.new("UIStroke")
+voteDevStroke.Color = Color3.fromRGB(255, 215, 0)
+voteDevStroke.Thickness = 2
+voteDevStroke.Parent = DevAvatarImg
+
+local DevNameLbl = Instance.new("TextLabel")
+DevNameLbl.Size = UDim2.new(0, 140, 0, 20)
+DevNameLbl.Position = UDim2.new(0, 68, 0, 10)
+DevNameLbl.BackgroundTransparency = 1
+DevNameLbl.Text = "👑 طحبح (تصويت مباشر)"
+DevNameLbl.TextColor3 = Color3.fromRGB(255, 215, 0)
+DevNameLbl.Font = Enum.Font.FredokaOne
+DevNameLbl.TextSize = 12
+DevNameLbl.TextXAlignment = Enum.TextXAlignment.Left
+DevNameLbl.ZIndex = 601
+DevNameLbl.Parent = VoteFrame
+
+local VoteTitleLbl = Instance.new("TextLabel")
+VoteTitleLbl.Size = UDim2.new(1, -220, 0, 30)
+VoteTitleLbl.Position = UDim2.new(0, 68, 0, 28)
+VoteTitleLbl.BackgroundTransparency = 1
+VoteTitleLbl.Text = "عنوان التصويت يظهر هنا..."
+VoteTitleLbl.TextColor3 = Color3.fromRGB(255, 255, 255)
+VoteTitleLbl.Font = Enum.Font.FredokaOne
+VoteTitleLbl.TextSize = 15
+VoteTitleLbl.TextXAlignment = Enum.TextXAlignment.Left
+VoteTitleLbl.ZIndex = 601
+VoteTitleLbl.Parent = VoteFrame
+
+local VoteTimerLbl = Instance.new("TextLabel")
+VoteTimerLbl.Size = UDim2.new(0, 130, 0, 24)
+VoteTimerLbl.Position = UDim2.new(1, -140, 0, 10)
+VoteTimerLbl.BackgroundColor3 = Color3.fromRGB(25, 20, 30)
+VoteTimerLbl.Text = "⏱️ المتبقي: 00:00"
+VoteTimerLbl.TextColor3 = Color3.fromRGB(255, 220, 100)
+VoteTimerLbl.Font = Enum.Font.FredokaOne
+VoteTimerLbl.TextSize = 11.5
+VoteTimerLbl.ZIndex = 601
+VoteTimerLbl.Parent = VoteFrame
+Instance.new("UICorner", VoteTimerLbl).CornerRadius = UDim.new(0, 6)
+
+local BtnOptionA = Instance.new("TextButton")
+BtnOptionA.Size = UDim2.new(0.46, 0, 0, 38)
+BtnOptionA.Position = UDim2.new(0.025, 0, 0, 68)
+BtnOptionA.BackgroundColor3 = Color3.fromRGB(25, 20, 35)
+BtnOptionA.Text = "الخيار الأول (0)"
+BtnOptionA.TextColor3 = Color3.fromRGB(255, 255, 255)
+BtnOptionA.Font = Enum.Font.FredokaOne
+BtnOptionA.TextSize = 13
+BtnOptionA.ZIndex = 602
+BtnOptionA.Parent = VoteFrame
+Instance.new("UICorner", BtnOptionA).CornerRadius = UDim.new(0, 8)
+
+local optAStroke = Instance.new("UIStroke")
+optAStroke.Color = Color3.fromRGB(0, 170, 255)
+optAStroke.Thickness = 1.8
+optAStroke.Parent = BtnOptionA
+
+local BtnOptionB = Instance.new("TextButton")
+BtnOptionB.Size = UDim2.new(0.46, 0, 0, 38)
+BtnOptionB.Position = UDim2.new(0.515, 0, 0, 68)
+BtnOptionB.BackgroundColor3 = Color3.fromRGB(25, 20, 35)
+BtnOptionB.Text = "الخيار الثاني (0)"
+BtnOptionB.TextColor3 = Color3.fromRGB(255, 255, 255)
+BtnOptionB.Font = Enum.Font.FredokaOne
+BtnOptionB.TextSize = 13
+BtnOptionB.ZIndex = 602
+BtnOptionB.Parent = VoteFrame
+Instance.new("UICorner", BtnOptionB).CornerRadius = UDim.new(0, 8)
+
+local optBStroke = Instance.new("UIStroke")
+optBStroke.Color = Color3.fromRGB(255, 80, 120)
+optBStroke.Thickness = 1.8
+optBStroke.Parent = BtnOptionB
+
+local TotalVotesLbl = Instance.new("TextLabel")
+TotalVotesLbl.Size = UDim2.new(1, 0, 0, 20)
+TotalVotesLbl.Position = UDim2.new(0, 0, 0, 112)
+TotalVotesLbl.BackgroundTransparency = 1
+TotalVotesLbl.Text = "📊 إجمالي عدد الأصوات: 0"
+TotalVotesLbl.TextColor3 = Color3.fromRGB(200, 220, 255)
+TotalVotesLbl.Font = Enum.Font.FredokaOne
+TotalVotesLbl.TextSize = 12
+TotalVotesLbl.TextXAlignment = Enum.TextXAlignment.Center
+TotalVotesLbl.ZIndex = 601
+TotalVotesLbl.Parent = VoteFrame
+
+local function submitUserVote(optionKey)
+    if not currentActiveVoteId or userVotedOption then return end
+    userVotedOption = optionKey
+    playUiSound(SOUND_CLICK, 1, 0.35)
+    
+    pcall(function()
+        customRequest({
+            Url = FIREBASE_VOTE_BASE .. "/votes/" .. tostring(LocalPlayer.UserId) .. ".json",
+            Method = "PUT",
+            Headers = {["Content-Type"] = "application/json"},
+            Body = HttpService:JSONEncode({choice = optionKey})
+        })
+    end)
+end
+
+BtnOptionA.MouseButton1Click:Connect(function() submitUserVote("optA") end)
+BtnOptionB.MouseButton1Click:Connect(function() submitUserVote("optB") end)
+
+-- استماع دوري للتصويت المباشر
+task.spawn(function()
+    while true do
+        pcall(function()
+            local res = customRequest({Url = FIREBASE_VOTE_URL, Method = "GET"})
+            if res and res.StatusCode == 200 then
+                local data = safeDecode(res.Body)
+                if data and data.active == true and data.title then
+                    local endTime = tonumber(data.endTime or 0)
+                    local remainingSecs = math.max(0, endTime - os.time())
+                    
+                    if remainingSecs > 0 then
+                        if not VoteFrame.Visible then
+                            VoteFrame.Visible = true
+                            if data.creatorUserId then
+                                loadAvatarThumbnail(tonumber(data.creatorUserId), DevAvatarImg)
+                            end
+                            TweenService:Create(VoteFrame, TweenInfo.new(0.5, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
+                                Position = UDim2.new(0.5, -260, 0, 15)
+                            }):Play()
+                        end
+                        
+                        currentActiveVoteId = data.voteId
+                        VoteTitleLbl.Text = tostring(data.title)
+                        VoteTimerLbl.Text = string.format("⏱️ المتبقي: %02d:%02d", math.floor(remainingSecs / 60), remainingSecs % 60)
+                        
+                        local votesA = 0
+                        local votesB = 0
+                        if data.votes then
+                            for uId, vData in pairs(data.votes) do
+                                if type(vData) == "table" and vData.choice then
+                                    if vData.choice == "optA" then votesA = votesA + 1
+                                    elseif vData.choice == "optB" then votesB = votesB + 1 end
+                                end
+                            end
+                        end
+                        
+                        local total = votesA + votesB
+                        BtnOptionA.Text = string.format("%s (%d)", tostring(data.optAName or "خيار A"), votesA)
+                        BtnOptionB.Text = string.format("%s (%d)", tostring(data.optBName or "خيار B"), votesB)
+                        TotalVotesLbl.Text = "📊 إجمالي عدد الأصوات: " .. total
+                    else
+                        if VoteFrame.Visible then
+                            TweenService:Create(VoteFrame, TweenInfo.new(0.4, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {
+                                Position = UDim2.new(0.5, -260, 0, -170)
+                            }):Play()
+                            task.wait(0.4)
+                            VoteFrame.Visible = false
+                            currentActiveVoteId = nil
+                            userVotedOption = nil
+                        end
+                    end
+                else
+                    if VoteFrame.Visible then
+                        TweenService:Create(VoteFrame, TweenInfo.new(0.4, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {
+                            Position = UDim2.new(0.5, -260, 0, -170)
+                        }):Play()
+                        task.wait(0.4)
+                        VoteFrame.Visible = false
+                        currentActiveVoteId = nil
+                        userVotedOption = nil
+                    end
+                end
+            end
+        end)
+        task.wait(2)
+    end
+end)
+
+---------------------------------------------------------
 -- فحص الباند والكتم للمستخدم الحالي
+---------------------------------------------------------
 local function checkAdminActions()
     pcall(function()
         local res = customRequest({Url = FIREBASE_ADMIN_ACTIONS_URL, Method = "GET"})
@@ -236,19 +462,8 @@ task.spawn(function()
     end
 end)
 
-local function loadAvatarThumbnail(userId, imageLabel)
-    task.spawn(function()
-        pcall(function()
-            local content, isLoaded = Players:GetUserThumbnailAsync(userId, Enum.ThumbnailType.HeadShot, Enum.ThumbnailSize.Size150x150)
-            if isLoaded and imageLabel and imageLabel.Parent then
-                imageLabel.Image = content
-            end
-        end)
-    end)
-end
-
 ---------------------------------------------------------
--- نظام البرودكاست (تكبير إضافي، خط أبيض عريض، عدم تكرار الصوت المزعج)
+-- نظام البرودكاست المباشر
 ---------------------------------------------------------
 local BroadcastGui = Instance.new("ScreenGui")
 BroadcastGui.Name = "DFXAdminBroadcastGui"
@@ -299,7 +514,7 @@ local function showBroadcastBanner(senderName, text, userId)
     nameLbl.Text = senderName .. " 👑 :"
     nameLbl.TextColor3 = Color3.fromRGB(255, 255, 255)
     nameLbl.Font = Enum.Font.FredokaOne
-    nameLbl.TextSize = 22 -- خط أكبر وأعرض جداً
+    nameLbl.TextSize = 22
     nameLbl.TextXAlignment = Enum.TextXAlignment.Left
     nameLbl.ZIndex = 502
     nameLbl.Parent = textContainer
@@ -316,7 +531,7 @@ local function showBroadcastBanner(senderName, text, userId)
     textLbl.Text = text
     textLbl.TextColor3 = Color3.fromRGB(255, 255, 255)
     textLbl.Font = Enum.Font.FredokaOne
-    textLbl.TextSize = 22 -- خط أكبر وأعرض جداً
+    textLbl.TextSize = 22
     textLbl.TextXAlignment = Enum.TextXAlignment.Left
     textLbl.TextWrapped = true
     textLbl.ZIndex = 502
@@ -410,7 +625,7 @@ Instance.new("UICorner", BarFill).CornerRadius = UDim.new(0, 5)
 -- الهيكل الرئيسي للواجهة
 ---------------------------------------------------------
 local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "DFXProV36UI"
+ScreenGui.Name = "DFXProV38UI"
 ScreenGui.ResetOnSpawn = false
 ScreenGui.Parent = parent
 
@@ -600,7 +815,7 @@ CenterLayout.Padding = UDim.new(0, 8)
 CenterLayout.Parent = CenterScroll
 
 ---------------------------------------------------------
--- نافذة الشات المباشرة (مع التحقق من الكتم)
+-- نافذة الشات المباشرة
 ---------------------------------------------------------
 local ChatScreenGui = Instance.new("ScreenGui")
 ChatScreenGui.Name = "DFXTopChatGui"
@@ -1117,7 +1332,6 @@ local function sendMessageNow()
         local msg = ChatInput.Text
         ChatInput.Text = ""
         
-        -- التحقق هل المستخدم مكتوم؟
         local isMuted = false
         pcall(function()
             local res = customRequest({Url = FIREBASE_ADMIN_ACTIONS_URL, Method = "GET"})
@@ -1464,7 +1678,7 @@ BtnMainHome.MouseButton1Click:Connect(function()
     updatesTitle.Size = UDim2.new(1, -10, 0, 22)
     updatesTitle.Position = UDim2.new(0, 5, 0, 4)
     updatesTitle.BackgroundTransparency = 1
-    updatesTitle.Text = "✨ آخر تحديثات السكربت (v36.0):"
+    updatesTitle.Text = "✨ آخر تحديثات السكربت (v38.0):"
     updatesTitle.TextColor3 = currentAccentColor
     updatesTitle.Font = Enum.Font.FredokaOne
     updatesTitle.TextSize = 14
@@ -1477,7 +1691,7 @@ BtnMainHome.MouseButton1Click:Connect(function()
     updatesDesc.Size = UDim2.new(1, -10, 0, 100)
     updatesDesc.Position = UDim2.new(0, 5, 0, 26)
     updatesDesc.BackgroundTransparency = 1
-    updatesDesc.Text = "• تنظيم بطاقات الأغاني وترقيمها (1 إلى 6) بدون أي تداخل.\n• إضافة شريط تحكم كامل ومرن لرفع وتخفيض الصوت (عالي وقوي).\n• إضافة لوحة تحكم أدمن كاملة للكتم، الطرد، والباند مع زر بحث سريع."
+    updatesDesc.Text = "• إصلاح نهائي لمسارات قاعدة بيانات التصويت (Firebase REST API).\n• ظهور شاشة التصويت المباشر أعلى شاشة جميع اللاعبين فور الإطلاق.\n• تحديث عداد الأصوات، النسب المئوية، ووقت الانتهاء بسلاسة."
     updatesDesc.TextColor3 = Color3.fromRGB(240, 220, 230)
     updatesDesc.Font = Enum.Font.FredokaOne
     updatesDesc.TextSize = 11.5
@@ -1722,7 +1936,6 @@ BtnMusic.MouseButton1Click:Connect(function()
         _G.DFXActiveMusicSound = nil
     end
 
-    -- شريط التحكم بالصوت (رفع وتخفيض)
     local volumeContainer = Instance.new("Frame")
     volumeContainer.Size = UDim2.new(1, 0, 0, 45)
     volumeContainer.BackgroundColor3 = Color3.fromRGB(20, 15, 25)
@@ -1855,7 +2068,7 @@ BtnMusic.MouseButton1Click:Connect(function()
             task.spawn(function()
                 local soundAsset = track.id
                 if track.isUrl then
-                    soundAsset = fetchAudioFile(track.url, "track_v36_" .. tostring(idx))
+                    soundAsset = fetchAudioFile(track.url, "track_v38_" .. tostring(idx))
                 end
 
                 local snd = Instance.new("Sound")
@@ -2068,13 +2281,133 @@ BtnSuggestions.MouseButton1Click:Connect(function()
 end)
 
 ---------------------------------------------------------
--- لوحة الأدمن الحصرية للمطور Dms921 فقط (مع الكتم، الطرد، الباند وزر البحث)
+-- لوحة الأدمن الحصرية للمطور Dms921 فقط (إطلاق التصويت المباشر)
 ---------------------------------------------------------
 if LocalPlayer.Name == "Dms921" then
     local BtnAdmin = createProStyleBtn("لوحة الأدمن", "right")
     BtnAdmin.MouseButton1Click:Connect(function()
         playUiSound(SOUND_CLICK, 1, 0.35)
         clearCenter()
+
+        addChilliAccordion("📊 نظام إنشاء وإطلاق التصويت المباشر", function(addToggle, addAction, contentHolder)
+            local vTitleBox = Instance.new("TextBox")
+            vTitleBox.Size = UDim2.new(1, 0, 0, 32)
+            vTitleBox.BackgroundColor3 = Color3.fromRGB(20, 15, 25)
+            vTitleBox.PlaceholderText = "اكتب عنوان/سؤال التصويت المباشر هنا..."
+            vTitleBox.Text = ""
+            vTitleBox.TextColor3 = Color3.fromRGB(255, 255, 255)
+            vTitleBox.Font = Enum.Font.FredokaOne
+            vTitleBox.TextSize = 12
+            vTitleBox.TextXAlignment = Enum.TextXAlignment.Right
+            vTitleBox.ZIndex = 3
+            vTitleBox.Parent = contentHolder
+            Instance.new("UICorner", vTitleBox).CornerRadius = UDim.new(0, 6)
+
+            local vOptABox = Instance.new("TextBox")
+            vOptABox.Size = UDim2.new(1, 0, 0, 32)
+            vOptABox.BackgroundColor3 = Color3.fromRGB(20, 15, 25)
+            vOptABox.PlaceholderText = "اسم الخيار الأول (مثال: ميزة هاتف)..."
+            vOptABox.Text = ""
+            vOptABox.TextColor3 = Color3.fromRGB(255, 255, 255)
+            vOptABox.Font = Enum.Font.FredokaOne
+            vOptABox.TextSize = 12
+            vOptABox.TextXAlignment = Enum.TextXAlignment.Right
+            vOptABox.ZIndex = 3
+            vOptABox.Parent = contentHolder
+            Instance.new("UICorner", vOptABox).CornerRadius = UDim.new(0, 6)
+
+            local vOptBBox = Instance.new("TextBox")
+            vOptBBox.Size = UDim2.new(1, 0, 0, 32)
+            vOptBBox.BackgroundColor3 = Color3.fromRGB(20, 15, 25)
+            vOptBBox.PlaceholderText = "اسم الخيار الثاني (مثال: ميزة وقت الحدث)..."
+            vOptBBox.Text = ""
+            vOptBBox.TextColor3 = Color3.fromRGB(255, 255, 255)
+            vOptBBox.Font = Enum.Font.FredokaOne
+            vOptBBox.TextSize = 12
+            vOptBBox.TextXAlignment = Enum.TextXAlignment.Right
+            vOptBBox.ZIndex = 3
+            vOptBBox.Parent = contentHolder
+            Instance.new("UICorner", vOptBBox).CornerRadius = UDim.new(0, 6)
+
+            local vDurationBox = Instance.new("TextBox")
+            vDurationBox.Size = UDim2.new(1, 0, 0, 32)
+            vDurationBox.BackgroundColor3 = Color3.fromRGB(20, 15, 25)
+            vDurationBox.PlaceholderText = "مدة التصويت بالثواني (افتراضي: 30 ثانية)..."
+            vDurationBox.Text = ""
+            vDurationBox.TextColor3 = Color3.fromRGB(255, 255, 255)
+            vDurationBox.Font = Enum.Font.FredokaOne
+            vDurationBox.TextSize = 12
+            vDurationBox.TextXAlignment = Enum.TextXAlignment.Right
+            vDurationBox.ZIndex = 3
+            vDurationBox.Parent = contentHolder
+            Instance.new("UICorner", vDurationBox).CornerRadius = UDim.new(0, 6)
+
+            local launchVoteBtn = Instance.new("TextButton")
+            launchVoteBtn.Size = UDim2.new(1, 0, 0, 34)
+            launchVoteBtn.BackgroundColor3 = currentAccentColor
+            launchVoteBtn.Text = "🚀 إطلاق التصويت المباشر للجميع"
+            launchVoteBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+            launchVoteBtn.Font = Enum.Font.FredokaOne
+            launchVoteBtn.TextSize = 13.5
+            launchVoteBtn.ZIndex = 3
+            launchVoteBtn.Parent = contentHolder
+            Instance.new("UICorner", launchVoteBtn).CornerRadius = UDim.new(0, 6)
+
+            local endVoteBtn = Instance.new("TextButton")
+            endVoteBtn.Size = UDim2.new(1, 0, 0, 34)
+            endVoteBtn.BackgroundColor3 = Color3.fromRGB(180, 20, 60)
+            endVoteBtn.Text = "🛑 إنهاء التصويت المباشر فوراً"
+            endVoteBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+            endVoteBtn.Font = Enum.Font.FredokaOne
+            endVoteBtn.TextSize = 13.5
+            endVoteBtn.ZIndex = 3
+            endVoteBtn.Parent = contentHolder
+            Instance.new("UICorner", endVoteBtn).CornerRadius = UDim.new(0, 6)
+
+            launchVoteBtn.MouseButton1Click:Connect(function()
+                if vTitleBox.Text ~= "" and vOptABox.Text ~= "" and vOptBBox.Text ~= "" then
+                    local duration = tonumber(vDurationBox.Text) or 30
+                    launchVoteBtn.Text = "جاري إطلاق التصويت..."
+                    
+                    pcall(function()
+                        customRequest({
+                            Url = FIREBASE_VOTE_URL,
+                            Method = "PUT",
+                            Headers = {["Content-Type"] = "application/json"},
+                            Body = HttpService:JSONEncode({
+                                active = true,
+                                voteId = "vote_" .. tostring(os.time()),
+                                title = vTitleBox.Text,
+                                optAName = vOptABox.Text,
+                                optBName = vOptBBox.Text,
+                                startTime = os.time(),
+                                endTime = os.time() + duration,
+                                creatorUserId = LocalPlayer.UserId,
+                                votes = {}
+                            })
+                        })
+                    end)
+                    
+                    launchVoteBtn.Text = "تم إطلاق التصويت بنجاح! ✅"
+                    task.wait(2)
+                    launchVoteBtn.Text = "🚀 إطلاق التصويت المباشر للجميع"
+                end
+            end)
+
+            endVoteBtn.MouseButton1Click:Connect(function()
+                pcall(function()
+                    customRequest({
+                        Url = FIREBASE_VOTE_URL,
+                        Method = "PUT",
+                        Headers = {["Content-Type"] = "application/json"},
+                        Body = HttpService:JSONEncode({active = false})
+                    })
+                end)
+                endVoteBtn.Text = "تم إنهاء التصويت! 🛑"
+                task.wait(2)
+                endVoteBtn.Text = "🛑 إنهاء التصويت المباشر فوراً"
+            end)
+        end)
 
         addChilliAccordion("📢 نظام إرسال برودكاست للجميع", function(addToggle, addAction, contentHolder)
             local bcBox = Instance.new("TextBox")
@@ -2275,6 +2608,7 @@ BtnSettings.MouseButton1Click:Connect(function()
             loadStroke.Color = accent
             BarFill.BackgroundColor3 = accent
             minBoxStroke.Color = accent
+            voteStroke.Color = accent
 
             ChatHeaderBtn1.BackgroundColor3 = accent
             ChatHeaderBtn2.BackgroundColor3 = accent
