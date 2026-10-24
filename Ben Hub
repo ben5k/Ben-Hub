@@ -1,5 +1,5 @@
 -- DFX Hub - Ultimate Admin Panel & Fixed Live Voting System
--- Version: v39.0.0 | Developer: Tahbah (Dms921)
+-- Version: v38.0.0 | Developer: Tahbah (Dms921)
 
 local CoreGui = game:GetService("CoreGui")
 local Players = game:GetService("Players")
